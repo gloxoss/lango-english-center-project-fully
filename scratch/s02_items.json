@@ -1,0 +1,1067 @@
+[
+  {
+    "item": "S-19",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "npx vitest run fine-run-idempotency -> 3/3 pass; finance suite earlier 29 files/159 pass; tsc --noEmit -> exit 0; 0156 applied on schoolos and schoolos_audit",
+    "files": [
+      "lango-app/migrations/0156_fine_assessment_unique.sql",
+      "lango-app/src/app/api/finance/fine-runs/route.ts",
+      "lango-app/src/app/api/finance/fine-assessments/route.ts",
+      "lango-app/src/features/finance/models/student-accounting-schema.ts"
+    ],
+    "previousVerify": {
+      "item": "S-19",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:47:37.408Z"
+    }
+  },
+  {
+    "item": "task:attendance-final-closeout",
+    "category": "redo-antigravity-1",
+    "doneBy": "opencode-1",
+    "verifyCmd": "attendance set 199/199 (23 files: incl G15 10/10, G14 convergence 6/6, runtime reconciliation 8/8); tsc 0; check:i18n PASS; check:isolation PASS; check:ui ratchet holding (mock screens 0, dead controls 38<39 baseline); full suite 3192/3193 (sole failure pre-existing finance refund-linkage, reproduced on target b6e7230); visual sweep school_admin/teacher/parent/phone-390/ar all ok (31 artifacts)",
+    "files": [
+      "lango-app/src/app/api/attendance",
+      "lango-app/src/features/attendance",
+      "lango-app/src/libs/api/attendance-aggregate.ts",
+      "lango-app/src/libs/api/attendance-summary.ts",
+      "lango-app/src/libs/api/attendance-registers.ts",
+      "lango-app/src/libs/api/attendance-flags.ts",
+      "lango-app/src/app/api/dashboard/summary/route.ts",
+      "lango-app/src/app/api/students/route.ts",
+      "lango-app/src/app/api/communication/reminder-audience/route.ts",
+      "lango-app/src/app/api/academics/classes/roster/route.ts",
+      "lango-app/src/addons/advanced-reporting/adapters/attendance-adapter.ts",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/ar.json",
+      "lango-app/locales/en.json"
+    ],
+    "previousVerify": {
+      "item": "task:attendance-final-closeout",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-23T22:38:40.394Z"
+    }
+  },
+  {
+    "item": "task:sweep-docs",
+    "category": "redo-antigravity-1",
+    "doneBy": "codex-2",
+    "verifyCmd": "Note added to the header next to the ACCOUNTS map. Failure and fix both observed first-hand: node scripts/visual-sweep.mjs teacher <routes> with the default account -> LOGIN FAILED for teacher; aborting sweep, and the same command with ACCOUNT_EMAIL=prof.01@atlas.ma -> sweep runs. Tool behaviour unchanged.",
+    "files": [
+      "lango-app/scripts/visual-sweep.mjs"
+    ],
+    "previousVerify": {
+      "item": "task:sweep-docs",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T11:05:21.935Z"
+    }
+  },
+  {
+    "item": "task:alumni-lifecycle-remediation",
+    "category": "redo-antigravity-1",
+    "doneBy": "gemini-2",
+    "verifyCmd": "check:types PASS, check:isolation PASS, check:ui PASS (38/39), check:i18n PASS, 16/16 vitest PASS, 9/9 reconciliation PASS",
+    "files": [
+      "lango-app/src/libs/services/alumni-transition.ts",
+      "lango-app/src/app/api/__tests__/alumni-lifecycle-domain.test.ts",
+      "lango-app/src/scripts/dump-alumni-reconciliation.ts",
+      "lango-app/scripts/capture-all-alumni-evidence.mjs",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/ar.json",
+      "lango-app/locales/en.json"
+    ],
+    "previousVerify": {
+      "item": "task:alumni-lifecycle-remediation",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T00:08:27.539Z"
+    }
+  },
+  {
+    "item": "S-47",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc --noEmit -> exit 0; screen check pending in batch re-sweep (teacher /dashboard/teacher, parent /dashboard/parent)",
+    "files": [
+      "lango-app/src/features/teacher/ui/TeacherPortalView.tsx",
+      "lango-app/src/components/parent/ChildContextSwitcher.tsx"
+    ],
+    "previousVerify": {
+      "item": "S-47",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:46:21.589Z"
+    }
+  },
+  {
+    "item": "task:merge-recovery",
+    "category": "redo-antigravity-1",
+    "doneBy": "codex-2",
+    "verifyCmd": "git diff --name-only --diff-filter=U -> 0 unmerged; grep -RIn conflict markers excluding node_modules, .git and .next -> 0; npx vitest run promotion-service-domain + promotion-year-activation + section-capacity + student-transfers-domain + nav-page-guard-parity -> 49 passed across 5 files (Promotion 21, capacity 8, Transfers 12, year activation 5, parity 3); live probe on localhost:3557 -> /api/academics/class-sections and /semesters return 200 as accountant and 403 as parent so the S-35 gate survives the merge; journal integrity 158 entries with strictly increasing idx and unique tags, last 0156_fine_assessment_unique; GET /fr/login -> 200 on a clean server with a fresh NEXT_DIST_DIR so the PostCSS selector defect does not reproduce once the merge is clean.",
+    "files": [
+      "lango-app/migrations/meta/_journal.json",
+      "lango-app/src/app/api/academics/class-sections/route.ts",
+      "lango-app/src/app/api/academics/promotions/capacity-check/route.ts",
+      "lango-app/src/app/api/students/promotions/route.ts",
+      "lango-app/src/app/api/students/transfers/route.ts"
+    ],
+    "previousVerify": {
+      "item": "task:merge-recovery",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T11:05:52.220Z"
+    }
+  },
+  {
+    "item": "S-46",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc --noEmit -> exit 0; codemod dry run == apply (108 strings, 8 fields), bank numbers intact. NOT run: a full reseed on a throwaway DB (user stopped that step) - the existing schoolos/schoolos_audit data is unchanged until someone reseeds",
+    "files": [
+      "lango-app/src/scripts/seed-full.ts"
+    ],
+    "previousVerify": {
+      "item": "S-46",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:56:41.199Z"
+    }
+  },
+  {
+    "item": "S-57",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc -> exit 0; check-missing-i18n-keys -> 0; workforce/payroll tests (see run); screen check pending in batch re-sweep",
+    "files": [
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json",
+      "lango-app/src/features/workforce/ui/payroll-workspace.tsx",
+      "lango-app/src/features/workforce/ui/workforce-operations-client.tsx",
+      "lango-app/src/features/finance/ui/expenses-view.tsx",
+      "lango-app/src/features/teachers/ui/teacher-admin-detail-view.tsx",
+      "lango-app/src/features/students/ui/student-detail-view.tsx",
+      "lango-app/src/features/events/ui/event-admin-detail-view.tsx"
+    ],
+    "previousVerify": {
+      "item": "S-57",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:57:21.900Z"
+    }
+  },
+  {
+    "item": "task:hub-page-lock-granularity",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "node --check ok; claim S-33 (page inside S-32) -> claimed with note; file-overlap rule unchanged",
+    "files": [
+      ".agent-hub/hub.mjs",
+      ".agent-hub/PROTOCOL.md"
+    ],
+    "previousVerify": {
+      "item": "task:hub-page-lock-granularity",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T11:04:55.719Z"
+    }
+  },
+  {
+    "item": "S-33",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "check-missing-i18n-keys -> 0; tsc -> exit 0; screen check pending in batch re-sweep (school_admin /dashboard/students/alumni/requests)",
+    "files": [
+      "lango-app/src/features/students/ui/alumni-requests-view.tsx",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json"
+    ],
+    "previousVerify": {
+      "item": "S-33",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:57:50.084Z"
+    }
+  },
+  {
+    "item": "S-45",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc -> exit 0; check-missing-i18n-keys -> 0; nav-page-guard-parity -> 3 passed; eslint: no findings on changed lines (file already had pre-existing lint errors); screen check pending in batch re-sweep (parent)",
+    "files": [
+      "lango-app/src/components/shared/sidebar.tsx",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json"
+    ],
+    "previousVerify": {
+      "item": "S-45",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:58:02.844Z"
+    }
+  },
+  {
+    "item": "S-36",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc -> exit 0; screen check pending in batch re-sweep with VIEWPORT=phone (school_admin /dashboard/finance/invoices)",
+    "files": [
+      "lango-app/src/features/finance/ui/invoices-view.tsx"
+    ],
+    "previousVerify": {
+      "item": "S-36",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:58:39.321Z"
+    }
+  },
+  {
+    "item": "S-34",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "vitest student-photos-domain -> 27 passed (G7 counter invariants hold); tsc -> exit 0; check-missing-i18n-keys -> 0; check:isolation passed",
+    "files": [
+      "lango-app/src/app/api/students/photos/route.ts",
+      "lango-app/src/features/students/ui/student-photos-view.tsx",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json"
+    ],
+    "previousVerify": {
+      "item": "S-34",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:59:10.750Z"
+    }
+  },
+  {
+    "item": "S-26",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc -> exit 0; check-missing-i18n-keys -> 0; screen check pending in batch re-sweep (school_admin /dashboard/settings, /settings/entitlements)",
+    "files": [
+      "lango-app/src/features/settings/ui/settings-hub-page.tsx",
+      "lango-app/src/features/settings/ui/settings-hub-client.tsx",
+      "lango-app/src/features/settings/ui/entitlements-catalog-view.tsx",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json"
+    ],
+    "previousVerify": {
+      "item": "S-26",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:52:51.767Z"
+    }
+  },
+  {
+    "item": "S-32",
+    "category": "redo-antigravity-1",
+    "doneBy": "codex-2",
+    "verifyCmd": "Accountant: AUDIT_BASE=http://localhost:3557 node scripts/visual-sweep.mjs accountant artifacts/s32-sweeps/routes.txt artifacts/s32-sweeps/accountant -> 88 routes checked, 0 bounce flags and 0 redirect failures (sweep JSON analysed per route). Teacher: same 88 routes earlier -> 88 checked, 0 bounces, 0 redirects, evidence in artifacts/s32-sweeps/teacher. Acceptance: 88 routes checked, 0 unintended /fr bounces, 0 nav/page-guard mismatches, 0 unauthorized exposures, expected denials still denied (4 x 403 on workforce/payroll config, payments and punches for the accountant, which is the known separate payroll role gap codex-1 logged against S-53 and is not this finding), and accountant-allowed pages stayed reachable (84 of 88 fully clean). 6 remaining flags are dev-server console noise (manifest MIME and globals.css parse notices), not navigation faults. GET /fr/login -> 200 on a clean server and fresh NEXT_DIST_DIR before sweeping.",
+    "files": [
+      "lango-app/artifacts/s32-sweeps"
+    ],
+    "previousVerify": {
+      "item": "S-32",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:44:08.193Z"
+    }
+  },
+  {
+    "item": "S-55",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc -> exit 0; schoolos_audit has 1 published news item (rentree-2026-2027) that the home page will now list; screen check pending in batch re-sweep (anonymous /atlas)",
+    "files": [
+      "lango-app/src/features/website/ui/public/site-header.tsx",
+      "lango-app/src/app/[locale]/(school-site)/[tenantSlug]/page.tsx"
+    ],
+    "previousVerify": {
+      "item": "S-55",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:53:45.264Z"
+    }
+  },
+  {
+    "item": "S-24",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "npx vitest run matricules-domain + admissions-intake-semantics + admissions-workflow -> 51/51 pass; npx tsc --noEmit -> exit 0",
+    "files": [
+      "lango-app/src/libs/services/matricule.ts",
+      "lango-app/src/app/api/__tests__/matricules-domain.test.ts"
+    ],
+    "previousVerify": {
+      "item": "S-24",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:46:59.313Z"
+    }
+  },
+  {
+    "item": "S-13",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc --noEmit -> exit 0; vitest nav-page-guard-parity + page-guard-path + guard-nav-role-visibility + exam-term-stage-route + online-exam-access -> 46/46; check:i18n -> 0 errors; check:i18n:keys -> 0 missing. Screen sweep pending (batch)",
+    "files": [
+      "lango-app/src/app/[locale]/(dashboard)/dashboard/academics/exams/page.tsx",
+      "lango-app/src/app/[locale]/(dashboard)/dashboard/academics/assessment/exam-master/page.client.tsx",
+      "lango-app/src/features/academics/ui/exam-planning-client.tsx",
+      "lango-app/src/components/shared/sidebar.tsx",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json"
+    ],
+    "previousVerify": {
+      "item": "S-13",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:48:12.610Z"
+    }
+  },
+  {
+    "item": "S-17",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc --noEmit -> exit 0; check:i18n -> 0 errors; check:i18n:keys -> 0 missing; schoolos_audit: UPDATE 3 (2nde, 1ère, Terminale -> Sciences). Seed not run. Screen sweep pending (batch)",
+    "files": [
+      "lango-app/src/features/academics/ui/classes-client.tsx",
+      "lango-app/src/scripts/seed-full.ts",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json"
+    ],
+    "previousVerify": {
+      "item": "S-17",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:50:01.621Z"
+    }
+  },
+  {
+    "item": "S-30",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc --noEmit -> exit 0; check:i18n -> 0 errors; check:i18n:keys -> 0 missing. Screen sweep pending (batch)",
+    "files": [
+      "lango-app/src/features/dashboard/ui/recent-payments-card.tsx",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json"
+    ],
+    "previousVerify": {
+      "item": "S-30",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:50:30.140Z"
+    }
+  },
+  {
+    "item": "S-23",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc --noEmit -> exit 0; vitest admissions-intake-semantics + admissions-workflow + academic-reconciliation-p0 + attendance-runtime-reconciliation + hostel-audit -> 63/63; check:i18n -> 0; check:i18n:keys -> 0 missing. Screen sweep pending (batch)",
+    "files": [
+      "lango-app/src/features/settings/ui/audit-logs-view.tsx",
+      "lango-app/src/app/api/finance/accounting/student-accounting/reconcile/route.ts",
+      "lango-app/src/features/students/services/admission-service.ts",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json"
+    ],
+    "previousVerify": {
+      "item": "S-23",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:51:22.773Z"
+    }
+  },
+  {
+    "item": "S-37",
+    "category": "redo-antigravity-1",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc --noEmit -> exit 0; vitest dashboard-summary + finance definitions -> 19/19; check:i18n -> 0 errors; check:i18n:keys -> 0 missing. Arabic screen sweep pending (batch)",
+    "files": [
+      "lango-app/src/features/dashboard/ui/daily-pulse-kpi.tsx",
+      "lango-app/src/features/dashboard/ui/dashboard-view.tsx",
+      "lango-app/src/features/dashboard/ui/action-center.tsx",
+      "lango-app/src/features/dashboard/ui/recent-payments-card.tsx",
+      "lango-app/src/features/dashboard/ui/finance-overview-card.tsx",
+      "lango-app/src/features/dashboard/ui/attendance-trend-card.tsx",
+      "lango-app/src/features/dashboard/ui/upcoming-events-card.tsx",
+      "lango-app/src/features/dashboard/ui/student-watchlist-card.tsx",
+      "lango-app/src/features/dashboard/ui/student-distribution-card.tsx",
+      "lango-app/src/app/api/dashboard/summary/route.ts",
+      "lango-app/src/components/shared/sidebar.tsx",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json"
+    ],
+    "previousVerify": {
+      "item": "S-37",
+      "agent": "antigravity-1",
+      "ok": true,
+      "ts": "2026-09-24T10:54:53.390Z"
+    }
+  },
+  {
+    "item": "task:AUD-PLATFORM-01",
+    "category": "unverified",
+    "doneBy": "codex-2",
+    "verifyCmd": "cd lango-app && npx vitest run src/features/subscriptions src/libs/api -> 137/137 PASS (15 files: 7 new entitlement-expiry + 130 pre-existing incl. license-expiry-worker, entitlements, subscription-enforcement, platform-billing, permissions, page-guard, nav-page-guard-parity). Honest iteration note: my first cut treated every expiry as a whole day and broke the 2 license-expiry-worker tests that expire a licence 1 second ago; the final rule is hybrid and keeps them green. npm run check:types -> PASS; npm run check:isolation -> PASS (828 files); npm run check:i18n:keys -> 0 missing; npm run check:ui -> ratchet holding; npx eslint on 3 touched files -> 0 problems. visual-sweep -> 12/12 routes captured + mobile 390 + Arabic RTL, 14 screenshots. LIMITATION: no TOTP secret on disk so superadmin@schoolos.ma cannot sign in; all captures are the access-denied boundary, not the platform screens. Branch audit/agent-c/AUD-PLATFORM-01-platform-entitlements, base f42c2bc, impl SHA a0eedbc.",
+    "files": [
+      "lango-app/src/libs/api/entitlements.ts",
+      "lango-app/src/features/subscriptions/services/license-expiry-worker.ts",
+      "lango-app/src/features/subscriptions/__tests__/entitlement-expiry.test.ts",
+      "lango-app/artifacts/page-audit/done/AUD-PLATFORM-01__platform-entitlements"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:ui-reality-baseline",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "npm run check:ui -> all 4 ratchets hold; src-only tsc -> 0 errors outside seed; seed tsc -> 177 = origin 177",
+    "files": [
+      "lango-app/scripts/ui-reality-baseline.json",
+      "lango-app/src/features/academics/ui/exam-planning-view.tsx",
+      "lango-app/src/features/academics/ui/exam-planning-page.tsx",
+      "lango-app/src/scripts/seed-full.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:inventory-invoice-number",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "vitest src/features/inventory -> 4 files 30/30; tsc -> 0 errors outside the stale .next/dev/types file",
+    "files": [
+      "lango-app/src/features/inventory/services/sales-service.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:transport-random-codes",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "npx tsx nextCode('RT',['RT-101','RT-205',null,'X-9','RT-abc']) -> RT-206, nextCode('BUS',[]) -> BUS-101; tsc -> 0 src errors; 0 Math.random left in the 3 pages",
+    "files": [
+      "lango-app/src/libs/next-code.ts",
+      "lango-app/src/app/[locale]/(dashboard)/dashboard/transport/routes/page.client.tsx",
+      "lango-app/src/app/[locale]/(dashboard)/dashboard/transport/stops/page.client.tsx",
+      "lango-app/src/app/[locale]/(dashboard)/dashboard/transport/vehicles/page.client.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:hardcoded-fr-links",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "grep hardcoded \"/fr/dashboard\" in src/**/*.tsx -> 0; tsc -> 0 src errors",
+    "files": [
+      "lango-app/src/features/settings/ui/security-sessions-client.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:leadership-dead-buttons",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "npm run check:ui -> dead controls 29 (was 38), all ratchets hold; tsc -> 0 src errors",
+    "files": [
+      "lango-app/src/features/crm/ui/leadership-portal-view.tsx",
+      "lango-app/scripts/ui-reality-baseline.json"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:syllabus-fake-template",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "grep fake resources in template -> 0; tsc -> 0 src errors",
+    "files": [
+      "lango-app/src/features/academics/ui/syllabus-client.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:syllabus-resource-link",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc -> 0 src errors; check:i18n -> 0; check:i18n:keys -> 0 missing",
+    "files": [
+      "lango-app/src/features/academics/ui/syllabus-client.tsx",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:archive-fake-components",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "npm run check:ui -> dead 27, mock 0, unlinked 29, orphaned 5, ratchet holding; tsc -> 0 src errors",
+    "files": [
+      "lango-app/src/components/parent/ParentInvoiceBreakdown.tsx",
+      "lango-app/src/components/accountant/CashierPaymentModal.tsx",
+      "lango-app/future-implementation/_archived-ui",
+      "lango-app/scripts/ui-reality-baseline.json"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:dead-buttons-2",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "npm run check:ui -> dead 24, ratchet holding; tsc -> 0 src errors",
+    "files": [
+      "lango-app/src/features/academics/ui/rooms-client.tsx",
+      "lango-app/src/features/settings/ui/branches-manage-view.tsx",
+      "lango-app/src/features/settings/ui/users-roles-client.tsx",
+      "lango-app/scripts/ui-reality-baseline.json"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:button-in-link",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "npm run check:ui -> dead 4 (was 24), ratchet holding; tsc -> 0 src errors; full vitest 229 files / 3281 tests pass",
+    "files": [
+      "lango-app/src/components/auth/subscription-gate.tsx",
+      "lango-app/src/features/academics/ui/academic-readiness-view.tsx",
+      "lango-app/src/features/broadcast/ui/broadcast-overview-view.tsx",
+      "lango-app/src/features/broadcast/ui/campaign-detail-view.tsx",
+      "lango-app/src/features/broadcast/ui/campaigns-view.tsx",
+      "lango-app/src/features/broadcast/ui/reports-view.tsx",
+      "lango-app/src/features/communication/ui/sms-reminders-view.tsx",
+      "lango-app/src/features/events/ui/events-calendar-client.tsx",
+      "lango-app/src/features/homework/ui/homework-client.tsx",
+      "lango-app/src/features/hostel/ui/hostel-detail-view.tsx",
+      "lango-app/src/features/students/ui/alumni-admin-view.tsx",
+      "lango-app/src/features/subscriptions/ui/subscription-overview-view.tsx",
+      "lango-app/src/features/super-admin/ui/super-admin-schools-create-view.tsx",
+      "lango-app/src/features/super-admin/ui/super-admin-schools-view.tsx",
+      "lango-app/src/features/students/ui/student-transfers-client.tsx",
+      "lango-app/src/features/academics/ui/class-detail-view.tsx",
+      "lango-app/src/features/website/ui/theme-settings-view.tsx",
+      "lango-app/scripts/ui-reality-baseline.json"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:renewal-zero-amount",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc -> 0 src errors; vitest subscription/renewal/license tests -> 12/12 pass; check:i18n 0, keys 0",
+    "files": [
+      "lango-app/src/app/api/super-admin/subscriptions/[schoolId]/payments/[paymentId]/decision/route.ts",
+      "lango-app/src/features/super-admin/ui/super-admin-school-detail-view.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:access-reset-fake-sms",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc -> 0 src errors; vitest src/app/api/security.test.ts -> 9/9; check:i18n 0, keys 0; SQL on schoolos + schoolos_audit -> 0 plaintext codes",
+    "files": [
+      "lango-app/src/app/api/settings/access-reset/route.ts",
+      "lango-app/src/features/settings/ui/access-reset-view.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:hostel-test-hook-prod",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc -> 0 src errors; vitest src/features/hostel -> 21/21 (hostel-audit uses the hook, still passes under NODE_ENV=test)",
+    "files": [
+      "lango-app/src/app/api/addons/hostel/allocations/[id]/check-out/route.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:payments-sandbox-prod",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc -> 0 src errors; vitest api payment tests pass; SQL: 0 SANDBOX- payments in both local DBs",
+    "files": [
+      "lango-app/src/app/api/finance/payments/sandbox/route.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:AUD-CRM-01",
+    "category": "unverified",
+    "doneBy": "codex-2",
+    "verifyCmd": "cd lango-app && npx vitest run src/features/crm src/app/api/crm -> 17/17 PASS (3 files: 5 new conversion-integrity + 12 pre-existing guard and duplicate/merge/convert). npm run check:types -> PASS; npm run check:isolation -> PASS (828 files); npm run check:i18n -> PASS; npm run check:i18n:keys -> 0 missing; npm run check:ui -> ratchet holding; npx eslint touched -> 0 problems. visual-sweep -> 6 screenshots: desktop FR for all 3 pages, teacher role capture showing honest access-denied (CRM is staff-only), plus mobile 390 and Arabic RTL on the kanban. Honest note: my first fix cut lost the backslash in split(/s+/) and split names on the letter s (Yassine -> Ya); two existing tests caught it before shipping. Branch audit/agent-c/AUD-CRM-01-crm-inquiries, base f42c2bc, impl SHA b8c7742.",
+    "files": [
+      "lango-app/src/features/crm",
+      "lango-app/src/app/api/crm",
+      "lango-app/artifacts/page-audit/done/AUD-CRM-01__crm-inquiries"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:fake-scheduled-jobs",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc -> 0 src errors; vitest api job tests 15/15; check:ui holding (dead 4); check:i18n 0; keys 0",
+    "files": [
+      "lango-app/src/app/api/settings/jobs/[id]/trigger/route.ts",
+      "lango-app/src/features/settings/data/jobs-audit-config.ts",
+      "lango-app/src/features/settings/ui/jobs-audit-client.tsx",
+      "lango-app/src/features/settings/ui/jobs-audit-page.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:FIX-DASH-FIN-KPI-01",
+    "category": "unverified",
+    "doneBy": "codex-2",
+    "verifyCmd": "cd lango-app && npx vitest run src/features/dashboard -> 8/8 PASS (new finance-kpi-truth.test.ts covering refunds, partials, overdue, zero invoiced -> null, bound across legacy overpayment, tenant/branch scoping, teacher confidentiality). npm run check:types -> PASS; check:isolation -> PASS; check:i18n + check:i18n:keys -> PASS (0 missing); check:ui -> ratchet holding; eslint touched -> 3 errors ALL PRE-EXISTING (verified identical on git show f42c2bc:<path>, zero introduced). Deterministic probe on schoolos_audit: invoiced 2 162 000 / outstanding 599 500 / cash 2 553 500 -> OLD 118.1% IMPOSSIBLE, NEW 72.3%. Screenshots: before shows 118% pulse + 118.1% recovery + 'Restant du 0 MAD' contradiction; after, mobile 390 and AR RTL also captured. Branch audit/agent-c/FIX-DASH-FIN-KPI-01-dashboard-finance-kpi, base f42c2bc, impl SHA 8dedade.",
+    "files": [
+      "lango-app/src/app/api/dashboard/summary/route.ts",
+      "lango-app/src/features/dashboard/__tests__/finance-kpi-truth.test.ts",
+      "lango-app/artifacts/page-audit/done/FIX-DASH-FIN-KPI-01__dashboard-finance-kpi"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:AUD-CREDENTIALS-01",
+    "category": "unverified",
+    "doneBy": "antigravity-1",
+    "verifyCmd": "node scripts/verify-all-31-package.mjs -> 31/31 PASS; npm run check:types -> 0 errors; npm run check:ui -> Ratchet holding",
+    "files": [
+      "artifacts/page-audit/done/AUD-CREDENTIALS-01__student-credentials/"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:port-3114",
+    "category": "unverified",
+    "doneBy": "antigravity-d",
+    "verifyCmd": "dev server killed -> port released",
+    "files": [
+      "scripts/audit-live-screenshots.mjs"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:REL-INTEGRATION-01",
+    "category": "unverified",
+    "doneBy": "antigravity-3",
+    "verifyCmd": "git log -1 audit/agent-b/REL-INTEGRATION-01 -> b016bde; all 9 artifact markdown documents + evidence generated and pushed to origin",
+    "files": [
+      "lango-app/artifacts/release-integration/REL-INTEGRATION-01"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:syllabus-url-regex",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "npx tsc --noEmit -p lango-app | grep -v .next -> 0 errors",
+    "files": [
+      "lango-app/src/features/academics/ui/syllabus-client.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:online-exam-resubmit",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "ALLOW_DB_SKIP=1 npx vitest run --project unit online-exam -> 12/12 passed; tsc (non-.next) 0 errors; eslint 0",
+    "files": [
+      "lango-app/src/app/api/academics/online-exams/submit/route.ts",
+      "lango-app/src/app/api/__tests__/online-exam-access.test.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:score-bounds-server",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "vitest score-bounds 4/4 + online-exam 12/12 (DB-free); tsc non-.next 0; eslint 0. DB-backed grading route tests NOT run: port 5432 is held by another project's container (datapathology_db).",
+    "files": [
+      "lango-app/src/features/assessment/services/outcome-service.ts",
+      "lango-app/src/features/assessment/services/exam-master-service.ts",
+      "lango-app/src/features/assessment/services/homework-service.ts",
+      "lango-app/src/features/assessment/services/__tests__/score-bounds.test.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:refund-cap-clarity",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "vitest refund-cap 4/4 (DB-free); tsc non-.next 0; eslint 0 new errors. Migration 0158 NOT run: needs lango_postgres (npm run db:migrate on schoolos_audit).",
+    "files": [
+      "lango-app/src/app/api/finance/refunds/route.ts",
+      "lango-app/src/libs/api/errors.ts",
+      "lango-app/migrations/0158_refund_cap_ignores_rejected.sql",
+      "lango-app/migrations/meta/_journal.json",
+      "lango-app/src/app/api/finance/refunds/refund-cap.test.ts",
+      "lango-app/src/features/finance/ui/refunds-view.tsx",
+      "lango-app/src/features/finance/ui/credit-notes-view.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:delete-confirmations",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc non-.next 0; check:i18n pass; check:i18n:keys 0; eslint: 0 new errors (5 pre-existing style errors on untouched lines)",
+    "files": [
+      "lango-app/src/features/finance/ui/fee-assignments-view.tsx",
+      "lango-app/src/features/broadcast/ui/automations-view.tsx",
+      "lango-app/src/features/broadcast/ui/segments-view.tsx",
+      "lango-app/src/features/communication/ui/sms-templates-view.tsx",
+      "lango-app/src/features/accounting/ui/student-accounting-view.tsx",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:alumni-consent-save",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc non-.next 0; eslint 0 new errors (2 pre-existing)",
+    "files": [
+      "lango-app/src/app/[locale]/(alumni-portal)/alumni/profile/page.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:salary-batch-retry",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "vitest salary-batch-retry 4/4 (DB-free); tsc non-.next 0; eslint 0 new errors. Migration 0159 NOT run.",
+    "files": [
+      "lango-app/src/app/api/workforce/payroll/payments/route.ts",
+      "lango-app/src/app/api/workforce/payroll/payments/[id]/action/route.ts",
+      "lango-app/src/features/workforce/models/workforce-schema.ts",
+      "lango-app/migrations/0159_salary_payment_retry.sql",
+      "lango-app/migrations/meta/_journal.json",
+      "lango-app/src/app/api/workforce/payroll/payments/salary-batch-retry.test.ts",
+      "lango-app/scripts/migrate-0094-payroll-workforce.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:pdf-documents",
+    "category": "unverified",
+    "doneBy": "codex-pdf-1",
+    "verifyCmd": "npm run check:types PASS; npm run check:isolation PASS; npm run check:ui PASS; ALLOW_DB_SKIP=1 npx vitest run src/libs/print-document.test.ts PASS 1/1; npx eslint on new helper and test PASS; git diff --check PASS; live role sweep unavailable because schoolos Postgres is down and port 5432 belongs to another project",
+    "files": [
+      "lango-app/src/libs/print-document.ts",
+      "lango-app/src/libs/print-document.test.ts",
+      "lango-app/src/features/finance/ui/finance-document-print.ts",
+      "lango-app/src/features/finance/ui/receipts-view.tsx",
+      "lango-app/src/features/finance/ui/statements-view.tsx",
+      "lango-app/src/features/finance/ui/invoices-view.tsx",
+      "lango-app/src/features/finance/ui/invoice-detail-view.tsx",
+      "lango-app/src/features/academics/ui/exam-planning-client.tsx",
+      "lango-app/src/features/academics/ui/schedule-client.tsx",
+      "lango-app/src/features/students/ui/student-detail-view.tsx",
+      "lango-app/src/features/crm/ui/leadership-portal-view.tsx",
+      "lango-app/src/app/[locale]/(dashboard)/dashboard/finance/collection-desk/page.client.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:invoice-cancel-race",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "vitest cancel-race 3/3 (DB-free); tsc non-.next 0; eslint 0",
+    "files": [
+      "lango-app/src/app/api/finance/invoices/[id]/cancel/route.ts",
+      "lango-app/src/app/api/finance/invoices/[id]/cancel/cancel-race.test.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:payment-row-lock",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc non-.next 0; eslint 0. DB-backed refund/reversal suites NOT run (lango_postgres down).",
+    "files": [
+      "lango-app/src/libs/services/payment-reversal.ts",
+      "lango-app/src/libs/services/refund-approval.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:silent-failures-2",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc non-.next 0; eslint 0 new errors (pre-existing: loadQuestions use-before-define, tailwind entryPoint config)",
+    "files": [
+      "lango-app/src/features/hr/ui/employee-portal-view.tsx",
+      "lango-app/src/features/academics/ui/optional-subjects-view.tsx",
+      "lango-app/src/features/academics/ui/question-bank-view.tsx",
+      "lango-app/src/features/academics/ui/classes-client.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:port-5433",
+    "category": "unverified",
+    "doneBy": "antigravity-1",
+    "verifyCmd": "node test-db.js -> connects cleanly",
+    "files": [
+      "lango-app/docker-compose.yml",
+      "lango-app/.env"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:silent-failures-3",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc non-.next 0; eslint 0 new errors",
+    "files": [
+      "lango-app/src/features/students/ui/alumni-events-view.tsx",
+      "lango-app/src/features/academics/ui/question-bank-view.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:settings-fake-saved",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc non-.next 0; eslint 0 new errors",
+    "files": [
+      "lango-app/src/features/settings/ui/accounting-defaults-client.tsx",
+      "lango-app/src/features/settings/ui/translations-custom-fields-client.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:lint-tailwind-entry",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "eslint question-bank-view.tsx: 0 'No tailwind css entry point' messages (was 4)",
+    "files": [
+      "lango-app/eslint.config.mjs"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:dashboard-stale-branch",
+    "category": "unverified",
+    "doneBy": "antigravity-1",
+    "verifyCmd": "npm run check:isolation -> passed",
+    "files": [
+      "lango-app/src/features/dashboard/ui/dashboard-view.tsx",
+      "lango-app/src/components/shared/header-campus-switcher.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:massar-import-guards",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "vitest massar-import-guards 5/5 (DB-free, real xlsx); tsc non-.next 0; eslint 0",
+    "files": [
+      "lango-app/src/app/api/academics/massar/import/marks/route.ts",
+      "lango-app/src/features/academics/services/massar-sync-service.ts",
+      "lango-app/src/features/academics/services/__tests__/massar-import-guards.test.ts",
+      "lango-app/src/features/assessment/ui/marksheet-grid-view.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:student-docs-teacher-scope",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc non-.next 0; eslint 0; all 3 handlers route ApiError through apiErrorResponse (403). No DB-free test (route is DB-heavy); DB suites blocked.",
+    "files": [
+      "lango-app/src/app/api/students/documents/route.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:teacher-grade-scope",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "tsc non-.next 0; eslint 0. DB-backed grade-entry-route.test.ts not run (DB down).",
+    "files": [
+      "lango-app/src/app/api/students/report-card/route.ts",
+      "lango-app/src/app/api/academics/assessments/route.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:privacy-scope-tests",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "ALLOW_DB_SKIP=1 vitest --project unit teacher-scope-privacy -> 6/6 passed; eslint 0",
+    "files": [
+      "lango-app/src/app/api/students/teacher-scope-privacy.test.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:journal-0160",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "vitest tenant-isolation payment-posting-status financial-correctness gateway-session invoice-lifecycle journal-export payment-allocation payment-idempotency payment-reversal refund-linkage -> 11 files, 875/875 passed",
+    "files": [
+      "lango-app/migrations/meta/_journal.json"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:fix-grade-entry-test",
+    "category": "unverified",
+    "doneBy": "gemini-audit",
+    "verifyCmd": "npx vitest run src/app/api/__tests__/grade-entry-route.test.ts -> 8 passed",
+    "files": [
+      "lango-app/src/app/api/__tests__/grade-entry-route.test.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:up-01-test-db",
+    "category": "unverified",
+    "doneBy": "gemini-audit",
+    "verifyCmd": "DATABASE_URL=.../schoolos_audit npx vitest run -> Test Files 237 passed (237), Tests 3323 passed (3323)",
+    "files": [
+      "lango-app/vitest.config.ts",
+      "lango-app/.env.example"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:up-05-alumni-cleanup",
+    "category": "unverified",
+    "doneBy": "gemini-audit",
+    "verifyCmd": "vitest run src/app/api/__tests__/alumni-lifecycle-domain.test.ts -> 17 passed; check:types -> 0 errors; check:isolation -> passed; billing filter: preview/route.ts:71 [eq(user.role, 'student')]",
+    "files": [
+      "lango-app/src/libs/services/alumni-transition.ts",
+      "lango-app/src/app/api/__tests__/alumni-lifecycle-domain.test.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:up-06-legacy-grades",
+    "category": "unverified",
+    "doneBy": "gemini-audit",
+    "verifyCmd": "grep api/academics/assessments -> 0 in code; check:types -> 0 errors; check:isolation -> passed (832 routes); check:ui -> passed",
+    "files": [
+      "lango-app/src/app/api/academics/assessments/route.ts",
+      "lango-app/src/app/api/__tests__/grade-entry-route.test.ts",
+      "AGENTS.md",
+      "lango-app/src/app/api/academics/assessment-sessions/route.ts",
+      "lango-app/knowledge-graph/FULL_APP_CONTEXT.md"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:up-07-public-forms",
+    "category": "unverified",
+    "doneBy": "gemini-audit",
+    "verifyCmd": "docker exec schoolos-db psql -U schoolos -d schoolos -c 'SELECT count(*) FROM inquiries;' -> 6 rows (seed only, 0 spam); /api/public/signup rate-limited at 10/min, inquiries at 5/hr with honeypot",
+    "files": [
+      "lango-app/src/app/api/public/signup/route.ts",
+      "lango-app/src/app/api/public/inquiries/[tenantSlug]/route.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:DISC-ATTENDANCE-01",
+    "category": "unverified",
+    "doneBy": "claude-finance",
+    "verifyCmd": "read-only SQL on schoolos -> evidence/db-truth.txt; vitest attendance/qr/badge/scanner/punch/excuse/flag on schoolos_audit -> 15 files, 113-114/114 (1 intermittent test flaw documented)",
+    "files": [
+      "lango-app/artifacts/product-discovery/DISC-ATTENDANCE-01/",
+      ".ultraplan/sections/section-04-timetable-guard.md"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:up-11-ux-cleanup",
+    "category": "unverified",
+    "doneBy": "gemini-audit",
+    "verifyCmd": "check:ui -> deadControls 0/0, orphanedComponents 2/2; check:types -> 0 errors; check:isolation -> passed; vitest run --project unit on schoolos_audit -> 236/236 files passed, 3313 tests",
+    "files": [
+      "lango-app/src/addons/advanced-reporting/ui/components/catalog-card.tsx",
+      "lango-app/src/features/finance/ui/invoice-detail-view.tsx",
+      "lango-app/src/features/finance/ui/invoices-view.tsx",
+      "lango-app/src/features/settings/ui/entitlements-catalog-view.tsx",
+      "lango-app/scripts/ui-reality-baseline.json",
+      "lango-app/src/features/attendance/ui/attendance-scanner-kiosk.tsx",
+      "lango-app/src/features/students/ui/parents-guardians-page.tsx",
+      "lango-app/src/features/students/ui/student-attendance-heatmap.tsx",
+      "lango-app/src/features/support/ui/tenant-support-view.tsx",
+      "lango-app/src/features/settings/ui/users-roles-client.tsx",
+      "lango-app/src/features/finance/ui/chart-of-accounts-view.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:up-03-ratchet",
+    "category": "unverified",
+    "doneBy": "gemini-audit",
+    "verifyCmd": "npm run check:i18n (0 missing keys, 0 invalid translations) -> npm run check:i18n:keys (missing translation keys: 0 in 0 files) -> node scripts/check-hardcoded-french.mjs (Hardcoded accented strings: 1211, baseline 1211, exit code 0)",
+    "files": [
+      "lango-app/src/app/[locale]/(dashboard)/dashboard/settings/documents/page.client.tsx",
+      "lango-app/src/features/documents/ui/pdf-preview.tsx",
+      "lango-app/src/features/documents/ui/pdf-preview-messages.ts",
+      "lango-app/src/features/documents/ui/document-design-config.ts",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json",
+      "lango-app/src/components/shared/sidebar.tsx",
+      "lango-app/src/features/finance/ui/chart-of-accounts-view.tsx",
+      "lango-app/src/features/settings/ui/users-roles-client.tsx"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:up-04-timetable-guard",
+    "category": "unverified",
+    "doneBy": "gemini-audit",
+    "verifyCmd": "vitest run timetable-conflict-constraint.test.ts -> 5/5 passed; check:types -> 0 errors; check:isolation -> 832 passed",
+    "files": [
+      "lango-app/migrations/0161_timetable_no_overlap.sql",
+      "lango-app/migrations/meta/_journal.json",
+      "lango-app/src/libs/api/errors.ts",
+      "lango-app/src/app/api/__tests__/timetable-conflict-constraint.test.ts"
+    ],
+    "previousVerify": null
+  },
+  {
+    "item": "task:up-08-navigation",
+    "category": "unverified",
+    "doneBy": "gemini-audit",
+    "verifyCmd": "npm run check:ui -> unlinkedPages 21/21, deadControls 0/0, mockScreens 0/0, orphanedComponents 2/2; vitest run nav-page-guard-parity.test.ts -> 3/3 passed; check:types -> 0 errors; check:i18n -> 0 missing",
+    "files": [
+      "lango-app/src/components/shared/sidebar.tsx",
+      "lango-app/src/libs/api/portal-manifest.ts",
+      "lango-app/scripts/ui-reality-baseline.json",
+      "lango-app/locales/fr.json",
+      "lango-app/locales/en.json",
+      "lango-app/locales/ar.json",
+      "lango-app/src/app/[locale]/(dashboard)/dashboard/hr/advances/page.tsx",
+      "lango-app/src/app/[locale]/(dashboard)/dashboard/hr/awards/page.tsx",
+      "lango-app/src/app/[locale]/(dashboard)/dashboard/communication/broadcast/page.tsx",
+      "lango-app/src/app/[locale]/(dashboard)/dashboard/accountant/page.tsx"
+    ],
+    "previousVerify": null
+  }
+]

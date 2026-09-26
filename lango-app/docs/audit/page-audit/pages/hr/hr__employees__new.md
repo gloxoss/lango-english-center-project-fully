@@ -2,7 +2,20 @@
 
 **Status: NEEDS FIX (P1)** · Module: `hr` · Source: [`src/app/[locale]/(dashboard)/dashboard/hr/employees/new/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/hr/employees/new/page.tsx>)
 
-**Progress (2026-09-25):** S-32 PARTIAL
+**Progress (2026-09-26):** S-32 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

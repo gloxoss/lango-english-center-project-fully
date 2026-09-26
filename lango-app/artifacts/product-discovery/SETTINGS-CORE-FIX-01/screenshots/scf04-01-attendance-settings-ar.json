@@ -1,0 +1,15 @@
+{
+  "text": "الحضور والغياب\n\nدقائق السماح، الساعة المرجعية للمسح، عتبات التبليغ وتنبيهات الأولياء.\n\nالتسجيل عند الدخول\nدقائق السماح عن التأخر\nالشارة الممسوحة قبل (بداية الحصة + السماح) تُسجّل حاضرا، وبعدها تُسجّل متأخرا.\nساعة بداية الحصة\nيستخدمها ماسح رمز QR إلى أن تُربط الحصص بجدول الحصص.\nعتبات التبليغ\nالغيابات المتتالية\nعدد أيام الدراسة المتتالية للغياب التي تُطلق تبليغا.\nالتأخرات المتكررة في الشهر\nعدد مرات التأخر في الشهر التي تُطلق تبليغا.\nتنبيهات الأولياء\n\nتنبيهات SMS تلقائية للأولياء\n\nإشعار الولي عند غياب غير مبرر.\n\nحالات الحضور\n\nالحالات التي يمكن لدفتر الحضور تسجيلها. إلغاء تحديد حالة يحذفها من الخيارات المعروضة على الأساتذة.\n\nحاضر\n\nغياب مبرر\n\nغياب غير مبرر\n\nمتأخر\n\nخروج مبكر\n\nصباحا\n\nبعد الزوال\n\nحفظ",
+  "dir": "rtl",
+  "overflowX": 0,
+  "missingKeys": [],
+  "status": 200,
+  "url": "/ar/dashboard/settings/attendance",
+  "consoleErrors": [
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h"
+  ],
+  "api5xx": []
+}

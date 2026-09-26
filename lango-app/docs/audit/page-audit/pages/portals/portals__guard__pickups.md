@@ -2,7 +2,20 @@
 
 **Status: FIXED, pending re-sweep** · Module: `portals` · Source: [`src/app/[locale]/(dashboard)/dashboard/portals/guard/pickups/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/portals/guard/pickups/page.tsx>)
 
-**Progress (2026-09-25):** S-8 DONE
+**Progress (2026-09-26):** S-8 DONE
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

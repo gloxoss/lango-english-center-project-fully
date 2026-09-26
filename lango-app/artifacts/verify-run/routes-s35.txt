@@ -1,0 +1,4 @@
+/dashboard/finance/collection-desk
+/dashboard/finance/fee-structures
+/dashboard/finance/payments
+/dashboard/finance/payments/new

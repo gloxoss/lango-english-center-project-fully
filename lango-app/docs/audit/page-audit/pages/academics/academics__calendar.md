@@ -1,4 +1,5 @@
 # `/dashboard/academics/calendar`
+<!-- swept: 2026-09-26 claude-scf-3 | school_admin on :3537: 2026-2027 Par defaut after the in-app switch, checklist dialog works, FR/390/AR -->
 
 **Status: PASS** · Module: `academics` · Source: [`src/app/[locale]/(dashboard)/dashboard/academics/calendar/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/academics/calendar/page.tsx>)
 

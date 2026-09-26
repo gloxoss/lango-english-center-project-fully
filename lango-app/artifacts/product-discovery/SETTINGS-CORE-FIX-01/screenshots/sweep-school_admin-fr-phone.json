@@ -1,0 +1,16 @@
+[
+  {
+    "route": "/dashboard/academics/calendar",
+    "finalPath": "/fr/dashboard/academics/calendar",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 541,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.settings-attendance` in messages for locale `fr`.\n    at getFallbackFromErrorAndNo",
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-phone-academics__calendar.png"
+  }
+]

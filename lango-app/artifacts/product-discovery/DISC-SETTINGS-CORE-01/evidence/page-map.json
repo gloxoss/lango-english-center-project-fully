@@ -1,0 +1,1675 @@
+[
+ {
+  "route": "/dashboard/settings/access-reset",
+  "guard": "requiredCapability: 'users.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/access-reset",
+   "/api/students"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/access-reset",
+    "exists": true,
+    "tables": [
+     "access_reset_requests",
+     "user",
+     "guardians",
+     "sms_messages",
+     "guardian_students",
+     "account",
+     "communication_connections",
+     "communication_suppressions",
+     "communication_consents"
+    ]
+   },
+   {
+    "api": "/api/students",
+    "exists": true,
+    "tables": [
+     "class_sections",
+     "classes",
+     "sections",
+     "user",
+     "guardian_students",
+     "guardians",
+     "attendance",
+     "payments",
+     "invoices",
+     "student_placements",
+     "session_years",
+     "assessment_results",
+     "assessments",
+     "alumni_directory_consent",
+     "alumni_requests",
+     "branches",
+     "tenants",
+     "plan_limits",
+     "addon_entitlements"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/accounting-defaults",
+  "guard": "requiredCapability: 'settings.finance_mapping.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/values/accounting.defaults"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/values/accounting.defaults",
+    "exists": false,
+    "tables": []
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/attendance",
+  "guard": "requiredCapability: 'settings.attendance.manage'",
+  "sidebar": "no",
+  "hub": "no",
+  "comingSoon": true,
+  "apis": [],
+  "apiTables": []
+ },
+ {
+  "route": "/dashboard/settings/audit-logs",
+  "guard": "requiredCapability: 'audit.read'",
+  "sidebar": "no",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/audit-logs"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/audit-logs",
+    "exists": true,
+    "tables": [
+     "audit_logs",
+     "user"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/branches",
+  "guard": "requiredCapability: 'settings.organization.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/branches",
+   "/api/settings/branches/[x]"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/branches",
+    "exists": true,
+    "tables": [
+     "branches",
+     "tenants"
+    ]
+   },
+   {
+    "api": "/api/settings/branches/[x]",
+    "exists": true,
+    "tables": [
+     "branches"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/cndp",
+  "guard": "requiredCapability: 'settings.organization.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/cndp-filing"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/cndp-filing",
+    "exists": true,
+    "tables": [
+     "cndp_filings"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/custom-fields",
+  "guard": "requiredCapability: 'settings.custom_field.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/custom-fields[x]",
+   "/api/settings/custom-fields",
+   "/api/settings/custom-fields/[x]",
+   "/api/settings/custom-fields/[x]/values"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/custom-fields[x]",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/settings/custom-fields",
+    "exists": true,
+    "tables": [
+     "custom_field_definitions",
+     "custom_field_definition_versions",
+     "custom_field_values"
+    ]
+   },
+   {
+    "api": "/api/settings/custom-fields/[x]",
+    "exists": true,
+    "tables": [
+     "custom_field_definitions",
+     "custom_field_definition_versions",
+     "custom_field_values"
+    ]
+   },
+   {
+    "api": "/api/settings/custom-fields/[x]/values",
+    "exists": true,
+    "tables": [
+     "custom_field_definitions",
+     "custom_field_definition_versions",
+     "custom_field_values"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/documents",
+  "guard": "requiredCapability: 'settings.organization.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/documents/designs/[x]",
+   "/api/documents/designs/[x]/publish",
+   "/api/documents/previews"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/documents/designs/[x]",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/documents/designs/[x]/publish",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/documents/previews",
+    "exists": true,
+    "tables": [
+     "document_designs",
+     "document_design_versions",
+     "school_settings",
+     "tenants",
+     "user",
+     "invoices",
+     "invoice_items",
+     "receipts",
+     "payments",
+     "payment_allocations",
+     "student_credits",
+     "document_artifacts",
+     "class_sections",
+     "classes",
+     "exam_schedules",
+     "exam_terms",
+     "exam_halls",
+     "assessment_definitions",
+     "exam_seats",
+     "sections",
+     "guardian_students",
+     "guardians",
+     "attendance",
+     "student_placements",
+     "session_years",
+     "assessment_results",
+     "assessments",
+     "alumni_directory_consent",
+     "alumni_requests",
+     "branches",
+     "plan_limits",
+     "addon_entitlements",
+     "attendance_flags",
+     "expenses",
+     "announcements",
+     "meeting_slots",
+     "timetable_versions",
+     "class_schedule_slots",
+     "class_subjects",
+     "subjects"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/domain",
+  "guard": "requiredCapability: 'settings.organization.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/domains",
+   "/api/settings/domains/[x]/verify"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/domains",
+    "exists": true,
+    "tables": [
+     "tenant_domains"
+    ]
+   },
+   {
+    "api": "/api/settings/domains/[x]/verify",
+    "exists": true,
+    "tables": [
+     "tenant_domains"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/drafts",
+  "guard": "requiredCapability: 'settings.organization.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/drafts",
+   "/api/settings/catalog",
+   "/api/settings/drafts/[x]",
+   "/api/settings/drafts/[x]/approve",
+   "/api/settings/drafts/[x]/reject"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/drafts",
+    "exists": true,
+    "tables": [
+     "setting_drafts",
+     "setting_approvals"
+    ]
+   },
+   {
+    "api": "/api/settings/catalog",
+    "exists": true,
+    "tables": [
+     "setting_definition_versions",
+     "setting_definitions"
+    ]
+   },
+   {
+    "api": "/api/settings/drafts/[x]",
+    "exists": true,
+    "tables": [
+     "setting_drafts",
+     "setting_approvals"
+    ]
+   },
+   {
+    "api": "/api/settings/drafts/[x]/approve",
+    "exists": true,
+    "tables": [
+     "setting_drafts",
+     "setting_approvals"
+    ]
+   },
+   {
+    "api": "/api/settings/drafts/[x]/reject",
+    "exists": true,
+    "tables": [
+     "setting_drafts",
+     "setting_approvals"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/entitlements",
+  "guard": "requiredCapability: 'settings.read'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/addons",
+   "/api/tenant/support"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/addons",
+    "exists": true,
+    "tables": [
+     "tenants",
+     "branches"
+    ]
+   },
+   {
+    "api": "/api/tenant/support",
+    "exists": true,
+    "tables": [
+     "platform_support_tickets",
+     "platform_support_ticket_messages",
+     "tenants"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/exports",
+  "guard": "requiredCapability: 'audit.read'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/exports",
+   "/api/exports/${encodeURIComponent"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/exports",
+    "exists": true,
+    "tables": []
+   },
+   {
+    "api": "/api/exports/${encodeURIComponent",
+    "exists": false,
+    "tables": []
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/jobs",
+  "guard": "requiredCapability: 'settings.jobs.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/jobs/[x]/trigger"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/jobs/[x]/trigger",
+    "exists": true,
+    "tables": [
+     "user",
+     "session",
+     "setting:jobs.definitions"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/live-classrooms",
+  "guard": "requiredCapability: 'live.providers.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/addons/live-classrooms/sessions${qs",
+   "/api/addons/live-classrooms/sessions/[x]",
+   "/api/addons/live-classrooms/sessions",
+   "/api/addons/live-classrooms/sessions/[x]/start",
+   "/api/addons/live-classrooms/sessions/[x]/end",
+   "/api/addons/live-classrooms/sessions/[x]/join",
+   "/api/addons/live-classrooms/sessions/[x]/redeem-join",
+   "/api/addons/live-classrooms/sessions/[x]/sync",
+   "/api/addons/live-classrooms/sessions/[x]/attendance",
+   "/api/addons/live-classrooms/sessions/[x]/reconcile",
+   "/api/addons/live-classrooms/sessions/[x]/post-attendance",
+   "/api/addons/live-classrooms/sessions/[x]/recordings",
+   "/api/addons/live-classrooms/sessions/[x]/recordings/[x]",
+   "/api/addons/live-classrooms/sessions/[x]/materials",
+   "/api/addons/live-classrooms/sessions/[x]/materials/[x]",
+   "/api/addons/live-classrooms/my-sessions",
+   "/api/addons/live-classrooms/reports/overview${qs",
+   "/api/addons/live-classrooms/provider-profiles",
+   "/api/addons/live-classrooms/provider-profiles/[x]",
+   "/api/addons/live-classrooms/provider-profiles/[x]/test"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/addons/live-classrooms/sessions${qs",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]",
+    "exists": true,
+    "tables": [
+     "class_sections",
+     "class_subjects",
+     "user",
+     "subject_teachers",
+     "academic_class_offerings",
+     "class_schedule_slots",
+     "live_class_sessions",
+     "live_class_provider_profiles",
+     "live_class_provider_operations",
+     "classes",
+     "sections",
+     "subjects",
+     "live_class_invitations",
+     "live_class_participant_events"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions",
+    "exists": true,
+    "tables": [
+     "class_sections",
+     "class_subjects",
+     "user",
+     "subject_teachers",
+     "academic_class_offerings",
+     "class_schedule_slots",
+     "live_class_sessions",
+     "live_class_provider_profiles",
+     "live_class_provider_operations",
+     "classes",
+     "sections",
+     "subjects",
+     "live_class_invitations",
+     "live_class_participant_events"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]/start",
+    "exists": true,
+    "tables": [
+     "class_sections",
+     "class_subjects",
+     "user",
+     "subject_teachers",
+     "academic_class_offerings",
+     "class_schedule_slots",
+     "live_class_sessions",
+     "live_class_provider_profiles",
+     "live_class_provider_operations",
+     "classes",
+     "sections",
+     "subjects",
+     "live_class_invitations",
+     "live_class_participant_events"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]/end",
+    "exists": true,
+    "tables": [
+     "class_sections",
+     "class_subjects",
+     "user",
+     "subject_teachers",
+     "academic_class_offerings",
+     "class_schedule_slots",
+     "live_class_sessions",
+     "live_class_provider_profiles",
+     "live_class_provider_operations",
+     "classes",
+     "sections",
+     "subjects",
+     "live_class_invitations",
+     "live_class_participant_events"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]/join",
+    "exists": true,
+    "tables": [
+     "live_class_invitations",
+     "student_placements",
+     "live_class_join_grants",
+     "live_class_provider_profiles",
+     "live_class_participant_events",
+     "live_class_sessions",
+     "user",
+     "class_sections",
+     "classes",
+     "sections",
+     "class_subjects",
+     "subjects",
+     "subject_teachers",
+     "academic_class_offerings",
+     "class_schedule_slots",
+     "live_class_provider_operations",
+     "guardians",
+     "guardian_students"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]/redeem-join",
+    "exists": true,
+    "tables": [
+     "live_class_invitations",
+     "student_placements",
+     "live_class_join_grants",
+     "live_class_provider_profiles",
+     "live_class_participant_events",
+     "live_class_sessions",
+     "user",
+     "class_sections",
+     "classes",
+     "sections",
+     "class_subjects",
+     "subjects",
+     "subject_teachers",
+     "academic_class_offerings",
+     "class_schedule_slots",
+     "live_class_provider_operations",
+     "guardians",
+     "guardian_students"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]/sync",
+    "exists": true,
+    "tables": [
+     "live_class_sessions",
+     "live_class_provider_profiles",
+     "live_class_webhook_receipts",
+     "live_class_participant_events"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]/attendance",
+    "exists": true,
+    "tables": [
+     "live_class_participant_events",
+     "live_class_attendance_summaries",
+     "user",
+     "class_sections",
+     "session_years",
+     "attendance",
+     "class_subjects",
+     "subject_teachers",
+     "academic_class_offerings",
+     "class_schedule_slots",
+     "live_class_sessions",
+     "live_class_provider_profiles",
+     "live_class_provider_operations",
+     "classes",
+     "sections",
+     "subjects",
+     "live_class_invitations"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]/reconcile",
+    "exists": true,
+    "tables": [
+     "live_class_participant_events",
+     "live_class_attendance_summaries",
+     "user",
+     "class_sections",
+     "session_years",
+     "attendance",
+     "class_subjects",
+     "subject_teachers",
+     "academic_class_offerings",
+     "class_schedule_slots",
+     "live_class_sessions",
+     "live_class_provider_profiles",
+     "live_class_provider_operations",
+     "classes",
+     "sections",
+     "subjects",
+     "live_class_invitations"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]/post-attendance",
+    "exists": true,
+    "tables": [
+     "live_class_participant_events",
+     "live_class_attendance_summaries",
+     "user",
+     "class_sections",
+     "session_years",
+     "attendance",
+     "class_subjects",
+     "subject_teachers",
+     "academic_class_offerings",
+     "class_schedule_slots",
+     "live_class_sessions",
+     "live_class_provider_profiles",
+     "live_class_provider_operations",
+     "classes",
+     "sections",
+     "subjects",
+     "live_class_invitations"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]/recordings",
+    "exists": true,
+    "tables": [
+     "live_class_provider_profiles",
+     "live_class_recordings",
+     "digital_asset_usage_links",
+     "digital_assets",
+     "class_sections",
+     "class_subjects",
+     "user",
+     "subject_teachers",
+     "academic_class_offerings",
+     "class_schedule_slots",
+     "live_class_sessions",
+     "live_class_provider_operations",
+     "classes",
+     "sections",
+     "subjects",
+     "live_class_invitations",
+     "live_class_participant_events"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]/recordings/[x]",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]/materials",
+    "exists": true,
+    "tables": [
+     "live_class_provider_profiles",
+     "live_class_recordings",
+     "digital_asset_usage_links",
+     "digital_assets",
+     "class_sections",
+     "class_subjects",
+     "user",
+     "subject_teachers",
+     "academic_class_offerings",
+     "class_schedule_slots",
+     "live_class_sessions",
+     "live_class_provider_operations",
+     "classes",
+     "sections",
+     "subjects",
+     "live_class_invitations",
+     "live_class_participant_events"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/sessions/[x]/materials/[x]",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/addons/live-classrooms/my-sessions",
+    "exists": true,
+    "tables": [
+     "live_class_invitations",
+     "student_placements",
+     "live_class_join_grants",
+     "live_class_provider_profiles",
+     "live_class_participant_events",
+     "live_class_sessions",
+     "user",
+     "class_sections",
+     "classes",
+     "sections",
+     "class_subjects",
+     "subjects",
+     "subject_teachers",
+     "academic_class_offerings",
+     "class_schedule_slots",
+     "live_class_provider_operations",
+     "guardians",
+     "guardian_students"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/reports/overview${qs",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/addons/live-classrooms/provider-profiles",
+    "exists": true,
+    "tables": [
+     "live_class_provider_profiles",
+     "live_class_sessions",
+     "live_class_provider_operations"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/provider-profiles/[x]",
+    "exists": true,
+    "tables": [
+     "live_class_provider_profiles",
+     "live_class_sessions",
+     "live_class_provider_operations"
+    ]
+   },
+   {
+    "api": "/api/addons/live-classrooms/provider-profiles/[x]/test",
+    "exists": true,
+    "tables": [
+     "live_class_provider_profiles",
+     "live_class_sessions",
+     "live_class_provider_operations"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/migration",
+  "guard": "requiredCapability: 'settings.organization.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/migration",
+   "/api/settings/migration/tasks/[x]",
+   "/api/settings/migration/template"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/migration",
+    "exists": true,
+    "tables": []
+   },
+   {
+    "api": "/api/settings/migration/tasks/[x]",
+    "exists": true,
+    "tables": []
+   },
+   {
+    "api": "/api/settings/migration/template",
+    "exists": true,
+    "tables": []
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/notifications",
+  "guard": "requiredCapability: 'settings.organization.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/notifications"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/notifications",
+    "exists": true,
+    "tables": []
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/numbering",
+  "guard": "requiredCapability: 'settings.numbering.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/numbering",
+   "/api/settings/numbering/[x]",
+   "/api/settings/numbering/[x]/preview",
+   "/api/settings/numbering/[x]/next"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/numbering",
+    "exists": true,
+    "tables": [
+     "numbering_series_definitions",
+     "numbering_series_versions"
+    ]
+   },
+   {
+    "api": "/api/settings/numbering/[x]",
+    "exists": true,
+    "tables": [
+     "numbering_series_definitions",
+     "numbering_series_versions"
+    ]
+   },
+   {
+    "api": "/api/settings/numbering/[x]/preview",
+    "exists": true,
+    "tables": [
+     "numbering_series_definitions",
+     "numbering_series_versions"
+    ]
+   },
+   {
+    "api": "/api/settings/numbering/[x]/next",
+    "exists": true,
+    "tables": [
+     "numbering_series_definitions",
+     "numbering_series_versions"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/onboarding",
+  "guard": "requiredCapability: 'settings.organization.manage'",
+  "sidebar": "no",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/logo",
+   "/api/settings"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/logo",
+    "exists": true,
+    "tables": [
+     "tenants"
+    ]
+   },
+   {
+    "api": "/api/settings",
+    "exists": true,
+    "tables": [
+     "school_settings"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings",
+  "guard": "requiredCapability: 'settings.organization.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [],
+  "apiTables": []
+ },
+ {
+  "route": "/dashboard/settings/payment-methods",
+  "guard": "requiredCapability: 'finance.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/finance/payment-methods"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/finance/payment-methods",
+    "exists": true,
+    "tables": [
+     "payment_method_configurations"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/permissions",
+  "guard": "requiredCapability: 'users.permissions.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/permissions"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/permissions",
+    "exists": true,
+    "tables": [
+     "role_permissions"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/policies",
+  "guard": "requiredCapability: 'settings.organization.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/values",
+   "/api/settings/values/[x]"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/values",
+    "exists": true,
+    "tables": [
+     "setting_definition_versions",
+     "setting_definitions"
+    ]
+   },
+   {
+    "api": "/api/settings/values/[x]",
+    "exists": false,
+    "tables": []
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/providers",
+  "guard": "requiredCapability: 'settings.integrations.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/providers/[x]/test",
+   "/api/settings/providers",
+   "/api/settings/providers/[x]"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/providers/[x]/test",
+    "exists": true,
+    "tables": [
+     "setting:integrations.providers",
+     "setting:integrations.connectionLogs"
+    ]
+   },
+   {
+    "api": "/api/settings/providers",
+    "exists": true,
+    "tables": [
+     "setting:integrations.providers",
+     "setting:integrations.connectionLogs"
+    ]
+   },
+   {
+    "api": "/api/settings/providers/[x]",
+    "exists": true,
+    "tables": [
+     "setting:integrations.providers",
+     "setting:integrations.connectionLogs"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/scanner-devices",
+  "guard": "requiredCapability: 'settings.attendance.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/scanner-devices",
+   "/api/scanner-devices/pair",
+   "/api/scanner-devices/[x]"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/scanner-devices",
+    "exists": true,
+    "tables": [
+     "scanner_devices"
+    ]
+   },
+   {
+    "api": "/api/scanner-devices/pair",
+    "exists": true,
+    "tables": [
+     "branches",
+     "scanner_devices"
+    ]
+   },
+   {
+    "api": "/api/scanner-devices/[x]",
+    "exists": true,
+    "tables": [
+     "scanner_devices"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/scheduled-jobs",
+  "guard": "requiredCapability: 'settings.jobs.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/scheduled-jobs",
+   "/api/settings/scheduled-jobs/[x]",
+   "/api/settings/scheduled-jobs/[x]/toggle",
+   "/api/settings/scheduled-jobs/[x]/trigger",
+   "/api/settings/scheduled-jobs/[x]/runs"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/scheduled-jobs",
+    "exists": true,
+    "tables": [
+     "user",
+     "session",
+     "student_placements",
+     "session_years",
+     "scheduled_job_definitions",
+     "scheduled_job_controls",
+     "scheduled_job_runs",
+     "setting:alumni.autoTransitionEnabled"
+    ]
+   },
+   {
+    "api": "/api/settings/scheduled-jobs/[x]",
+    "exists": true,
+    "tables": [
+     "user",
+     "session",
+     "student_placements",
+     "session_years",
+     "scheduled_job_definitions",
+     "scheduled_job_controls",
+     "scheduled_job_runs",
+     "setting:alumni.autoTransitionEnabled"
+    ]
+   },
+   {
+    "api": "/api/settings/scheduled-jobs/[x]/toggle",
+    "exists": true,
+    "tables": [
+     "user",
+     "session",
+     "student_placements",
+     "session_years",
+     "scheduled_job_definitions",
+     "scheduled_job_controls",
+     "scheduled_job_runs",
+     "setting:alumni.autoTransitionEnabled"
+    ]
+   },
+   {
+    "api": "/api/settings/scheduled-jobs/[x]/trigger",
+    "exists": true,
+    "tables": [
+     "user",
+     "session",
+     "student_placements",
+     "session_years",
+     "scheduled_job_definitions",
+     "scheduled_job_controls",
+     "scheduled_job_runs",
+     "setting:alumni.autoTransitionEnabled"
+    ]
+   },
+   {
+    "api": "/api/settings/scheduled-jobs/[x]/runs",
+    "exists": true,
+    "tables": [
+     "user",
+     "session",
+     "student_placements",
+     "session_years",
+     "scheduled_job_definitions",
+     "scheduled_job_controls",
+     "scheduled_job_runs",
+     "setting:alumni.autoTransitionEnabled"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/security/2fa",
+  "guard": "requiredCapability: 'settings.security.manage'",
+  "sidebar": "no",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/auth/get-session",
+   "/api/auth/two-factor/enable",
+   "/api/auth/two-factor/verify-totp",
+   "/api/auth/two-factor/disable"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/auth/get-session",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/auth/two-factor/enable",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/auth/two-factor/verify-totp",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/auth/two-factor/disable",
+    "exists": false,
+    "tables": []
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/security/login-events",
+  "guard": "requiredCapability: 'settings.security.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/security/login-events"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/security/login-events",
+    "exists": true,
+    "tables": [
+     "login_events",
+     "user"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/security",
+  "guard": "requiredCapability: 'settings.security.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/values/security.requireTwoFactorForAdmins",
+   "/api/security/sessions/[x]",
+   "/api/settings/values/security.dismissedAlerts",
+   "/api/audit-logs/export"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/values/security.requireTwoFactorForAdmins",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/security/sessions/[x]",
+    "exists": true,
+    "tables": [
+     "session",
+     "user"
+    ]
+   },
+   {
+    "api": "/api/settings/values/security.dismissedAlerts",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/audit-logs/export",
+    "exists": true,
+    "tables": [
+     "audit_logs",
+     "user"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/staff",
+  "guard": "requiredCapability: 'users.manage'",
+  "sidebar": "no",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/users"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/users",
+    "exists": true,
+    "tables": [
+     "user",
+     "two_factor",
+     "branches",
+     "account_setup_tokens",
+     "sms_messages"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/subscription",
+  "guard": "requiredCapability: 'settings.organization.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/subscription",
+   "/api/settings/subscription/renewal-request"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/subscription",
+    "exists": true,
+    "tables": [
+     "school_licenses",
+     "license_payments",
+     "tenants"
+    ]
+   },
+   {
+    "api": "/api/settings/subscription/renewal-request",
+    "exists": true,
+    "tables": [
+     "school_licenses",
+     "license_payments",
+     "tenants"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/translations",
+  "guard": "requiredCapability: 'settings.translation.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/values/i18n.translations"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/values/i18n.translations",
+    "exists": false,
+    "tables": []
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/users",
+  "guard": "requiredCapability: 'users.manage'",
+  "sidebar": "yes",
+  "hub": "yes",
+  "comingSoon": false,
+  "apis": [
+   "/api/users",
+   "/api/settings/invitations",
+   "/api/settings/invitations/[x]",
+   "/api/settings/permissions"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/users",
+    "exists": true,
+    "tables": [
+     "user",
+     "two_factor",
+     "branches",
+     "account_setup_tokens",
+     "sms_messages"
+    ]
+   },
+   {
+    "api": "/api/settings/invitations",
+    "exists": true,
+    "tables": [
+     "tenant_invitations",
+     "user"
+    ]
+   },
+   {
+    "api": "/api/settings/invitations/[x]",
+    "exists": true,
+    "tables": [
+     "tenant_invitations"
+    ]
+   },
+   {
+    "api": "/api/settings/permissions",
+    "exists": true,
+    "tables": [
+     "role_permissions"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/values",
+  "guard": "requiredCapability: 'settings.organization.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/values",
+   "/api/settings/values/${encodeURIComponent"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/values",
+    "exists": true,
+    "tables": [
+     "setting_definition_versions",
+     "setting_definitions"
+    ]
+   },
+   {
+    "api": "/api/settings/values/${encodeURIComponent",
+    "exists": false,
+    "tables": []
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/website/menu",
+  "guard": "requiredCapability: 'website.menu.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/website/menu-items",
+   "/api/settings/website/menu-items/[x]"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/website/menu-items",
+    "exists": true,
+    "tables": [
+     "website_theme",
+     "website_pages",
+     "website_menu_items",
+     "website_news",
+     "tenants"
+    ]
+   },
+   {
+    "api": "/api/settings/website/menu-items/[x]",
+    "exists": true,
+    "tables": [
+     "website_theme",
+     "website_pages",
+     "website_menu_items",
+     "website_news",
+     "tenants"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/website/news",
+  "guard": "requiredCapability: 'website.news.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/website/news",
+   "/api/settings/website/images",
+   "/api/settings/website/news/[x]"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/website/news",
+    "exists": true,
+    "tables": [
+     "website_theme",
+     "website_pages",
+     "website_menu_items",
+     "website_news",
+     "tenants"
+    ]
+   },
+   {
+    "api": "/api/settings/website/images",
+    "exists": true,
+    "tables": [
+     "tenants"
+    ]
+   },
+   {
+    "api": "/api/settings/website/news/[x]",
+    "exists": true,
+    "tables": [
+     "website_theme",
+     "website_pages",
+     "website_menu_items",
+     "website_news",
+     "tenants"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/website",
+  "guard": "requiredCapability: 'website.read'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/website/theme"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/website/theme",
+    "exists": true,
+    "tables": [
+     "website_theme",
+     "website_pages",
+     "website_menu_items",
+     "website_news",
+     "tenants"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/settings/website/pages",
+  "guard": "requiredCapability: 'website.pages.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/settings/website/images",
+   "/api/public/",
+   "/api/settings/website/pages",
+   "/api/settings/website/pages/[x]"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/settings/website/images",
+    "exists": true,
+    "tables": [
+     "tenants"
+    ]
+   },
+   {
+    "api": "/api/public/",
+    "exists": false,
+    "tables": []
+   },
+   {
+    "api": "/api/settings/website/pages",
+    "exists": true,
+    "tables": [
+     "website_theme",
+     "website_pages",
+     "website_menu_items",
+     "website_news",
+     "tenants"
+    ]
+   },
+   {
+    "api": "/api/settings/website/pages/[x]",
+    "exists": false,
+    "tables": []
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/academics/calendar",
+  "guard": "requiredCapability: 'academics.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/academics/session-years"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/academics/session-years",
+    "exists": true,
+    "tables": [
+     "session_years"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/academics/semesters",
+  "guard": "requiredCapability: 'academics.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/academics/semesters"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/academics/semesters",
+    "exists": true,
+    "tables": [
+     "semesters",
+     "class_subjects"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/academics/grading/policies",
+  "guard": "requiredCapability: 'grading.manage'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/academics/classes",
+   "/api/academics/streams",
+   "/api/academics/subjects",
+   "/api/academics/grading-policies",
+   "/api/academics/streams/coefficients"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/academics/classes",
+    "exists": true,
+    "tables": [
+     "branches",
+     "classes",
+     "mediums",
+     "shifts",
+     "streams",
+     "class_sections",
+     "class_subjects",
+     "student_placements",
+     "attendance",
+     "attendance_registers",
+     "academic_class_offerings",
+     "class_teachers",
+     "subject_teachers",
+     "class_schedule_slots",
+     "assessment_plans",
+     "user",
+     "semesters",
+     "sections"
+    ]
+   },
+   {
+    "api": "/api/academics/streams",
+    "exists": true,
+    "tables": [
+     "streams"
+    ]
+   },
+   {
+    "api": "/api/academics/subjects",
+    "exists": true,
+    "tables": [
+     "mediums",
+     "subjects",
+     "class_subjects",
+     "subject_teachers"
+    ]
+   },
+   {
+    "api": "/api/academics/grading-policies",
+    "exists": true,
+    "tables": [
+     "setting:academic.passThreshold",
+     "setting:academic.eliminatoryScore",
+     "setting:academic.evaluationWeights",
+     "setting:academic.gradingScale"
+    ]
+   },
+   {
+    "api": "/api/academics/streams/coefficients",
+    "exists": true,
+    "tables": [
+     "streams",
+     "stream_subject_coefficients",
+     "subjects"
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/dashboard/students/matricules",
+  "guard": "requiredCapability: 'students.update'",
+  "sidebar": "yes",
+  "hub": "no",
+  "comingSoon": false,
+  "apis": [
+   "/api/students",
+   "/api/students/matricules"
+  ],
+  "apiTables": [
+   {
+    "api": "/api/students",
+    "exists": true,
+    "tables": [
+     "class_sections",
+     "classes",
+     "sections",
+     "user",
+     "guardian_students",
+     "guardians",
+     "attendance",
+     "payments",
+     "invoices",
+     "student_placements",
+     "session_years",
+     "assessment_results",
+     "assessments",
+     "alumni_directory_consent",
+     "alumni_requests",
+     "branches",
+     "tenants",
+     "plan_limits",
+     "addon_entitlements"
+    ]
+   },
+   {
+    "api": "/api/students/matricules",
+    "exists": true,
+    "tables": [
+     "user"
+    ]
+   }
+  ]
+ }
+]

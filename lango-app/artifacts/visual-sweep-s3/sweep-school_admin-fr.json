@@ -1,0 +1,12 @@
+[
+  {
+    "route": "/dashboard/finance/accounting/statements",
+    "finalPath": "/fr/dashboard/finance/accounting/statements",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 554,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__accounting__statements.png"
+  }
+]

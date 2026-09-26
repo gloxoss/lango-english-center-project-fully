@@ -1,4 +1,5 @@
 # `/dashboard/settings/attendance`
+<!-- swept: 2026-09-26 claude-scf-3 | school_admin on :3537: real 6-key form, save disabled while unchanged, FR/390/AR, round-trip test 2 passed -->
 
 **Status: PASS** · Module: `settings` · Source: [`src/app/[locale]/(dashboard)/dashboard/settings/attendance/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/settings/attendance/page.tsx>)
 

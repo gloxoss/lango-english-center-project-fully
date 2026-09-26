@@ -1,4 +1,5 @@
 # `/dashboard/academics/grading/policies`
+<!-- swept: 2026-09-26 claude-scf-3 | school_admin on :3537: weights table gone, grading scale select present, FR/390/AR -->
 
 **Status: PASS** · Module: `academics` · Source: [`src/app/[locale]/(dashboard)/dashboard/academics/grading/policies/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/academics/grading/policies/page.tsx>)
 

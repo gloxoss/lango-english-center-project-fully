@@ -1,0 +1,1292 @@
+[
+  {
+    "route": "/dashboard/academics",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-academics.png"
+  },
+  {
+    "route": "/dashboard/academics/assessment/marksheet",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-academics__assessment__marksheet.png"
+  },
+  {
+    "route": "/dashboard/academics/calendar",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-academics__calendar.png"
+  },
+  {
+    "route": "/dashboard/academics/evaluations",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-academics__evaluations.png"
+  },
+  {
+    "route": "/dashboard/academics/grading/policies",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-academics__grading__policies.png"
+  },
+  {
+    "route": "/dashboard/academics/live-class/new",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-academics__live-class__new.png"
+  },
+  {
+    "route": "/dashboard/academics/promotions",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-academics__promotions.png"
+  },
+  {
+    "route": "/dashboard/academics/results",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-academics__results.png"
+  },
+  {
+    "route": "/dashboard/academics/sections",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-academics__sections.png"
+  },
+  {
+    "route": "/dashboard/academics/shifts",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-academics__shifts.png"
+  },
+  {
+    "route": "/dashboard/academics/syllabus",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-academics__syllabus.png"
+  },
+  {
+    "route": "/dashboard/access-denied",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-access-denied.png"
+  },
+  {
+    "route": "/dashboard/attendance",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-attendance.png"
+  },
+  {
+    "route": "/dashboard/attendance/excuses",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-attendance__excuses.png"
+  },
+  {
+    "route": "/dashboard/attendance/scanner",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-attendance__scanner.png"
+  },
+  {
+    "route": "/dashboard/broadcast/automations",
+    "finalPath": "/fr/dashboard/finance",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 326,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-broadcast__automations.png"
+  },
+  {
+    "route": "/dashboard/broadcast/reports",
+    "finalPath": "/fr/dashboard/finance",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 326,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-broadcast__reports.png"
+  },
+  {
+    "route": "/dashboard/cards",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-cards.png"
+  },
+  {
+    "route": "/dashboard/cards/issued",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-cards__issued.png"
+  },
+  {
+    "route": "/dashboard/cards/templates",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-cards__templates.png"
+  },
+  {
+    "route": "/dashboard/certificates/issue/employees",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-certificates__issue__employees.png"
+  },
+  {
+    "route": "/dashboard/certificates/jobs",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-certificates__jobs.png"
+  },
+  {
+    "route": "/dashboard/certificates/templates",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-certificates__templates.png"
+  },
+  {
+    "route": "/dashboard/communication/campaign-composer",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-communication__campaign-composer.png"
+  },
+  {
+    "route": "/dashboard/communication/events",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-communication__events.png"
+  },
+  {
+    "route": "/dashboard/content/library",
+    "finalPath": "/fr/dashboard/finance",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 326,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-content__library.png"
+  },
+  {
+    "route": "/dashboard/events",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-events.png"
+  },
+  {
+    "route": "/dashboard/finance/accounting/deposits/new",
+    "finalPath": "/fr/dashboard/finance/accounting/deposits/new",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 230,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__accounting__deposits__new.png"
+  },
+  {
+    "route": "/dashboard/finance/accounting/statements",
+    "finalPath": "/fr/dashboard/finance/accounting/statements",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 251,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__accounting__statements.png"
+  },
+  {
+    "route": "/dashboard/finance/accounting/voucher-types",
+    "finalPath": "/fr/dashboard/finance/accounting/voucher-types",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 247,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__accounting__voucher-types.png"
+  },
+  {
+    "route": "/dashboard/finance/approvals",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__approvals.png"
+  },
+  {
+    "route": "/dashboard/finance/chart-of-accounts",
+    "finalPath": "/fr/dashboard/finance/chart-of-accounts",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 280,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__chart-of-accounts.png"
+  },
+  {
+    "route": "/dashboard/finance/expenses",
+    "finalPath": "/fr/dashboard/finance/expenses",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 357,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__expenses.png"
+  },
+  {
+    "route": "/dashboard/finance/fee-structures",
+    "finalPath": "/fr/dashboard/finance/fee-structures",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 214,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__fee-structures.png"
+  },
+  {
+    "route": "/dashboard/finance/invoices",
+    "finalPath": "/fr/dashboard/finance/invoices",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 1657,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__invoices.png"
+  },
+  {
+    "route": "/dashboard/finance/online-payments",
+    "finalPath": "/fr/dashboard/finance/online-payments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 427,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__online-payments.png"
+  },
+  {
+    "route": "/dashboard/finance/receipts",
+    "finalPath": "/fr/dashboard/finance/receipts",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 218,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__receipts.png"
+  },
+  {
+    "route": "/dashboard/finance/refunds",
+    "finalPath": "/fr/dashboard/finance/refunds",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 215,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__refunds.png"
+  },
+  {
+    "route": "/dashboard/finance/statements",
+    "finalPath": "/fr/dashboard/finance/statements",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 180,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__statements.png"
+  },
+  {
+    "route": "/dashboard/hostel/allocations",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__allocations.png"
+  },
+  {
+    "route": "/dashboard/hostel/categories",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__categories.png"
+  },
+  {
+    "route": "/dashboard/hostel/leave-passes",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__leave-passes.png"
+  },
+  {
+    "route": "/dashboard/hostel/reports",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__reports.png"
+  },
+  {
+    "route": "/dashboard/hostel/zones",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__zones.png"
+  },
+  {
+    "route": "/dashboard/hr/advances",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-hr__advances.png"
+  },
+  {
+    "route": "/dashboard/hr/designations",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-hr__designations.png"
+  },
+  {
+    "route": "/dashboard/hr/leave",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-hr__leave.png"
+  },
+  {
+    "route": "/dashboard/hr/salary-advances",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-hr__salary-advances.png"
+  },
+  {
+    "route": "/dashboard/inventory/adjustments",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-inventory__adjustments.png"
+  },
+  {
+    "route": "/dashboard/inventory/overview",
+    "finalPath": "/fr/dashboard/inventory/overview",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 407,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-inventory__overview.png"
+  },
+  {
+    "route": "/dashboard/inventory/sales",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-inventory__sales.png"
+  },
+  {
+    "route": "/dashboard/inventory/suppliers",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-inventory__suppliers.png"
+  },
+  {
+    "route": "/dashboard/library",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-library.png"
+  },
+  {
+    "route": "/dashboard/library/me",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-library__me.png"
+  },
+  {
+    "route": "/dashboard/parent/communication",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-parent__communication.png"
+  },
+  {
+    "route": "/dashboard/parent/live-classes",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-parent__live-classes.png"
+  },
+  {
+    "route": "/dashboard/portals/guard",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-portals__guard.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/incidents",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-portals__guard__incidents.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/visitors",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-portals__guard__visitors.png"
+  },
+  {
+    "route": "/dashboard/portals/leadership/approvals",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-portals__leadership__approvals.png"
+  },
+  {
+    "route": "/dashboard/portals/librarian/charges",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-portals__librarian__charges.png"
+  },
+  {
+    "route": "/dashboard/portals/librarian/holds",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-portals__librarian__holds.png"
+  },
+  {
+    "route": "/dashboard/portals/librarian/reports",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-portals__librarian__reports.png"
+  },
+  {
+    "route": "/dashboard/receptionist",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-receptionist.png"
+  },
+  {
+    "route": "/dashboard/receptionist/inquiries",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-receptionist__inquiries.png"
+  },
+  {
+    "route": "/dashboard/reports",
+    "finalPath": "/fr/dashboard/reports",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 758,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-reports.png"
+  },
+  {
+    "route": "/dashboard/reports/schedules",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-reports__schedules.png"
+  },
+  {
+    "route": "/dashboard/settings/accounting-defaults",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__accounting-defaults.png"
+  },
+  {
+    "route": "/dashboard/settings/branches",
+    "finalPath": "/fr/dashboard/finance",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 326,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__branches.png"
+  },
+  {
+    "route": "/dashboard/settings/documents",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__documents.png"
+  },
+  {
+    "route": "/dashboard/settings/entitlements",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__entitlements.png"
+  },
+  {
+    "route": "/dashboard/settings/live-classrooms",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__live-classrooms.png"
+  },
+  {
+    "route": "/dashboard/settings/numbering",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__numbering.png"
+  },
+  {
+    "route": "/dashboard/settings/permissions",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__permissions.png"
+  },
+  {
+    "route": "/dashboard/settings/scanner-devices",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__scanner-devices.png"
+  },
+  {
+    "route": "/dashboard/settings/security/2fa",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__security__2fa.png"
+  },
+  {
+    "route": "/dashboard/settings/subscription",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__subscription.png"
+  },
+  {
+    "route": "/dashboard/settings/values",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__values.png"
+  },
+  {
+    "route": "/dashboard/settings/website/news",
+    "finalPath": "/fr/dashboard/finance",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 326,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__website__news.png"
+  },
+  {
+    "route": "/dashboard/student/live-classes",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-student__live-classes.png"
+  },
+  {
+    "route": "/dashboard/students/admissions",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-students__admissions.png"
+  },
+  {
+    "route": "/dashboard/students/alumni-transition",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-students__alumni-transition.png"
+  },
+  {
+    "route": "/dashboard/students/import",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-students__import.png"
+  },
+  {
+    "route": "/dashboard/students/photos",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-students__photos.png"
+  },
+  {
+    "route": "/dashboard/super-admin",
+    "finalPath": "/fr/dashboard/finance",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 326,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-super-admin.png"
+  },
+  {
+    "route": "/dashboard/super-admin/schools",
+    "finalPath": "/fr/dashboard/finance",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 326,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-super-admin__schools.png"
+  },
+  {
+    "route": "/dashboard/super-admin/sms",
+    "finalPath": "/fr/dashboard/finance",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 326,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-super-admin__sms.png"
+  },
+  {
+    "route": "/dashboard/super-admin/support",
+    "finalPath": "/fr/dashboard/finance",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 326,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-super-admin__support.png"
+  },
+  {
+    "route": "/dashboard/teacher",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-teacher.png"
+  },
+  {
+    "route": "/dashboard/teachers/manage",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-teachers__manage.png"
+  },
+  {
+    "route": "/dashboard/transport/boarding",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-transport__boarding.png"
+  },
+  {
+    "route": "/dashboard/transport/incidents",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-transport__incidents.png"
+  },
+  {
+    "route": "/dashboard/transport/routes",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-transport__routes.png"
+  },
+  {
+    "route": "/dashboard/transport/trips",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-transport__trips.png"
+  },
+  {
+    "route": "/dashboard/workforce/advances",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 177,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-workforce__advances.png"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/adjustments",
+    "finalPath": "/fr/dashboard/workforce/payroll/adjustments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 219,
+    "failures": [
+      "403 /api/workforce/payroll/config",
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-workforce__payroll__adjustments.png"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/payments",
+    "finalPath": "/fr/dashboard/workforce/payroll/payments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 179,
+    "failures": [
+      "403 /api/workforce/payroll/payments",
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-workforce__payroll__payments.png"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/runs",
+    "finalPath": "/fr/dashboard/workforce/payroll/runs",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 211,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-workforce__payroll__runs.png"
+  },
+  {
+    "route": "/dashboard/workforce/timeclock",
+    "finalPath": "/fr/dashboard/workforce/timeclock",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 220,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "403 /api/workforce/punches",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-workforce__timeclock.png"
+  }
+]

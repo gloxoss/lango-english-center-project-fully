@@ -1,0 +1,15 @@
+{
+  "text": "المؤسسة والهوية\n\nبيانات المؤسسة وجهات الاتصال المؤسسية وتفضيلات اللغة والتوقيت.\n\nحفظ\nالهوية البصرية\n\nشعار المؤسسة\n\nتغيير الشعار\nPNG / JPG · 2 ميغابايت كحد أقصى\n\nأيقونة الموقع\n\nتغيير أيقونة الموقع\nPNG / JPG · 2 ميغابايت كحد أقصى\nمعلومات عامة\nالاسم الكامل للمؤسسة*\nالاسم المختصر\n\nيُستعمل في الوثائق المختصرة\n\nالمدينة\nالبلد\nالعنوان الكامل\nالموقع الإلكتروني\nالهاتف\nالبريد الإلكتروني\nالسنة الدراسية\nالسنة الدراسية الحالية\n2026-2027\nتاريخ البداية\n2026-09-01\nتاريخ النهاية\n2027-06-30\n\nتُدار السنة الدراسية من السنوات الدراسية؛ لم تعد قابلة للتعديل هنا.\n\nإدارة السنوات الدراسية\nالمعلومات القانونية\nالشكل القانوني\nالسجل التجاري (RC)\nICE\n\nالمعرف الموحد للمقاولة\n\nالتعريف الضريبي (IF)\nترخيص الوزارة والختم الرسمي والتوقيع (المغرب)\n\nالامتثال للقانون 06-00 (التعليم الخصوصي بالمغرب)\n\nتُضاف هذه المعلومات والصور الرسمية تلقائيًا إلى شهادات التمدرس وكشوف النقط والشهادات وشهادات التسجيل التي تنشئها المنصة.\n\nرقم ترخيص الوزارة\n\nمثال: 06/2018/EP أو المرجع الوزاري\n\nالأكاديمية الجهوية (AREF)\n\nمثال: الدار البيضاء-سطات\n\nالمديرية الإقليمية\n\nمثال: مديرية أنفا، مديرية فاس\n\nرابط الختم الرسمي (PNG شفاف)\n\nالختم الرسمي للمؤسسة (يُفضّل خلفية شفافة)\n\nرابط توقيع المدير (PNG شفاف)\n\nالتوقيع الممسوح لرئيس المؤسسة\n\nجهات الاتصال المؤسسية\nرئيسي\nالمدير\nالاسم الكامل\nالبريد الإلكتروني\nالهاتف\nالمالية\nمسؤول المالية\nالاسم الكامل\nالبريد الإلكتروني\nالهاتف\nالقبول\nمسؤول القبول\nالاسم الكامل\nالبريد الإلكتروني\nالهاتف\nاللغات والتوطين\n\nلغات الواجهة\n\nالعربية\nالعربية\nالإنجليزية\nالإنجليزية\nالفرنسية\nالفرنسية\nالمنطقة الزمنية\nAfrica/Casablanca (GMT+1)\nEurope/Paris (GMT+2)\nUTC\nصيغة التاريخ\ndd/mm/yyyy\nmm/dd/yyyy\nyyyy-mm-dd\nنمط الوثائق\n\nكلاسيكي\n\nترويسة كاملة مع الشعار وبيانات الاتصال\n\nبسيط\n\nترويسة بسيطة باسم المؤسسة فقط\n\nعصري\n\nشريط ملون مع شعار بارز\n\nالعمليات وأنماط الحضور\n\nالعمليات مفعّلة\n\nيسمح بالعمليات التربوية والمالية\n\nالعمليات مفعّلة\nالبنية التربوية (الأسلاك، الأقسام)\nالانتقال إلى تدبير الأقسام",
+  "dir": "rtl",
+  "overflowX": 0,
+  "missingKeys": [],
+  "status": 200,
+  "url": "/ar/dashboard/settings/onboarding",
+  "consoleErrors": [
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h"
+  ],
+  "api5xx": []
+}

@@ -1,0 +1,15 @@
+{
+  "text": "سياسات التقييم وسلم التنقيط\n\nإعداد معاملات الترجيح، وسلالم الميزات وقواعد احتساب المعدلات.\n\nحفظ السياسة\nSeuils & Barème\nCoefficients par Filière\n\nLes moyennes utilisent les coefficients des matières.\n\nعتبات النجاح والأهلية\nسلم التنقيط\nمن 20 (المعيار المغربي)\nمن 100 (نسبة مئوية)\nالنقطة الدنيا للنجاح (/20)\n/20\nالنقطة الموجبة للرسوب (/20)\n/20\nسلم الميزات وعتبة القبول\nT\nTrès Bien\n16 - 20 /20\nB\nBien\n14 - 16 /20\nA\nAssez Bien\n12 - 14 /20\nP\nPassable\n10 - 12 /20\nI\nInsuffisant\n0 - 10 /20\nSIMULATEUR DE MENTION OFFICIELLE\nNorme Marocaine /20\nMoyenne Générale Simulée :\n/ 20\nMention attribuée\nBien\nDécision du conseil :\nAdmis (Seuil admis : 10/20)",
+  "dir": "rtl",
+  "overflowX": 0,
+  "missingKeys": [],
+  "status": 200,
+  "url": "/ar/dashboard/academics/grading/policies",
+  "consoleErrors": [
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h"
+  ],
+  "api5xx": []
+}

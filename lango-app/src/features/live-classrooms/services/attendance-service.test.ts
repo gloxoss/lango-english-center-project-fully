@@ -363,5 +363,27 @@ describe.skipIf(!hasDb)('attendance-service (P1-5 calculations, P1-6 posting)', 
 
       expect(rows).toHaveLength(1);
     });
+
+    it('a student joining 7 min after start is posted with lateMinutes = 7', async () => {
+      const session = await createSession();
+      // Session starts at t = 0. Student joins at 7 minutes (420s) and stays until 3600s
+      await seedEvents(session, ids.sLate, [{ type: 'joined', at: 420 }, { type: 'left', at: 3600 }]);
+      await reconcileAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
+      const summaries = await getSummaries(tenantId, session.id);
+      const lateSummary = summaries.find(s => s.userId === ids.sLate);
+      expect(lateSummary?.status).toBe('late');
+      expect(lateSummary?.lateJoinSeconds).toBe(420);
+
+      await postAttendance(ctx(ids.admin, tenantId), tenantId, session.id, {});
+
+      const [row] = await db.select().from(attendance).where(and(
+        eq(attendance.tenantId, tenantId),
+        eq(attendance.studentId, ids.sLate),
+        eq(attendance.date, session.date),
+      ));
+
+      expect(row?.status).toBe('late');
+      expect(row?.lateMinutes).toBe(7);
+    });
   });
 });

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Guide Opérationnel & Technique — Module Rapports & Analytics (SchoolOS)</title>
+  <style>
+    :root {
+      --primary: #2487B8;
+      --primary-dark: #1B6C93;
+      --bg: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --text: #16212B;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    h1 {
+      color: var(--primary-dark);
+      font-size: 28px;
+      font-weight: 800;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 12px;
+      margin-top: 0;
+    }
+    h2 {
+      color: var(--primary);
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 32px;
+      margin-bottom: 16px;
+    }
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: #E0F2FE;
+      color: #0369A1;
+    }
+    .badge-success {
+      background: #DCFCE7;
+      color: #15803D;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      text-align: left;
+    }
+    th {
+      background-color: #F1F5F9;
+      font-weight: 700;
+    }
+    code, pre {
+      font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+      background-color: #F1F5F9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    pre {
+      padding: 16px;
+      overflow-x: auto;
+      border-radius: 8px;
+    }
+    .hero-banner {
+      background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
+      border: 1px solid #7DD3FC;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>📘 Guide Opérationnel & Business Logic — Rapports & Analytics (SchoolOS)</h1>
+  
+  <div class="hero-banner">
+    <h3>Module Add-on Officiel Deployed & Verified</h3>
+    <p style="margin: 0; font-size: 13px; color: #0369A1;">
+      Ce document est la référence complète pour comprendre le flux de données, l'utilisation pas-à-pas, le catalogue des 27 rapports types, et les garanties de sécurité (CNDP, Formules CSV, HMAC SHA-256).
+    </p>
+  </div>
+
+  <h2>🔁 1. Flux de Données & Architecture</h2>
+  <p>Le module <strong>Rapports & Analytics</strong> est une plateforme décisionnelle gouvernée. Aucune donnée n'est saisie manuellement dans les pages de rapport. Le système lit automatiquement les faits en temps réel depuis les modules opérationnels :</p>
+  
+  <pre>
+┌─────────────────────────────────────────┐
+│          MODULES OPÉRATIONNELS          │
+│ (Élèves, Présences, Comptabilité, HR...) │
+└────────────────────┬────────────────────┘
+                     │ Requêtes SQL/Projections
+                     ▼
+┌─────────────────────────────────────────┐
+│          ADAPTATEURS DE DOMAINE         │
+│ (StudentAdapter, AttendanceAdapter...)  │
+└────────────────────┬────────────────────┘
+                     │ Données Filtrées & Masquées
+                     ▼
+┌─────────────────────────────────────────┐
+│       MODULE RAPPORTS & ANALYTICS       │
+│   (Aperçu, Run Engine, Exporateurs)     │
+└─────────────────────────────────────────┘
+  </pre>
+
+  <h2>🛠️ 2. Guide de Test Manuel Pas-à-Pas</h2>
+  <ol>
+    <li><strong>Parcourir le Centre de Rapports :</strong> Ouvrez <code>http://localhost:3000/fr/dashboard/reports</code>. Filtrez par domaine (<em>Élèves</em>, <em>Présences</em>, <em>Frais</em>, <em>Comptabilité</em>, <em>Examens</em>, <em>RH</em>, <em>Stocks</em>).</li>
+    <li><strong>Favoris en 1-Clic :</strong> Cliquez sur l'étoile (⭐) d'une carte de rapport pour l'ajouter aux <strong>Mes Favoris</strong>. Cliquez sur l'onglet <strong>Mes Favoris</strong> pour les consulter.</li>
+    <li><strong>Configurer & Aperçu :</strong> Cliquez sur <strong>Ouvrir →</strong> sur un rapport disponible (ex: <code>/dashboard/reports/student.credentials</code>). Ajustez les paramètres et cliquez sur <strong>Aperçu (50 lignes)</strong>.</li>
+    <li><strong>Lancer l'Exécution & Exporter :</strong> Cliquez sur <strong>Lancer le Rapport (Complet)</strong> pour traiter le jeu complet de données jusqu'à 50 000 lignes et choisissez CSV, XLSX ou PDF.</li>
+    <li><strong>Télécharger dans Mes Exécutions :</strong> Accédez à <code>/dashboard/reports/runs</code> et téléchargez le fichier généré via un lien sécurisé HMAC SHA-256.</li>
+  </ol>
+
+  <h2>🖥️ 3. Inventaire des Pages & Workspaces</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Workspace Page</th>
+        <th>URL Route</th>
+        <th>Comportements & Fonctionnalités</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Centre de Rapports</strong></td>
+        <td><code>/dashboard/reports</code></td>
+        <td>Catalogue des 27 rapports, onglets de domaine en français, barre de recherche, badges Prêt / Non activé, onglet Mes Favoris.</td>
+      </tr>
+      <tr>
+        <td><strong>Workspace de Rapport</strong></td>
+        <td><code>/dashboard/reports/[key]</code></td>
+        <td>Studio d'exécution interactif : formulaire de paramètres, graphique Recharts en barres, tableau d'aperçu 50 lignes, boutons d'exportation.</td>
+      </tr>
+      <tr>
+        <td><strong>Mes Exécutions</strong></td>
+        <td><code>/dashboard/reports/runs</code></td>
+        <td>Historique de la file d'attente d'exécution : ID de run, durée (ms), nombre de lignes, badges de statut, liens de téléchargement sécurisés.</td>
+      </tr>
+      <tr>
+        <td><strong>Planifications</strong></td>
+        <td><code>/dashboard/reports/schedules</code></td>
+        <td>Gestion des envois automatisés : expressions cron, formats de sortie, liste des destinataires, bascules actif/suspendu.</td>
+      </tr>
+      <tr>
+        <td><strong>Console Admin</strong></td>
+        <td><code>/dashboard/reports/admin</code></td>
+        <td>Tableau de bord de gouvernance : quotas de stockage, journal des requêtes lentes, matrice de préparation des définitions, filigranes de projection.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>🔒 4. Logic Business & Sécurité Enforced</h2>
+  <ul>
+    <li><strong>Confidentialité CNDP :</strong> Les identifiants élèves masquent les emails (<code>ya***@gmail.com</code>) et excluent les mots de passe. Les résumés de paie RH masquent les salaires individuels pour les groupes de &lt; 3 employés.</li>
+    <li><strong>Équilibre du Bilan Comptable :</strong> Garantit l'équation comptable fondamentale : <code>Actifs = Passifs + Capitaux Propres</code>.</li>
+    <li><strong>Protection Formules CSV :</strong> Échappe les caractères <code>=</code>, <code>+</code>, <code>-</code>, <code>@</code> avec <code>'</code> pour bloquer les vulnérabilités d'exécution de code à distance dans Microsoft Excel.</li>
+    <li><strong>Signature Cryptographique HMAC SHA-256 :</strong> Les liens de téléchargement expirent après 24h et utilisent <code>crypto.timingSafeEqual</code> contre les attaques par canal auxiliaire.</li>
+  </ul>
+</div>
+
+</body>
+</html>

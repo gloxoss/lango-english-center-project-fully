@@ -1,0 +1,20 @@
+{
+  "text": "العودة إلى الدليل\nZF\nZineb Fassi\nActif\nATL-2526-0002\n3ème B\nالسنة الدراسية 2025-2026\n+212 6 14-973977\netudiant.0002@atlas.ma\nاستخلاص\nإصدار بطاقة\nإجراءات\nالملف الشخصي\nالوثائق\nأولياء الأمور\nالمسار الأكاديمي\nالمالية\nالسياق الأكاديمي والتسجيل\nتسجيل نشط\nالسنة الدراسية الحالية\n\n2025-2026\n\nالقسم والفوج\n\n3ème B\n\nحالة التسجيل\n\nمسجّل\n\nالمعلومات الشخصية\nتاريخ الازدياد\n\n2013-05-11\n\nالجنس\n\nأنثى\n\nالجنسية\n\nMarocaine\n\nاللغة الأم\n\n— غير مدخل\n\nالمدينة\n\nCasablanca\n\nالفصيلة الدموية\n\nO-\n\nالعنوان\n\n23, Rue Ibn Sina\n\nتعديل\nحقول مخصصة\n\nحقول تعرّفها المدرسة لاستكمال ملف التلميذ.\n\nSPORT PRATIQUÉ\n\nnatation\n\nN° MATRICULE\n\n— غير مدخل\n\nحماية المعطيات ذات الطابع الشخصي (القانون 09-08)\n\nتتم معالجة البيانات المدرسية والمعلومات الشخصية للتلميذ وفقاً لمقتضيات القانون 09-08 المتعلق بحماية الأشخاص الذاتيين تجاه معالجة المعطيات ذات الطابع الشخصي.\n\nإطار CNDP",
+  "hasCardTitleKey": false,
+  "hasCardTitleFr": false,
+  "hasSport": false,
+  "dir": "rtl",
+  "overflowX": 0,
+  "status": 200,
+  "savedValue": null,
+  "missingMessage": [],
+  "consoleErrors": [
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537"
+  ],
+  "api5xx": []
+}

@@ -1,0 +1,15 @@
+{
+  "text": "Organisation et identité\n\nParamètres de l’établissement, contacts institutionnels et préférences de localisation.\n\nEnregistrer\nIdentité visuelle\n\nLogo de l’établissement\n\nChanger le logo\nPNG / JPG · 2 Mo max\n\nFavicon\n\nChanger le favicon\nPNG / JPG · 2 Mo max\nInformations générales\nNom complet de l’établissement*\nNom abrégé\n\nUtilisé dans les documents compacts\n\nVille\nPays\nAdresse complète\nSite web\nTéléphone\nEmail\nAnnée scolaire\nAnnée scolaire en cours\n2026-2027\nDate de début\n2026-09-01\nDate de fin\n2027-06-30\n\nL'année scolaire se gère depuis les années scolaires : elle n'est plus modifiable ici.\n\nGérer les années scolaires\nInformations légales\nForme juridique\nRegistre de commerce (RC)\nICE\n\nIdentifiant commun de l’entreprise\n\nIdentifiant fiscal (IF)\nAgrément MEN, cachet officiel et signature (Maroc)\n\nConformité loi 06-00 (enseignement privé au Maroc)\n\nCes informations et visuels officiels sont ajoutés automatiquement aux attestations de scolarité, relevés de notes, diplômes et certificats d’inscription générés par la plateforme.\n\nN° d’autorisation MEN\n\nEx : 06/2018/EP ou réf. ministérielle\n\nAcadémie régionale (AREF)\n\nEx : Casablanca-Settat\n\nDirection provinciale\n\nEx : DP Anfa, DP Fès\n\nURL du cachet officiel (PNG transparent)\n\nTampon officiel de l’école (fond transparent recommandé)\n\nURL de la signature du directeur (PNG transparent)\n\nSignature numérisée du chef d’établissement\n\nContacts institutionnels\nPrincipal\nDirecteur\nNom complet\nEmail\nTéléphone\nFinance\nContact financier\nNom complet\nEmail\nTéléphone\nAdmissions\nContact admissions\nNom complet\nEmail\nTéléphone\nLangues et localisation\n\nLangues de l’interface\n\nArabe\nArabe\nAnglais\nAnglais\nFrançais\nFrançais\nFuseau horaire\nAfrica/Casablanca (GMT+1)\nEurope/Paris (GMT+2)\nUTC\nFormat de date\ndd/mm/yyyy\nmm/dd/yyyy\nyyyy-mm-dd\nStyle des documents\n\nClassique\n\nEn-tête complet avec logo et coordonnées\n\nMinimal\n\nEn-tête épuré, nom de l’établissement uniquement\n\nModerne\n\nBandeau coloré avec logo en relief\n\nOpérations et modes de présence\n\nOpérations actives\n\nAutorise les opérations académiques et financières\n\nOpérations actives\nStructure académique (cycles, classes)\nAller à la gestion des classes",
+  "dir": "ltr",
+  "overflowX": 0,
+  "missingKeys": [],
+  "status": 200,
+  "url": "/fr/dashboard/settings/onboarding",
+  "consoleErrors": [
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h"
+  ],
+  "api5xx": []
+}

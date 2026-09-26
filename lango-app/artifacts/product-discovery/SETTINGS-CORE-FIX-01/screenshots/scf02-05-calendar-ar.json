@@ -1,0 +1,15 @@
+{
+  "text": "السنوات الدراسية والتقويم الأكاديمي\n\nإعداد السنوات الدراسية وتواريخ البدء/الانتهاء والسنة الافتراضية\n\nإضافة سنة دراسية\n\nالسنوات المحددة\n\n2\n\nقائمة السنوات الدراسية\nالسنة الدراسية\tتاريخ البدء\tتاريخ الانتهاء\tالحالة\tالإجراءات\n\n2025-2026\n\t2025-09-01\t2026-06-30\tثانوي\t\n\n\n2026-2027\nالسنة النشطة\n\t2026-09-01\t2027-06-30\tافتراضي\t\n\n2 سنة في المجموع\n\n1",
+  "dir": "rtl",
+  "overflowX": 0,
+  "missingKeys": [],
+  "status": 200,
+  "url": "/ar/dashboard/academics/calendar",
+  "consoleErrors": [
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotify (h"
+  ],
+  "api5xx": []
+}

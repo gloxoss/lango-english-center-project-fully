@@ -2,7 +2,21 @@
 
 **Status: FIXED, pending re-sweep** · Module: `certificates` · Source: [`src/app/[locale]/(dashboard)/dashboard/certificates/jobs/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/certificates/jobs/page.tsx>)
 
-**Progress (2026-09-25):** S-6 DONE · S-42 DONE
+**Progress (2026-09-26):** S-6 DONE · S-42 DONE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

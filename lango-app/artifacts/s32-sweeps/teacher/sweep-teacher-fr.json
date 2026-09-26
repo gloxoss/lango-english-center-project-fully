@@ -1,0 +1,1036 @@
+[
+  {
+    "route": "/dashboard/academics/assessment/exam-master",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 223,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-academics__assessment__exam-master.png"
+  },
+  {
+    "route": "/dashboard/academics/assessment/homework",
+    "finalPath": "/fr/dashboard/academics/assessment/homework",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10554:20\nError: Parsing CSS source code failed\n  10552 |   }\n  10553 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10549:9\nError: Parsing CSS source code failed\n  10547 |   }\n  10548 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__assessment__homework.png"
+  },
+  {
+    "route": "/dashboard/academics/assessment/online-exams",
+    "finalPath": "/fr/dashboard/academics/assessment/online-exams",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10563:20\nError: Parsing CSS source code failed\n  10561 |   }\n  10562 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10558:9\nError: Parsing CSS source code failed\n  10556 |   }\n  10557 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__assessment__online-exams.png"
+  },
+  {
+    "route": "/dashboard/academics/assignments",
+    "finalPath": "/fr/dashboard/academics/assignments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10563:20\nError: Parsing CSS source code failed\n  10561 |   }\n  10562 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10558:9\nError: Parsing CSS source code failed\n  10556 |   }\n  10557 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__assignments.png"
+  },
+  {
+    "route": "/dashboard/academics/classes",
+    "finalPath": "/fr/dashboard/academics/classes",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10563:20\nError: Parsing CSS source code failed\n  10561 |   }\n  10562 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10558:9\nError: Parsing CSS source code failed\n  10556 |   }\n  10557 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__classes.png"
+  },
+  {
+    "route": "/dashboard/academics/class-section-teachers",
+    "finalPath": "/fr/dashboard/academics/class-section-teachers",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10563:20\nError: Parsing CSS source code failed\n  10561 |   }\n  10562 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10558:9\nError: Parsing CSS source code failed\n  10556 |   }\n  10557 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: ./src/app/globals.css:10568:20\nError: Parsing CSS source code failed\n  10566 |   }\n  10567 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10563:9\nError: Parsing CSS source code failed\n  10561 |   }\n  10562 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__class-section-teachers.png"
+  },
+  {
+    "route": "/dashboard/academics/class-subjects",
+    "finalPath": "/fr/dashboard/academics/class-subjects",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10568:20\nError: Parsing CSS source code failed\n  10566 |   }\n  10567 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10563:9\nError: Parsing CSS source code failed\n  10561 |   }\n  10562 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__class-subjects.png"
+  },
+  {
+    "route": "/dashboard/academics/conflicts",
+    "finalPath": "/fr/dashboard/academics/conflicts",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10568:20\nError: Parsing CSS source code failed\n  10566 |   }\n  10567 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10563:9\nError: Parsing CSS source code failed\n  10561 |   }\n  10562 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__conflicts.png"
+  },
+  {
+    "route": "/dashboard/academics/mediums",
+    "finalPath": "/fr/dashboard/academics/mediums",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10571:20\nError: Parsing CSS source code failed\n  10569 |   }\n  10570 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10566:9\nError: Parsing CSS source code failed\n  10564 |   }\n  10565 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__mediums.png"
+  },
+  {
+    "route": "/dashboard/academics/optional-subjects",
+    "finalPath": "/fr/dashboard/academics/optional-subjects",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10574:20\nError: Parsing CSS source code failed\n  10572 |   }\n  10573 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10569:9\nError: Parsing CSS source code failed\n  10567 |   }\n  10568 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__optional-subjects.png"
+  },
+  {
+    "route": "/dashboard/academics/question-bank",
+    "finalPath": "/fr/dashboard/academics/question-bank",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10577:20\nError: Parsing CSS source code failed\n  10575 |   }\n  10576 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10572:9\nError: Parsing CSS source code failed\n  10570 |   }\n  10571 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__question-bank.png"
+  },
+  {
+    "route": "/dashboard/academics/readiness",
+    "finalPath": "/fr/dashboard/academics/readiness",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10580:20\nError: Parsing CSS source code failed\n  10578 |   }\n  10579 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10575:9\nError: Parsing CSS source code failed\n  10573 |   }\n  10574 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__readiness.png"
+  },
+  {
+    "route": "/dashboard/academics/schedule",
+    "finalPath": "/fr/dashboard/academics/schedule",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10589:20\nError: Parsing CSS source code failed\n  10587 |   }\n  10588 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10584:9\nError: Parsing CSS source code failed\n  10582 |   }\n  10583 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__schedule.png"
+  },
+  {
+    "route": "/dashboard/academics/sections",
+    "finalPath": "/fr/dashboard/academics/sections",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10601:20\nError: Parsing CSS source code failed\n  10599 |   }\n  10600 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10596:9\nError: Parsing CSS source code failed\n  10594 |   }\n  10595 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__sections.png"
+  },
+  {
+    "route": "/dashboard/academics/semesters",
+    "finalPath": "/fr/dashboard/academics/semesters",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10607:20\nError: Parsing CSS source code failed\n  10605 |   }\n  10606 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10602:9\nError: Parsing CSS source code failed\n  10600 |   }\n  10601 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__semesters.png"
+  },
+  {
+    "route": "/dashboard/academics/shifts",
+    "finalPath": "/fr/dashboard/academics/shifts",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10610:20\nError: Parsing CSS source code failed\n  10608 |   }\n  10609 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10605:9\nError: Parsing CSS source code failed\n  10603 |   }\n  10604 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__shifts.png"
+  },
+  {
+    "route": "/dashboard/academics/streams",
+    "finalPath": "/fr/dashboard/academics/streams",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10616:20\nError: Parsing CSS source code failed\n  10614 |   }\n  10615 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10611:9\nError: Parsing CSS source code failed\n  10609 |   }\n  10610 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__streams.png"
+  },
+  {
+    "route": "/dashboard/academics/subjects",
+    "finalPath": "/fr/dashboard/academics/subjects",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10616:20\nError: Parsing CSS source code failed\n  10614 |   }\n  10615 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10611:9\nError: Parsing CSS source code failed\n  10609 |   }\n  10610 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-academics__subjects.png"
+  },
+  {
+    "route": "/dashboard/analytics",
+    "finalPath": "/fr/dashboard/analytics",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10616:20\nError: Parsing CSS source code failed\n  10614 |   }\n  10615 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10611:9\nError: Parsing CSS source code failed\n  10609 |   }\n  10610 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-analytics.png"
+  },
+  {
+    "route": "/dashboard/attendance/badges",
+    "finalPath": "/fr/dashboard/attendance/badges",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10619:20\nError: Parsing CSS source code failed\n  10617 |   }\n  10618 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10614:9\nError: Parsing CSS source code failed\n  10612 |   }\n  10613 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-attendance__badges.png"
+  },
+  {
+    "route": "/dashboard/attendance/excuses",
+    "finalPath": "/fr/dashboard/attendance/excuses",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10625:20\nError: Parsing CSS source code failed\n  10623 |   }\n  10624 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10620:9\nError: Parsing CSS source code failed\n  10618 |   }\n  10619 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-attendance__excuses.png"
+  },
+  {
+    "route": "/dashboard/attendance/flags",
+    "finalPath": "/fr/dashboard/attendance/flags",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10628:20\nError: Parsing CSS source code failed\n  10626 |   }\n  10627 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10623:9\nError: Parsing CSS source code failed\n  10621 |   }\n  10622 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-attendance__flags.png"
+  },
+  {
+    "route": "/dashboard/broadcast/automations",
+    "finalPath": "/fr/dashboard/broadcast/automations",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10628:20\nError: Parsing CSS source code failed\n  10626 |   }\n  10627 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10623:9\nError: Parsing CSS source code failed\n  10621 |   }\n  10622 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-broadcast__automations.png"
+  },
+  {
+    "route": "/dashboard/broadcast/connections",
+    "finalPath": "/fr/dashboard/broadcast/connections",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10628:20\nError: Parsing CSS source code failed\n  10626 |   }\n  10627 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10623:9\nError: Parsing CSS source code failed\n  10621 |   }\n  10622 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-broadcast__connections.png"
+  },
+  {
+    "route": "/dashboard/broadcast/segments",
+    "finalPath": "/fr/dashboard/broadcast/segments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10628:20\nError: Parsing CSS source code failed\n  10626 |   }\n  10627 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10623:9\nError: Parsing CSS source code failed\n  10621 |   }\n  10622 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-broadcast__segments.png"
+  },
+  {
+    "route": "/dashboard/broadcast/templates",
+    "finalPath": "/fr/dashboard/broadcast/templates",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10628:20\nError: Parsing CSS source code failed\n  10626 |   }\n  10627 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10623:9\nError: Parsing CSS source code failed\n  10621 |   }\n  10622 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-broadcast__templates.png"
+  },
+  {
+    "route": "/dashboard/certificates/requests",
+    "finalPath": "/fr/dashboard/certificates/requests",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10628:20\nError: Parsing CSS source code failed\n  10626 |   }\n  10627 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10623:9\nError: Parsing CSS source code failed\n  10621 |   }\n  10622 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-certificates__requests.png"
+  },
+  {
+    "route": "/dashboard/communication/reminders",
+    "finalPath": "/fr/dashboard/communication/reminders",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10634:20\nError: Parsing CSS source code failed\n  10632 |   }\n  10633 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10629:9\nError: Parsing CSS source code failed\n  10627 |   }\n  10628 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-communication__reminders.png"
+  },
+  {
+    "route": "/dashboard/communication/templates",
+    "finalPath": "/fr/dashboard/communication/templates",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10637:20\nError: Parsing CSS source code failed\n  10635 |   }\n  10636 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10632:9\nError: Parsing CSS source code failed\n  10630 |   }\n  10631 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-communication__templates.png"
+  },
+  {
+    "route": "/dashboard/content/library",
+    "finalPath": "/fr/dashboard/content/library",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10637:20\nError: Parsing CSS source code failed\n  10635 |   }\n  10636 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10632:9\nError: Parsing CSS source code failed\n  10630 |   }\n  10631 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-content__library.png"
+  },
+  {
+    "route": "/dashboard/documents/generator",
+    "finalPath": "/fr/dashboard/documents/generator",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10637:20\nError: Parsing CSS source code failed\n  10635 |   }\n  10636 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10632:9\nError: Parsing CSS source code failed\n  10630 |   }\n  10631 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-documents__generator.png"
+  },
+  {
+    "route": "/dashboard/finance/allocation",
+    "finalPath": "/fr/dashboard/finance/allocation",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10637:20\nError: Parsing CSS source code failed\n  10635 |   }\n  10636 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10632:9\nError: Parsing CSS source code failed\n  10630 |   }\n  10631 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-finance__allocation.png"
+  },
+  {
+    "route": "/dashboard/finance/allocations",
+    "finalPath": "/fr/dashboard/finance/allocations",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10637:20\nError: Parsing CSS source code failed\n  10635 |   }\n  10636 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10632:9\nError: Parsing CSS source code failed\n  10630 |   }\n  10631 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-finance__allocations.png"
+  },
+  {
+    "route": "/dashboard/finance/approvals",
+    "finalPath": "/fr/dashboard/finance/approvals",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10640:20\nError: Parsing CSS source code failed\n  10638 |   }\n  10639 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10635:9\nError: Parsing CSS source code failed\n  10633 |   }\n  10634 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-finance__approvals.png"
+  },
+  {
+    "route": "/dashboard/finance/collection-desk",
+    "finalPath": "/fr/dashboard/finance/collection-desk",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10640:20\nError: Parsing CSS source code failed\n  10638 |   }\n  10639 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10635:9\nError: Parsing CSS source code failed\n  10633 |   }\n  10634 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-finance__collection-desk.png"
+  },
+  {
+    "route": "/dashboard/finance/credit-notes",
+    "finalPath": "/fr/dashboard/finance/credit-notes",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10640:20\nError: Parsing CSS source code failed\n  10638 |   }\n  10639 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10635:9\nError: Parsing CSS source code failed\n  10633 |   }\n  10634 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-finance__credit-notes.png"
+  },
+  {
+    "route": "/dashboard/finance/fee-assignments",
+    "finalPath": "/fr/dashboard/finance/fee-assignments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: ./src/app/globals.css:10640:20\nError: Parsing CSS source code failed\n  10638 |   }\n  10639 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10635:9\nError: Parsing CSS source code failed\n  10633 |   }\n  10634 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 ",
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica"
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-finance__fee-assignments.png"
+  },
+  {
+    "route": "/dashboard/finance/fee-structures",
+    "finalPath": "/fr/dashboard/finance/fee-structures",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10646:20\nError: Parsing CSS source code failed\n  10644 |   }\n  10645 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10641:9\nError: Parsing CSS source code failed\n  10639 |   }\n  10640 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-finance__fee-structures.png"
+  },
+  {
+    "route": "/dashboard/finance/fee-types",
+    "finalPath": "/fr/dashboard/finance/fee-types",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 35,
+    "failures": [
+      "console: Refused to execute script from 'http://localhost:3557/_next/static/development/_clientMiddlewareManifest.js' because its MIME type ('applica",
+      "console: ./src/app/globals.css:10646:20\nError: Parsing CSS source code failed\n  10644 |   }\n  10645 |   .\\[\\&_\\[cmdk-group-h\\1a \\f �\\]\\]\\:px-2 {\n> 10",
+      "console: ./src/app/globals.css:10641:9\nError: Parsing CSS source code failed\n  10639 |   }\n  10640 |   .\\[\\&_\\[R\\3 \\10 -\\~\\1 �\\2 p-heading\\]\\]\\:px-2 "
+    ],
+    "textDefects": [],
+    "file": "teacher-fr-finance__fee-types.png"
+  },
+  {
+    "route": "/dashboard/finance/fine-policies",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-finance__fine-policies.png"
+  },
+  {
+    "route": "/dashboard/finance/payments/new",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-finance__payments__new.png"
+  },
+  {
+    "route": "/dashboard/finance/refunds",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-finance__refunds.png"
+  },
+  {
+    "route": "/dashboard/finance/statements",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-finance__statements.png"
+  },
+  {
+    "route": "/dashboard/hostel/allocations",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hostel__allocations.png"
+  },
+  {
+    "route": "/dashboard/hostel/applications",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hostel__applications.png"
+  },
+  {
+    "route": "/dashboard/hostel/board",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hostel__board.png"
+  },
+  {
+    "route": "/dashboard/hostel/categories",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hostel__categories.png"
+  },
+  {
+    "route": "/dashboard/hostel/hostels",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hostel__hostels.png"
+  },
+  {
+    "route": "/dashboard/hostel/roll-call",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hostel__roll-call.png"
+  },
+  {
+    "route": "/dashboard/hostel/rooms",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hostel__rooms.png"
+  },
+  {
+    "route": "/dashboard/hostel/zones",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hostel__zones.png"
+  },
+  {
+    "route": "/dashboard/hr",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hr.png"
+  },
+  {
+    "route": "/dashboard/hr/employees",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hr__employees.png"
+  },
+  {
+    "route": "/dashboard/hr/employees/new",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hr__employees__new.png"
+  },
+  {
+    "route": "/dashboard/hr/overview",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-hr__overview.png"
+  },
+  {
+    "route": "/dashboard/inventory/adjustments",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-inventory__adjustments.png"
+  },
+  {
+    "route": "/dashboard/inventory/issues",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-inventory__issues.png"
+  },
+  {
+    "route": "/dashboard/inventory/products",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-inventory__products.png"
+  },
+  {
+    "route": "/dashboard/inventory/purchases",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-inventory__purchases.png"
+  },
+  {
+    "route": "/dashboard/inventory/sales",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-inventory__sales.png"
+  },
+  {
+    "route": "/dashboard/inventory/transfers",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-inventory__transfers.png"
+  },
+  {
+    "route": "/dashboard/settings",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings.png"
+  },
+  {
+    "route": "/dashboard/settings/accounting-defaults",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__accounting-defaults.png"
+  },
+  {
+    "route": "/dashboard/settings/cndp",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__cndp.png"
+  },
+  {
+    "route": "/dashboard/settings/custom-fields",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__custom-fields.png"
+  },
+  {
+    "route": "/dashboard/settings/drafts",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__drafts.png"
+  },
+  {
+    "route": "/dashboard/settings/exports",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__exports.png"
+  },
+  {
+    "route": "/dashboard/settings/jobs",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__jobs.png"
+  },
+  {
+    "route": "/dashboard/settings/migration",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__migration.png"
+  },
+  {
+    "route": "/dashboard/settings/notifications",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__notifications.png"
+  },
+  {
+    "route": "/dashboard/settings/numbering",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__numbering.png"
+  },
+  {
+    "route": "/dashboard/settings/policies",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__policies.png"
+  },
+  {
+    "route": "/dashboard/settings/providers",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__providers.png"
+  },
+  {
+    "route": "/dashboard/settings/scheduled-jobs",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__scheduled-jobs.png"
+  },
+  {
+    "route": "/dashboard/settings/subscription",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__subscription.png"
+  },
+  {
+    "route": "/dashboard/settings/translations",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__translations.png"
+  },
+  {
+    "route": "/dashboard/settings/values",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-settings__values.png"
+  },
+  {
+    "route": "/dashboard/students/admissions",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-students__admissions.png"
+  },
+  {
+    "route": "/dashboard/students/alumni",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-students__alumni.png"
+  },
+  {
+    "route": "/dashboard/students/alumni/events",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-students__alumni__events.png"
+  },
+  {
+    "route": "/dashboard/students/alumni/requests",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-students__alumni__requests.png"
+  },
+  {
+    "route": "/dashboard/students/matricules",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-students__matricules.png"
+  },
+  {
+    "route": "/dashboard/students/photos",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-students__photos.png"
+  },
+  {
+    "route": "/dashboard/students/promotions",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-students__promotions.png"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/assignments",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-workforce__payroll__assignments.png"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/components",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-workforce__payroll__components.png"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/payments",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-workforce__payroll__payments.png"
+  },
+  {
+    "route": "/dashboard/workforce/timeclock",
+    "finalPath": "chrome-error://chromewebdata/",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 3,
+    "failures": [],
+    "textDefects": [],
+    "file": "teacher-fr-workforce__timeclock.png"
+  }
+]

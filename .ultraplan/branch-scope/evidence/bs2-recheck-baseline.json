@@ -1,0 +1,229 @@
+{
+  "capturedAt": "2026-09-25T22:48:29.936Z",
+  "database": "schoolos@localhost:5433/schoolos",
+  "month": "2026-09",
+  "purpose": "BRANCH-SCOPE-01 B0-02 before-baseline; invariant 4 proof and B6 parity reference. Read-only capture.",
+  "definitions": {
+    "students": "user rows with role=student; direct user.branch_id",
+    "classes": "classes rows; direct branch_id",
+    "applicants": "applicants rows; direct branch_id",
+    "invoicesCount": "invoices rows; via the owning student (user.branch_id); count + sum(net_amount)",
+    "invoicesSum": "sum of invoices.net_amount via the owning student",
+    "paymentsPostedSum": "sum of payments.amount where status=posted, via the owning student",
+    "attendanceThisMonth": "attendance rows with date >= first day of the capture month (computed in Node), via the owning student",
+    "employees": "employee_profiles rows; direct branch_id",
+    "libraryCopies": "library_copies rows; direct branch_id",
+    "hostelBeds": "hostel_beds joined through hostel_rooms -> hostels.branch_id",
+    "transportRoutes": "transport_routes rows; direct branch_id"
+  },
+  "queries": {
+    "tenants": "select id, name from tenants order by name",
+    "branches": "select id, tenant_id, name, code, is_active, is_default from branches order by tenant_id, name",
+    "students": "select tenant_id, coalesce(branch_id::text, '_unassigned') as bucket, count(*)::int as n\n             from \"user\" where role = 'student' and tenant_id is not null group by 1, 2",
+    "classes": "select tenant_id, coalesce(branch_id::text, '_unassigned') as bucket, count(*)::int as n\n            from classes group by 1, 2",
+    "applicants": "select tenant_id, coalesce(branch_id::text, '_unassigned') as bucket, count(*)::int as n\n               from applicants group by 1, 2",
+    "invoices": "select i.tenant_id, coalesce(u.branch_id::text, '_unassigned') as bucket,\n                    count(*)::int as n, coalesce(sum(i.net_amount), 0)::float8 as s\n             from invoices i left join \"user\" u on u.id = i.student_id group by 1, 2",
+    "payments": "select p.tenant_id, coalesce(u.branch_id::text, '_unassigned') as bucket,\n                    coalesce(sum(p.amount), 0)::float8 as s\n             from payments p left join \"user\" u on u.id = p.student_id\n             where p.status = 'posted' group by 1, 2",
+    "attendance": "select a.tenant_id, coalesce(u.branch_id::text, '_unassigned') as bucket, count(*)::int as n\n               from attendance a left join \"user\" u on u.id = a.student_id\n               where a.date >= $1 group by 1, 2",
+    "employees": "select tenant_id, coalesce(branch_id::text, '_unassigned') as bucket, count(*)::int as n\n              from employee_profiles group by 1, 2",
+    "libraryCopies": "select tenant_id, coalesce(branch_id::text, '_unassigned') as bucket, count(*)::int as n\n                  from library_copies group by 1, 2",
+    "hostelBeds": "select h.tenant_id, coalesce(h.branch_id::text, '_unassigned') as bucket, count(b.id)::int as n\n               from hostel_beds b\n               join hostel_rooms r on r.id = b.room_id\n               join hostels h on h.id = r.hostel_id\n               group by 1, 2",
+    "transportRoutes": "select tenant_id, coalesce(branch_id::text, '_unassigned') as bucket, count(*)::int as n\n                    from transport_routes group by 1, 2"
+  },
+  "tenants": {
+    "9c496194-2fcc-41f3-ad8a-fd728850f168": {
+      "name": "Groupe Scolaire Atlas",
+      "branchCount": 2,
+      "all": {
+        "students": 200,
+        "classes": 4,
+        "applicants": 20,
+        "invoicesCount": 200,
+        "invoicesSum": 4557000,
+        "paymentsPostedSum": 3412500,
+        "attendanceThisMonth": 1617,
+        "employees": 20,
+        "libraryCopies": 27,
+        "hostelBeds": 24,
+        "transportRoutes": 3
+      },
+      "branches": {
+        "85a226a2-dc24-463a-898c-47bbde0aaf8d": {
+          "name": "Annexe Maarif",
+          "code": "BR-2",
+          "isActive": true,
+          "isDefault": false,
+          "totals": {
+            "students": 51,
+            "classes": 1,
+            "applicants": 6,
+            "invoicesCount": 51,
+            "invoicesSum": 1006000,
+            "paymentsPostedSum": 767500,
+            "attendanceThisMonth": 408,
+            "employees": 0,
+            "libraryCopies": 0,
+            "hostelBeds": 0,
+            "transportRoutes": 0
+          }
+        },
+        "a5d6ddc6-db50-4872-8c8f-271ba6693bc5": {
+          "name": "Siège - Casablanca",
+          "code": "ATL",
+          "isActive": true,
+          "isDefault": true,
+          "totals": {
+            "students": 149,
+            "classes": 3,
+            "applicants": 14,
+            "invoicesCount": 149,
+            "invoicesSum": 3551000,
+            "paymentsPostedSum": 2645000,
+            "attendanceThisMonth": 1209,
+            "employees": 0,
+            "libraryCopies": 27,
+            "hostelBeds": 24,
+            "transportRoutes": 0
+          }
+        }
+      },
+      "unassigned": {
+        "students": 0,
+        "classes": 0,
+        "applicants": 0,
+        "invoicesCount": 0,
+        "invoicesSum": 0,
+        "paymentsPostedSum": 0,
+        "attendanceThisMonth": 0,
+        "employees": 20,
+        "libraryCopies": 0,
+        "hostelBeds": 0,
+        "transportRoutes": 3
+      }
+    },
+    "b02ab512-5377-4265-af5d-557c99047214": {
+      "name": "GL Status Test",
+      "branchCount": 0,
+      "all": {
+        "students": 1,
+        "classes": 0,
+        "applicants": 0,
+        "invoicesCount": 2,
+        "invoicesSum": 170,
+        "paymentsPostedSum": 50,
+        "attendanceThisMonth": 0,
+        "employees": 0,
+        "libraryCopies": 0,
+        "hostelBeds": 0,
+        "transportRoutes": 0
+      },
+      "branches": {},
+      "unassigned": {
+        "students": 1,
+        "classes": 0,
+        "applicants": 0,
+        "invoicesCount": 2,
+        "invoicesSum": 170,
+        "paymentsPostedSum": 50,
+        "attendanceThisMonth": 0,
+        "employees": 0,
+        "libraryCopies": 0,
+        "hostelBeds": 0,
+        "transportRoutes": 0
+      }
+    },
+    "b84e81b9-e066-424e-a277-4b60aadf748a": {
+      "name": "Lango Center",
+      "branchCount": 0,
+      "all": {
+        "students": 2,
+        "classes": 1,
+        "applicants": 0,
+        "invoicesCount": 1,
+        "invoicesSum": 1500,
+        "paymentsPostedSum": 1500,
+        "attendanceThisMonth": 2,
+        "employees": 0,
+        "libraryCopies": 0,
+        "hostelBeds": 0,
+        "transportRoutes": 0
+      },
+      "branches": {},
+      "unassigned": {
+        "students": 2,
+        "classes": 1,
+        "applicants": 0,
+        "invoicesCount": 1,
+        "invoicesSum": 1500,
+        "paymentsPostedSum": 1500,
+        "attendanceThisMonth": 2,
+        "employees": 0,
+        "libraryCopies": 0,
+        "hostelBeds": 0,
+        "transportRoutes": 0
+      }
+    },
+    "bc4222f4-05fb-4999-acd1-6ba0756eb9dd": {
+      "name": "GL Status Test",
+      "branchCount": 0,
+      "all": {
+        "students": 1,
+        "classes": 0,
+        "applicants": 0,
+        "invoicesCount": 1,
+        "invoicesSum": 120,
+        "paymentsPostedSum": 0,
+        "attendanceThisMonth": 0,
+        "employees": 0,
+        "libraryCopies": 0,
+        "hostelBeds": 0,
+        "transportRoutes": 0
+      },
+      "branches": {},
+      "unassigned": {
+        "students": 1,
+        "classes": 0,
+        "applicants": 0,
+        "invoicesCount": 1,
+        "invoicesSum": 120,
+        "paymentsPostedSum": 0,
+        "attendanceThisMonth": 0,
+        "employees": 0,
+        "libraryCopies": 0,
+        "hostelBeds": 0,
+        "transportRoutes": 0
+      }
+    },
+    "f3132e77-57c6-4485-a4bd-09bbd0d8b7b4": {
+      "name": "GL Status Test",
+      "branchCount": 0,
+      "all": {
+        "students": 1,
+        "classes": 0,
+        "applicants": 0,
+        "invoicesCount": 2,
+        "invoicesSum": 170,
+        "paymentsPostedSum": 50,
+        "attendanceThisMonth": 0,
+        "employees": 0,
+        "libraryCopies": 0,
+        "hostelBeds": 0,
+        "transportRoutes": 0
+      },
+      "branches": {},
+      "unassigned": {
+        "students": 1,
+        "classes": 0,
+        "applicants": 0,
+        "invoicesCount": 2,
+        "invoicesSum": 170,
+        "paymentsPostedSum": 50,
+        "attendanceThisMonth": 0,
+        "employees": 0,
+        "libraryCopies": 0,
+        "hostelBeds": 0,
+        "transportRoutes": 0
+      }
+    }
+  }
+}

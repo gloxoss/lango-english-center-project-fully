@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SchoolOS — Interactive System Knowledge Graph</title>
+  <style>
+    :root {
+      --primary: #2487B8;
+      --primary-dark: #1B6C93;
+      --bg: #0F172A;
+      --card-bg: #1E293B;
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+      --emerald: #10B981;
+      --amber: #F59E0B;
+      --rose: #F43F5E;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+    header { background: #16212B; border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 0.75rem; }
+    .brand-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; }
+    .brand h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.025em; }
+    .stats-bar { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .stat-badge { background: var(--card-bg); border: 1px solid var(--border); padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+    .stat-badge strong { color: var(--text); }
+    .main-layout { display: grid; grid-template-columns: 360px 1fr; flex: 1; height: calc(100vh - 72px); }
+    .sidebar { background: #131E2E; border-right: 1px solid var(--border); overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+    .search-box { width: 100%; padding: 0.6rem 0.8rem; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.85rem; outline: none; }
+    .search-box:focus { border-color: var(--primary); }
+    .subsystem-list { display: flex; flex-direction: column; gap: 0.4rem; }
+    .subsystem-btn { text-align: left; background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 0.6rem 0.8rem; color: var(--muted); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; justify-content: space-between; align-items: center; }
+    .subsystem-btn:hover { background: rgba(36, 135, 184, 0.1); color: var(--text); border-color: rgba(36, 135, 184, 0.3); }
+    .subsystem-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .content-area { padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.5rem; background: radial-gradient(circle at top right, #1A2639 0%, var(--bg) 100%); }
+    .detail-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; }
+    .detail-title { font-size: 1.25rem; font-weight: 800; color: #38BDF8; }
+    .badge-live { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--emerald); color: var(--emerald); padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+    .info-block { background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+    .info-block h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.5rem; }
+    .item-list { list-style: none; font-size: 0.8rem; color: #CBD5E1; display: flex; flex-direction: column; gap: 0.35rem; max-height: 220px; overflow-y: auto; }
+    .item-list li { font-family: monospace; padding: 0.2rem 0.4rem; background: rgba(255,255,255,0.03); border-radius: 4px; }
+    .architecture-banner { background: linear-gradient(135deg, rgba(36, 135, 184, 0.15), rgba(16, 185, 129, 0.1)); border: 1px solid rgba(36, 135, 184, 0.3); border-radius: 12px; padding: 1rem 1.25rem; font-size: 0.85rem; line-height: 1.5; color: #E2E8F0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">S</div>
+      <div>
+        <h1>SchoolOS Knowledge Graph</h1>
+        <p style="font-size: 0.75rem; color: var(--muted);">Moroccan School Management Platform • Architectural Explorer</p>
+      </div>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-badge">Nodes: <strong>2 087</strong></div>
+      <div class="stat-badge">Edges: <strong>1 214</strong></div>
+      <div class="stat-badge">Subsystems: <strong>16</strong></div>
+      <div class="stat-badge">Tables: <strong>420</strong></div>
+      <div class="stat-badge">APIs: <strong>798</strong></div>
+      <div class="stat-badge">Pages: <strong>344</strong></div>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <div class="sidebar">
+      <input type="text" id="search" class="search-box" placeholder="Rechercher module, table, route...">
+      <div class="subsystem-list" id="subsystem-list"></div>
+    </div>
+
+    <div class="content-area">
+      <div class="architecture-banner">
+        <strong>🏛️ Architecture &amp; Tenancy Invariants :</strong> Base unique PostgreSQL partitionnée par <code>tenant_id</code>. Les 16 sous-systèmes respectent scrupuleusement la loi marocaine 09-08 (CNDP), le barème de notation officiel sur 20, le moteur de paie CNSS/AMO/IR, et l'isolation des comptes WhatsApp (WAHA).
+      </div>
+
+      <div class="detail-card" id="detail-card">
+        <div class="detail-header">
+          <div>
+            <h2 class="detail-title" id="module-title">ACADEMICS</h2>
+            <p id="module-desc" style="font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem;">Gestion des années académiques, filières, classes, matières et solveur d'emplois du temps.</p>
+          </div>
+          <span class="badge-live">100% OPÉRATIONNEL</span>
+        </div>
+
+        <div class="grid-2">
+          <div class="info-block">
+            <h4>Pages Enregistrées (<span id="pages-count">0</span>)</h4>
+            <ul class="item-list" id="pages-list"></ul>
+          </div>
+          <div class="info-block">
+            <h4>Routes d'API (<span id="apis-count">0</span>)</h4>
+            <ul class="item-list" id="apis-list"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUBSYSTEMS = {
+      academics: {
+        title: "ACADEMICS",
+        desc: "Années scolaires, filières marocaines, classes, sections, registre des salles et solveur d'emplois du temps.",
+        pages: [
+          "/dashboard/academics",
+          "/dashboard/academics/classes",
+          "/dashboard/academics/sections",
+          "/dashboard/academics/schedule",
+          "/dashboard/academics/rooms",
+          "/dashboard/academics/streams",
+          "/dashboard/academics/conflicts",
+          "/dashboard/academics/subjects",
+          "/dashboard/academics/syllabus"
+        ],
+        apis: [
+          "GET /api/academics/academic-years",
+          "GET|POST /api/academics/classes",
+          "GET|POST /api/academics/class-sections",
+          "GET|POST /api/academics/timetable-slots",
+          "GET /api/academics/timetable-conflicts",
+          "POST /api/academics/timetable-versions/publish"
+        ]
+      },
+      assessment: {
+        title: "ASSESSMENT & GRADES",
+        desc: "Barème national marocain sur 20, coefficients par filière, grille de notation live et devoirs.",
+        pages: [
+          "/dashboard/academics/assessment/marksheet",
+          "/dashboard/academics/assessment/exam-master",
+          "/dashboard/academics/assessment/homework",
+          "/dashboard/academics/assessment/online-exams"
+        ],
+        apis: [
+          "GET|POST /api/academics/exam-terms",
+          "GET|POST /api/academics/exam-terms/[id]/marksheet",
+          "GET /api/academics/exam-terms/[id]/rankings",
+          "POST /api/academics/homework/[id]/grade"
+        ]
+      },
+      students: {
+        title: "STUDENTS & ADMISSIONS",
+        desc: "Cycle de vie élève, matricules automatiques, import Excel de masse, promotions et dossiers CNDP.",
+        pages: [
+          "/dashboard/students",
+          "/dashboard/students/add",
+          "/dashboard/students/import",
+          "/dashboard/students/matricules",
+          "/dashboard/students/promotions",
+          "/dashboard/students/admissions"
+        ],
+        apis: [
+          "GET|POST /api/students",
+          "POST /api/students/import",
+          "GET|POST /api/students/matricules",
+          "POST /api/students/promotions"
+        ]
+      },
+      finance: {
+        title: "FINANCE & ACCOUNTING",
+        desc: "Facturation scolarité, caisse POS avec sessions, Plan Comptable Marocain, paiements CMI et Stripe.",
+        pages: [
+          "/dashboard/finance",
+          "/dashboard/finance/invoices",
+          "/dashboard/finance/payments",
+          "/dashboard/finance/collection-desk",
+          "/dashboard/finance/cashier-sessions",
+          "/dashboard/finance/accounting/journal"
+        ],
+        apis: [
+          "GET|POST /api/finance/invoices",
+          "GET|POST /api/finance/payments",
+          "GET|POST /api/finance/cashier-sessions",
+          "GET /api/finance/accounting/trial-balance"
+        ]
+      },
+      workforce: {
+        title: "WORKFORCE & MOROCCAN PAYROLL",
+        desc: "Pointeuse horaire, calcul CNSS avec plafond 6000 DH, AMO obligatoire et barèmes progressifs IR marocains.",
+        pages: [
+          "/dashboard/workforce",
+          "/dashboard/workforce/timeclock",
+          "/dashboard/workforce/payroll/runs",
+          "/dashboard/workforce/payroll/payslips"
+        ],
+        apis: [
+          "GET|POST /api/workforce/payroll/runs",
+          "POST /api/workforce/payroll/runs/[id]/calculate",
+          "POST /api/workforce/payroll/runs/[id]/lock"
+        ]
+      },
+      communication: {
+        title: "COMMUNICATION & BROADCAST",
+        desc: "Rappels absences/retards, passerelle SMS Direct (GSM-7), WhatsApp Multi-Session isolée et moteur Anti-Ban Meta.",
+        pages: [
+          "/dashboard/communication/reminders",
+          "/dashboard/broadcast/connections"
+        ],
+        apis: [
+          "GET|POST /api/communication/messages",
+          "GET /api/communication/balance",
+          "GET /api/addons/broadcast/waha/qr"
+        ]
+      }
+    };
+
+    const listEl = document.getElementById('subsystem-list');
+    let activeKey = 'academics';
+
+    function renderSubsystems(filter = '') {
+      listEl.innerHTML = '';
+      Object.entries(SUBSYSTEMS).forEach(([key, sub]) => {
+        if (filter && !sub.title.toLowerCase().includes(filter.toLowerCase()) && !sub.desc.toLowerCase().includes(filter.toLowerCase())) {
+          return;
+        }
+        const btn = document.createElement('button');
+        btn.className = `subsystem-btn ${key === activeKey ? 'active' : ''}`;
+        btn.innerHTML = `<span>${sub.title}</span><span style="font-size:0.75rem; opacity:0.7;">${sub.pages.length}p</span>`;
+        btn.onclick = () => {
+          activeKey = key;
+          renderSubsystems(filter);
+          renderDetails(key);
+        };
+        listEl.appendChild(btn);
+      });
+    }
+
+    function renderDetails(key) {
+      const sub = SUBSYSTEMS[key] || SUBSYSTEMS['academics'];
+      document.getElementById('module-title').innerText = sub.title;
+      document.getElementById('module-desc').innerText = sub.desc;
+      document.getElementById('pages-count').innerText = sub.pages.length;
+      document.getElementById('apis-count').innerText = sub.apis.length;
+
+      const pList = document.getElementById('pages-list');
+      pList.innerHTML = sub.pages.map(p => `<li>${p}</li>`).join('');
+
+      const aList = document.getElementById('apis-list');
+      aList.innerHTML = sub.apis.map(a => `<li>${a}</li>`).join('');
+    }
+
+    document.getElementById('search').addEventListener('input', (e) => {
+      renderSubsystems(e.target.value);
+    });
+
+    renderSubsystems();
+    renderDetails('academics');
+  </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{
+  "text": "Espace de configuration système\n\nAccès centralisé à l'ensemble des modules d'administration et politiques de votre établissement.\n\nModules de configuration\n\n9 / 17\n\n8 module(s) à configurer\n\nStatut de conformité\n\n100%\n\nPCG 2026 & CNDP conformes\n\nDernière modification\n\nil y a 1 heure\n\nPar Yassine El Amrani\n\nÉtablissement actif\n\nGroupe Scolaire Atlas\n\nCasablanca · ICE ICE-001234567\n\nToutes les catégories\nGénéral & Identité\nSécurité & Accès\nFinance & Comptabilité\nAcadémique & Politiques\nIntégrations & SMS\nSystème & Infrastructure\nConfiguré\nOrganisation & Identité\n\nRaison sociale, identifiants fiscaux (ICE/IF), logo, coordonnées et branding officiel.\n\nAccéder au module\nConfiguré\nUtilisateurs, Rôles & Accès\n\nGestion des comptes staff/enseignants, rôles RBAC et périmètres d'accès multi-sites.\n\nAccéder au module\nÀ configurer\nSécurité, Sessions & 2FA\n\nAuthentification à deux facteurs, sessions actives, politiques de mots de passe et trusted devices.\n\nAccéder au module\nÀ configurer\nJournal de connexion\n\nHistorique des tentatives d'authentification email/mot de passe — réussites, échecs, adresse IP et appareil.\n\nAccéder au module\nÀ configurer\nConnexions & Fournisseurs\n\nPasserelles SMS Orange/SMS.ma, SMTP Email, S3 Storage et webhooks d'intégration.\n\nAccéder au module\nConfiguré\nComptabilité & Liaisons PCG\n\nMapping du Plan Comptable Général Marocain (PCG 2026), devises, journaux et TVA (20%).\n\nAccéder au module\nConfiguré\nCentre de Migration Fichiers\n\nImportation des élèves/tuteurs, cartographie des champs Excel et validation de cohérence.\n\nAccéder au module\nConfiguré\nPrésences & Absences\n\nMinutes de grâce, heure de référence du scan, seuils de signalement et alertes SMS aux tuteurs.\n\nAccéder au module\nConfiguré\nPolitiques Académiques & Portails\n\nRègles d'évaluation, seuils de présence, portails parents/élèves et accès tuteurs.\n\nAccéder au module\nConfiguré\nCatalogue des Modules & Licences\n\nGestion des add-ons souscrits, quotas élèves/staff et mises à niveau de l'abonnement.\n\nAccéder au module\nÀ configurer\nApprobation des paramètres\n\nPropositions de modification avec séparation des tâches : l'auteur propose, un second administrateur valide.\n\nAccéder au module\nConfiguré\nSéries de numérotation\n\nSéquences de numérotation pour documents (factures, matricules) : préfixe, suffixe, remplissage et pas.\n\nAccéder au module\nÀ configurer\nModèles de documents\n\nConcevez et publiez les modèles de certificats, bulletins et cartes.\n\nAccéder au module\nÀ configurer\nChamps personnalisés\n\nAttributs sur mesure pour élèves, tuteurs et employés : texte, nombre, date, liste et booléen.\n\nAccéder au module\nÀ configurer\nTâches automatisées\n\nExécutions périodiques (purge des sessions expirées) avec historique des exécutions et activation à la demande.\n\nAccéder au module\nÀ configurer\nAnnexes & Multi-Sites\n\nGestion des campus (Casablanca, Rabat, Marrakech) et périmètres géographiques.\n\nAccéder au module\nConfiguré\nConformité CNDP & Données\n\nRegistre CNDP Loi 09-08, consentement RGPD/CNDP et purges RGPD des données.\n\nAccéder au module\nModifications Récentes des Paramètres\nVoir le journal complet\nYE\n\nYassine El Amrani a modifié\n\nil y a 1 heure\n\nAudité\nYE\n\nYassine El Amrani a modifié\n\nil y a 11 heures\n\nAudité\nYE\n\nYassine El Amrani a modifié\n\nil y a 17 heures\n\nAudité\nYE\n\nYassine El Amrani a modifié\n\nil y a 17 heures\n\nAudité\nYE\n\nYassine El Amrani a modifié\n\nil y a 17 heures\n\nAudité",
+  "providerHref": "/fr/dashboard/broadcast/connections",
+  "missingKeys": [],
+  "dir": "ltr",
+  "overflowX": 0,
+  "hasTranslationsCard": false,
+  "hasJobsCard": false,
+  "hasNumberingCard": true,
+  "status": 200,
+  "consoleErrors": [
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537"
+  ],
+  "missingMessage": [
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (http://localhost:3537"
+  ],
+  "api5xx": []
+}

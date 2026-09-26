@@ -1,8 +1,22 @@
 # `/dashboard/settings/policies`
+<!-- swept: 2026-09-26 claude-scf-3 | school_admin on :3537: 307 to /dashboard/academics/grading/policies (final URL verified) -->
 
 **Status: NEEDS FIX (P1)** · Module: `settings` · Source: [`src/app/[locale]/(dashboard)/dashboard/settings/policies/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/settings/policies/page.tsx>)
 
-**Progress (2026-09-25):** S-32 PARTIAL
+**Progress (2026-09-26):** S-32 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

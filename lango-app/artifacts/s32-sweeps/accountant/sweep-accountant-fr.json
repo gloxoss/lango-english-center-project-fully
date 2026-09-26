@@ -1,0 +1,897 @@
+[
+  {
+    "route": "/dashboard/academics/assessment/exam-master",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__assessment__exam-master.png"
+  },
+  {
+    "route": "/dashboard/academics/assessment/homework",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__assessment__homework.png"
+  },
+  {
+    "route": "/dashboard/academics/assessment/online-exams",
+    "finalPath": "/fr/dashboard/finance",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 320,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__assessment__online-exams.png"
+  },
+  {
+    "route": "/dashboard/academics/assignments",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__assignments.png"
+  },
+  {
+    "route": "/dashboard/academics/classes",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__classes.png"
+  },
+  {
+    "route": "/dashboard/academics/class-section-teachers",
+    "finalPath": "/fr/dashboard/academics/class-section-teachers",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 36,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__class-section-teachers.png"
+  },
+  {
+    "route": "/dashboard/academics/class-subjects",
+    "finalPath": "/fr/dashboard/academics/class-subjects",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 36,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__class-subjects.png"
+  },
+  {
+    "route": "/dashboard/academics/conflicts",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__conflicts.png"
+  },
+  {
+    "route": "/dashboard/academics/mediums",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__mediums.png"
+  },
+  {
+    "route": "/dashboard/academics/optional-subjects",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__optional-subjects.png"
+  },
+  {
+    "route": "/dashboard/academics/question-bank",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__question-bank.png"
+  },
+  {
+    "route": "/dashboard/academics/readiness",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__readiness.png"
+  },
+  {
+    "route": "/dashboard/academics/schedule",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__schedule.png"
+  },
+  {
+    "route": "/dashboard/academics/sections",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__sections.png"
+  },
+  {
+    "route": "/dashboard/academics/semesters",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__semesters.png"
+  },
+  {
+    "route": "/dashboard/academics/shifts",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__shifts.png"
+  },
+  {
+    "route": "/dashboard/academics/streams",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__streams.png"
+  },
+  {
+    "route": "/dashboard/academics/subjects",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-academics__subjects.png"
+  },
+  {
+    "route": "/dashboard/analytics",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-analytics.png"
+  },
+  {
+    "route": "/dashboard/attendance/badges",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-attendance__badges.png"
+  },
+  {
+    "route": "/dashboard/attendance/excuses",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-attendance__excuses.png"
+  },
+  {
+    "route": "/dashboard/attendance/flags",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-attendance__flags.png"
+  },
+  {
+    "route": "/dashboard/broadcast/automations",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-broadcast__automations.png"
+  },
+  {
+    "route": "/dashboard/broadcast/connections",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-broadcast__connections.png"
+  },
+  {
+    "route": "/dashboard/broadcast/segments",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-broadcast__segments.png"
+  },
+  {
+    "route": "/dashboard/broadcast/templates",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-broadcast__templates.png"
+  },
+  {
+    "route": "/dashboard/certificates/requests",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-certificates__requests.png"
+  },
+  {
+    "route": "/dashboard/communication/reminders",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-communication__reminders.png"
+  },
+  {
+    "route": "/dashboard/communication/templates",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentHome` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (htt",
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentAttendance` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotif",
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentFinance` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (",
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentMessages` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify ",
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentRequests` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify ",
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentSettings` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify "
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-communication__templates.png"
+  },
+  {
+    "route": "/dashboard/content/library",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-content__library.png"
+  },
+  {
+    "route": "/dashboard/documents/generator",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-documents__generator.png"
+  },
+  {
+    "route": "/dashboard/finance/allocation",
+    "finalPath": "/fr/dashboard/finance/allocation",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 554,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__allocation.png"
+  },
+  {
+    "route": "/dashboard/finance/allocations",
+    "finalPath": "/fr/dashboard/finance/allocations",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 222,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__allocations.png"
+  },
+  {
+    "route": "/dashboard/finance/approvals",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__approvals.png"
+  },
+  {
+    "route": "/dashboard/finance/collection-desk",
+    "finalPath": "/fr/dashboard/finance/collection-desk",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 214,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__collection-desk.png"
+  },
+  {
+    "route": "/dashboard/finance/credit-notes",
+    "finalPath": "/fr/dashboard/finance/credit-notes",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 234,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__credit-notes.png"
+  },
+  {
+    "route": "/dashboard/finance/fee-assignments",
+    "finalPath": "/fr/dashboard/finance/fee-assignments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 200,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__fee-assignments.png"
+  },
+  {
+    "route": "/dashboard/finance/fee-structures",
+    "finalPath": "/fr/dashboard/finance/fee-structures",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 238,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__fee-structures.png"
+  },
+  {
+    "route": "/dashboard/finance/fee-types",
+    "finalPath": "/fr/dashboard/finance/fee-types",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 308,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__fee-types.png"
+  },
+  {
+    "route": "/dashboard/finance/fine-policies",
+    "finalPath": "/fr/dashboard/finance/fine-policies",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 563,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__fine-policies.png"
+  },
+  {
+    "route": "/dashboard/finance/payments/new",
+    "finalPath": "/fr/dashboard/finance/collection-desk",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 214,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__payments__new.png"
+  },
+  {
+    "route": "/dashboard/finance/refunds",
+    "finalPath": "/fr/dashboard/finance/refunds",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 259,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__refunds.png"
+  },
+  {
+    "route": "/dashboard/finance/statements",
+    "finalPath": "/fr/dashboard/finance/statements",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 179,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-finance__statements.png"
+  },
+  {
+    "route": "/dashboard/hostel/allocations",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__allocations.png"
+  },
+  {
+    "route": "/dashboard/hostel/applications",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__applications.png"
+  },
+  {
+    "route": "/dashboard/hostel/board",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__board.png"
+  },
+  {
+    "route": "/dashboard/hostel/categories",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__categories.png"
+  },
+  {
+    "route": "/dashboard/hostel/hostels",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__hostels.png"
+  },
+  {
+    "route": "/dashboard/hostel/roll-call",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__roll-call.png"
+  },
+  {
+    "route": "/dashboard/hostel/rooms",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__rooms.png"
+  },
+  {
+    "route": "/dashboard/hostel/zones",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-hostel__zones.png"
+  },
+  {
+    "route": "/dashboard/hr",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-hr.png"
+  },
+  {
+    "route": "/dashboard/hr/employees",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-hr__employees.png"
+  },
+  {
+    "route": "/dashboard/hr/employees/new",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-hr__employees__new.png"
+  },
+  {
+    "route": "/dashboard/hr/overview",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-hr__overview.png"
+  },
+  {
+    "route": "/dashboard/inventory/adjustments",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-inventory__adjustments.png"
+  },
+  {
+    "route": "/dashboard/inventory/issues",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-inventory__issues.png"
+  },
+  {
+    "route": "/dashboard/inventory/products",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-inventory__products.png"
+  },
+  {
+    "route": "/dashboard/inventory/purchases",
+    "finalPath": "/fr/dashboard/inventory/purchases",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 355,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-inventory__purchases.png"
+  },
+  {
+    "route": "/dashboard/inventory/sales",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-inventory__sales.png"
+  },
+  {
+    "route": "/dashboard/inventory/transfers",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-inventory__transfers.png"
+  },
+  {
+    "route": "/dashboard/settings",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings.png"
+  },
+  {
+    "route": "/dashboard/settings/accounting-defaults",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__accounting-defaults.png"
+  },
+  {
+    "route": "/dashboard/settings/cndp",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__cndp.png"
+  },
+  {
+    "route": "/dashboard/settings/custom-fields",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__custom-fields.png"
+  },
+  {
+    "route": "/dashboard/settings/drafts",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__drafts.png"
+  },
+  {
+    "route": "/dashboard/settings/exports",
+    "finalPath": "/fr/dashboard/settings/exports",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 205,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__exports.png"
+  },
+  {
+    "route": "/dashboard/settings/jobs",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__jobs.png"
+  },
+  {
+    "route": "/dashboard/settings/migration",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__migration.png"
+  },
+  {
+    "route": "/dashboard/settings/notifications",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__notifications.png"
+  },
+  {
+    "route": "/dashboard/settings/numbering",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__numbering.png"
+  },
+  {
+    "route": "/dashboard/settings/policies",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__policies.png"
+  },
+  {
+    "route": "/dashboard/settings/providers",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__providers.png"
+  },
+  {
+    "route": "/dashboard/settings/scheduled-jobs",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__scheduled-jobs.png"
+  },
+  {
+    "route": "/dashboard/settings/subscription",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__subscription.png"
+  },
+  {
+    "route": "/dashboard/settings/translations",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__translations.png"
+  },
+  {
+    "route": "/dashboard/settings/values",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-settings__values.png"
+  },
+  {
+    "route": "/dashboard/students/admissions",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-students__admissions.png"
+  },
+  {
+    "route": "/dashboard/students/alumni",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-students__alumni.png"
+  },
+  {
+    "route": "/dashboard/students/alumni/events",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-students__alumni__events.png"
+  },
+  {
+    "route": "/dashboard/students/alumni/requests",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-students__alumni__requests.png"
+  },
+  {
+    "route": "/dashboard/students/matricules",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-students__matricules.png"
+  },
+  {
+    "route": "/dashboard/students/photos",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-students__photos.png"
+  },
+  {
+    "route": "/dashboard/students/promotions",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 176,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-students__promotions.png"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/assignments",
+    "finalPath": "/fr/dashboard/workforce/payroll/assignments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 194,
+    "failures": [
+      "403 /api/workforce/payroll/config"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-workforce__payroll__assignments.png"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/components",
+    "finalPath": "/fr/dashboard/workforce/payroll/components",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 208,
+    "failures": [
+      "403 /api/workforce/payroll/config"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-workforce__payroll__components.png"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/payments",
+    "finalPath": "/fr/dashboard/workforce/payroll/payments",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 178,
+    "failures": [
+      "403 /api/workforce/payroll/payments"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-workforce__payroll__payments.png"
+  },
+  {
+    "route": "/dashboard/workforce/timeclock",
+    "finalPath": "/fr/dashboard/workforce/timeclock",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 219,
+    "failures": [
+      "403 /api/workforce/punches"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-workforce__timeclock.png"
+  }
+]

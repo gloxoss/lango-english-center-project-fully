@@ -1,0 +1,50 @@
+[
+  {
+    "route": "/dashboard/finance/collection-desk",
+    "finalPath": "/fr/dashboard/finance/collection-desk",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 214,
+    "failures": [
+      "403 /api/settings/cndp-filing"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__collection-desk.png"
+  },
+  {
+    "route": "/dashboard/finance/fee-structures",
+    "finalPath": "/fr/dashboard/finance/fee-structures",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 238,
+    "failures": [
+      "403 /api/settings/cndp-filing"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__fee-structures.png"
+  },
+  {
+    "route": "/dashboard/finance/payments",
+    "finalPath": "/fr/dashboard/finance/collection-desk",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 214,
+    "failures": [
+      "403 /api/settings/cndp-filing"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__payments.png"
+  },
+  {
+    "route": "/dashboard/finance/payments/new",
+    "finalPath": "/fr/dashboard/finance/collection-desk",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 214,
+    "failures": [
+      "403 /api/settings/cndp-filing"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-finance__payments__new.png"
+  }
+]

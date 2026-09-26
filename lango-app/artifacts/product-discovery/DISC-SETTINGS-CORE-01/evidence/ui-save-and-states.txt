@@ -1,0 +1,14 @@
+{"name":"onboarding","button":true,"status":200,"body":"{\"success\":true,\"data\":{\"id\":\"9d568204-3586-47ca-92b1-787d81e57141\",\"tenantId\":\"9c496194-2fcc-41f3-ad8a-fd728850f168\",\"establishmentName\":\"Groupe Scolaire Atlas\",\"shortName\":\"Atlas\",\"city\":\"Casablanca\",\"address\":\"12, Avenue Mohammed V\",\"phone\":\"+212522000000\",","toast":""}
+{"name":"policies","button":true,"status":"no request","body":"","toast":"Aucune modification à enregistrer. | "}
+{"name":"grading-policies","button":true,"status":200,"body":"{\"success\":true,\"data\":{\"passingScore\":10,\"eliminatoryScore\":5,\"rules\":[{\"name\":\"Examen Final de Semestre (Devoir Synthèse)\",\"weight\":50,\"description\":\"Épreuve écrite nationale / régionale sur table\"},{\"name\":\"Contrôles Continus (CC1 & CC2)\",\"weight\":30,\"descr","toast":""}
+academic-year-add-modal captured
+academic-year-add-validation action failed locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole
+academic-year-add-validation captured
+semester-add-modal captured
+numbering-create-empty-validation captured
+custom-field-type-dropdown captured
+grading-coefficients-tab captured
+entitlements-request-modal captured
+security-page captured

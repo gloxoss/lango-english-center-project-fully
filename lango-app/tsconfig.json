@@ -106,6 +106,18 @@
     ".next-codex-2d/types/**/*.ts",
     ".next-codex-2d/dev/types/**/*.ts",
     ".next-claude-finance/types/**/*.ts",
-    ".next-claude-finance/dev/types/**/*.ts"
+    ".next-claude-finance/dev/types/**/*.ts",
+    ".next-claude-bs/types/**/*.ts",
+    ".next-claude-bs/dev/types/**/*.ts",
+    ".next-scf1/types/**/*.ts",
+    ".next-scf1/dev/types/**/*.ts",
+    ".next-scf2/types/**/*.ts",
+    ".next-scf2/dev/types/**/*.ts",
+    ".next-3465/types/**/*.ts",
+    ".next-3465/dev/types/**/*.ts",
+    ".next-bs2/types/**/*.ts",
+    ".next-bs2/dev/types/**/*.ts",
+    ".next-scf3/types/**/*.ts",
+    ".next-scf3/dev/types/**/*.ts"
   ]
 }

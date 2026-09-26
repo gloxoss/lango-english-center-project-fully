@@ -1,0 +1,1158 @@
+diff --git a/lango-app/src/features/attendance/ui/attendance-scanner-playground.tsx b/lango-app/src/features/attendance/ui/attendance-scanner-playground.tsx
+index 91de9f17..6dbfff3e 100644
+--- a/lango-app/src/features/attendance/ui/attendance-scanner-playground.tsx
++++ b/lango-app/src/features/attendance/ui/attendance-scanner-playground.tsx
+@@ -10,10 +10,9 @@ import { Input } from '@/components/ui/input';
+ import { casablancaTodayIso } from '@/libs/finance/today';
+ import {
+   ScanLine, CheckCircle2, AlertCircle, XCircle, ShieldCheck, User,
+-  History, Play, Square, Volume2, VolumeX, Smartphone, Monitor,
+-  Camera, CameraOff, RefreshCw, Keyboard, Clock, AlertTriangle,
+-  QrCode, Check, Bell, Flame, ShieldAlert, Sparkles, Send,
+-  ArrowRight, ExternalLink, Activity, Radio
++  Volume2, VolumeX, Camera, CameraOff, RefreshCw, Keyboard, Clock,
++  QrCode, Maximize, Minimize, Search, X, Check, ArrowRight,
++  ShieldAlert, Sparkles, Send, Activity, DoorOpen
+ } from 'lucide-react';
+ 
+ type ClassSectionOption = {
+@@ -31,10 +30,6 @@ type UnifiedScanEvent = {
+   studentName: string;
+   matricule: string;
+   className: string;
+-  // Truthfulness (audit pass 2): guardian data and SMS dispatch are shown
+-  // only when the API actually returns them. The scan APIs do not dispatch
+-  // SMS and return no guardian fields, so these stay null/false — the UI
+-  // shows "—" and "Notification non envoyée" instead of invented claims.
+   guardianName?: string | null;
+   guardianCin?: string | null;
+   smsDispatched?: boolean;
+@@ -106,16 +101,20 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+   const [cameraReady, setCameraReady] = useState(false);
+   const [cameraError, setCameraError] = useState<string | null>(null);
+   const [soundEnabled, setSoundEnabled] = useState(true);
++  const [isFullscreen, setIsFullscreen] = useState(false);
++
++  // Manual Modal (for students who forgot their badge)
++  const [manualModalOpen, setManualModalOpen] = useState(false);
++  const [manualSearchQuery, setManualSearchQuery] = useState('');
++  const [isProcessing, setIsProcessing] = useState(false);
++  const [manualError, setManualError] = useState<string | null>(null);
+ 
+   // Inputs
+   const [rawTokenInput, setRawTokenInput] = useState('');
+-  const [keypadInput, setKeypadInput] = useState('');
+-  const [isProcessing, setIsProcessing] = useState(false);
+ 
+   // Results & Feeds
+   const [lastScan, setLastScan] = useState<UnifiedScanEvent | null>(null);
+   const [events, setEvents] = useState<UnifiedScanEvent[]>([]);
+-  const [emergencyLockdown, setEmergencyLockdown] = useState(false);
+   const [onsiteHeadcount, setOnsiteHeadcount] = useState<OnsiteHeadcount | null>(null);
+   const [headcountError, setHeadcountError] = useState(false);
+ 
+@@ -125,6 +124,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+   const usbInputRef = useRef<HTMLInputElement>(null);
+   const lastScannedTokenRef = useRef<{ token: string; time: number } | null>(null);
+   const scanningLoopRef = useRef<boolean>(false);
++  const kioskContainerRef = useRef<HTMLDivElement>(null);
+ 
+   const [classRosterCount, setClassRosterCount] = useState<number | null>(null);
+ 
+@@ -137,7 +137,6 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+       .then(json => {
+         if (json.success && Array.isArray(json.data)) {
+           setSections(json.data);
+-          setSelectedSectionId(prev => prev || json.data[0]?.id || '');
+         } else {
+           setSectionsError(json?.error?.message || 'Impossible de charger les classes.');
+         }
+@@ -150,29 +149,20 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+   }, [loadSections]);
+ 
+   // Fetch student roster size for selected class
+-  const [rosterError, setRosterError] = useState<string | null>(null);
+-  const [rosterRetry, setRosterRetry] = useState(0);
+   useEffect(() => {
+     if (!selectedSectionId) {
+       setClassRosterCount(null);
+       return;
+     }
+-    setRosterError(null);
+     fetch(`/api/students?classSectionId=${selectedSectionId}`)
+       .then(res => res.json())
+       .then(json => {
+         if (json.success && Array.isArray(json.data)) {
+-          // The authoritative roster size is the API's `total` (all students in
+-          // the section), NOT the fetched page length — the call is paginated
+-          // and data.length would cap the meter at one page
+-          // (audit 2026-09-22, P1-4).
+           setClassRosterCount(typeof json.total === 'number' ? json.total : json.data.length);
+-        } else {
+-          setRosterError(json?.error?.message || 'Impossible de charger l\'effectif de la classe.');
+         }
+       })
+-      .catch(() => setRosterError('Erreur réseau : impossible de charger l\'effectif.'));
+-  }, [selectedSectionId, rosterRetry]);
++      .catch(() => {});
++  }, [selectedSectionId]);
+ 
+   // Fetch Initial Event History
+   const fetchRecentEvents = useCallback(async () => {
+@@ -183,7 +173,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+       const res = await fetch(endpoint);
+       const json = await res.json();
+       if (json.success && Array.isArray(json.data)) {
+-        const mapped: UnifiedScanEvent[] = json.data.slice(0, 30).map((item: any) => ({
++        const mapped: UnifiedScanEvent[] = json.data.slice(0, 20).map((item: any) => ({
+           id: item.id || `ev-${Math.random()}`,
+           scannedAt: item.scannedAt
+             ? new Date(item.scannedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+@@ -259,15 +249,15 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+   }, [closeCurrentSession]);
+ 
+   // Start Scanner Session
+-  const handleStartSession = async () => {
+-    if (!selectedSectionId) return;
++  const handleStartSession = async (sectionId: string) => {
++    if (!sectionId) return;
+     try {
+       setSessionStarting(true);
+       setSessionError(null);
+       const res = await fetch('/api/attendance/qr/scanner-sessions', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+-        body: JSON.stringify({ classSectionId: selectedSectionId }),
++        body: JSON.stringify({ classSectionId: sectionId }),
+       });
+       const json = await res.json();
+       if (!res.ok || !json.success) {
+@@ -330,7 +320,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+           stagedStatus,
+           studentName: json.data?.student?.name || 'Élève reconnu',
+           matricule: json.data?.student?.matricule || '—',
+-          className: sections.find(s => s.id === selectedSectionId)?.className || '—',
++          className: sections.find(s => s.id === selectedSectionId)?.className || json.data?.className || '—',
+           guardianName: json.data?.guardian?.name ?? null,
+           guardianCin: json.data?.guardian?.cin ?? null,
+           smsDispatched: Boolean(json.data?.smsDispatched),
+@@ -347,9 +337,9 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+           scannedAt: timeStr,
+           resultStatus: 'rejected',
+           rejectionReason: errorMsg,
+-          studentName: 'Badge Invalide / Inconnu',
+-          matricule: 'NON-RECONNU',
+-          className: 'Accès restreint',
++          studentName: 'Badge Non Reconnu',
++          matricule: 'NON-VALIDE',
++          className: 'Accès refusé',
+           smsDispatched: false,
+         };
+         setLastScan(rejectedEv);
+@@ -458,12 +448,28 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+     };
+   }, [scanMode, cameraActive, startCamera, stopCamera]);
+ 
+-  // Handle Manual Matricule / Keypad Submission (Fallback when student forgot badge)
+-  const handleManualMatriculeSubmit = async (codeToSearch?: string) => {
+-    const term = (codeToSearch || keypadInput || rawTokenInput).trim();
++  // Fullscreen toggle
++  const toggleFullscreen = () => {
++    if (!document.fullscreenElement) {
++      kioskContainerRef.current?.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
++    } else {
++      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
++    }
++  };
++
++  useEffect(() => {
++    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
++    document.addEventListener('fullscreenchange', handleFsChange);
++    return () => document.removeEventListener('fullscreenchange', handleFsChange);
++  }, []);
++
++  // Handle Manual Matricule / Search Submission (Modal fallback)
++  const handleManualSubmit = async () => {
++    const term = manualSearchQuery.trim();
+     if (!term || isProcessing) return;
+ 
+     setIsProcessing(true);
++    setManualError(null);
+     const timeStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+ 
+     try {
+@@ -474,18 +480,27 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+       if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+         const student = json.data[0];
+ 
+-        // 2. Register direct attendance in database
++        // 2. Direct attendance write via canonical batch API
+         const todayStr = casablancaTodayIso();
++        const targetSectionId = student.classSectionId || selectedSectionId;
++
++        if (!targetSectionId) {
++          throw new Error('Section de classe introuvable pour cet élève.');
++        }
++
+         const attendanceResponse = await fetch('/api/attendance', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+             date: todayStr,
++            studentGroupId: targetSectionId,
+             records: [{ studentId: student.id, status: 'present' }],
+           }),
+         });
+-        if (!attendanceResponse.ok || !(await attendanceResponse.json()).success) {
+-          throw new Error('Attendance registration failed');
++
++        const attJson = await attendanceResponse.json();
++        if (!attendanceResponse.ok || !attJson.success) {
++          throw new Error(attJson.error?.message || 'Erreur lors de l\'enregistrement de la présence.');
+         }
+ 
+         const registeredEv: UnifiedScanEvent = {
+@@ -504,16 +519,17 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+         setLastScan(registeredEv);
+         setEvents(prev => [registeredEv, ...prev]);
+         fetchOnsiteHeadcount();
+-        setKeypadInput('');
+-        setRawTokenInput('');
++        setManualSearchQuery('');
++        setManualModalOpen(false);
+         if (soundEnabled) playBeep('accepted');
+       } else {
+         // Try fallback directly as QR token
+         await processToken(term);
+-        setKeypadInput('');
+-        setRawTokenInput('');
++        setManualSearchQuery('');
++        setManualModalOpen(false);
+       }
+-    } catch {
++    } catch (err: any) {
++      setManualError(err?.message || 'Élève non trouvé.');
+       if (soundEnabled) playBeep('rejected');
+     } finally {
+       setIsProcessing(false);
+@@ -527,231 +543,121 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+   const totalScans = events.length;
+ 
+   return (
+-    <div className="space-y-6 max-w-[1400px] mx-auto pb-16">
+-      {/* Quick Ecosystem Switcher */}
+-      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+-        <Link
+-          href={`/${locale}/dashboard/attendance`}
+-          className="px-3.5 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-colors shrink-0 flex items-center gap-1.5 shadow-2xs"
+-        >
+-          <Activity className="w-3.5 h-3.5 text-[#2487B8]" />
+-          Feuille d'Appel
+-        </Link>
+-        <Link
+-          href={`/${locale}/dashboard/attendance/badges`}
+-          className="px-3.5 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-colors shrink-0 flex items-center gap-1.5 shadow-2xs"
+-        >
+-          <QrCode className="w-3.5 h-3.5 text-[#0EA5C4]" />
+-          Badges QR
+-        </Link>
+-        <Link
+-          href={`/${locale}/dashboard/attendance/qr-reports`}
+-          className="px-3.5 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-colors shrink-0 flex items-center gap-1.5 shadow-2xs"
+-        >
+-          <History className="w-3.5 h-3.5 text-slate-500" />
+-          Audit & Rapports
+-        </Link>
+-        <Link
+-          href={`/${locale}/dashboard/workforce/timeclock`}
+-          className="px-3.5 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition-colors shrink-0 flex items-center gap-1.5 shadow-2xs"
+-        >
+-          <Clock className="w-3.5 h-3.5 text-amber-500" />
+-          Pointeuse Staff
+-        </Link>
+-      </div>
+-
+-      {/* Top Station Header & Hardware Control Strip */}
+-      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-sm">
+-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+-          <div className="flex items-center gap-4">
+-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0EA5C4] to-[#2487B8] flex items-center justify-center text-white shadow-md shrink-0">
+-              <ScanLine className="w-6 h-6" />
+-            </div>
+-            <div>
+-              <div className="flex items-center gap-2 flex-wrap">
+-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#0EA5C4]/15 text-[#0EA5C4] border border-[#0EA5C4]/30">
+-                  <ShieldCheck className="w-3.5 h-3.5" /> Station de Scan Unifiée
+-                </span>
+-                <span className="text-xs font-semibold text-slate-400">Caméra WebRTC + Douchette USB + Saisie Tactile</span>
+-              </div>
+-              <h1 className="text-xl sm:text-2xl font-black text-[#16212B] tracking-tight mt-1">
+-                {t('scannerKioskTitle')}
++    <div
++      ref={kioskContainerRef}
++      className={`max-w-[1300px] mx-auto space-y-6 ${isFullscreen ? 'p-6 bg-slate-900 min-h-screen text-white' : ''}`}
++    >
++      {/* Top Header Bar: Clean, distraction-free & minimalist */}
++      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200/80 rounded-2xl p-4 sm:px-6 shadow-xs">
++        <div className="flex items-center gap-3.5">
++          <div className="w-10 h-10 rounded-xl bg-[#2487B8]/10 text-[#2487B8] flex items-center justify-center shrink-0">
++            <ScanLine className="w-5 h-5" />
++          </div>
++          <div>
++            <div className="flex items-center gap-2">
++              <h1 className="text-lg font-bold text-slate-900 tracking-tight">
++                Borne de Pointage
+               </h1>
+-              <p className="text-xs text-slate-500 font-medium">
+-                Borne unique de pointage des badges QR, vérification d'identité et appel en temps réel.
+-              </p>
++              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
++                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
++                {scanMode === 'camera' ? (cameraReady ? 'Prêt pour le scan' : 'Connexion caméra...') : 'Douchette active'}
++              </span>
+             </div>
++            <p className="text-xs text-slate-500">
++              Scannez le badge élève à l'entrée de l'établissement
++            </p>
+           </div>
++        </div>
+ 
+-          {/* Quick Hardware Controls & Audio Toggle */}
+-          <div className="flex items-center gap-2.5 flex-wrap">
+-            {/* Capture Mode Pill */}
+-            <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200/80 text-xs font-bold">
+-              <button
+-                type="button"
+-                onClick={() => setScanMode('camera')}
+-                className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+-                  scanMode === 'camera' ? 'bg-white text-[#2487B8] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+-                }`}
+-              >
+-                <Camera className="w-3.5 h-3.5" />
+-                <span>Caméra Vidéo</span>
+-              </button>
+-              <button
+-                type="button"
+-                onClick={() => setScanMode('usb')}
+-                className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
+-                  scanMode === 'usb' ? 'bg-white text-[#2487B8] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+-                }`}
+-              >
+-                <Keyboard className="w-3.5 h-3.5" />
+-                <span>Douchette USB</span>
+-              </button>
+-            </div>
++        {/* Right Action Tools: Scope selector + Clean Controls */}
++        <div className="flex items-center gap-2.5 flex-wrap">
++          {/* Section/Portique Selector */}
++          <div className="relative">
++            <select
++              id="sectionPortiqueSelect"
++              name="sectionPortiqueSelect"
++              aria-label="Sélectionner le portique ou la classe"
++              value={selectedSectionId}
++              onChange={e => {
++                const newId = e.target.value;
++                setSelectedSectionId(newId);
++                if (sessionId) {
++                  handleEndSession();
++                }
++                if (newId) {
++                  handleStartSession(newId);
++                }
++              }}
++              className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-medium text-slate-700 outline-none focus:ring-1 focus:ring-[#2487B8]"
++            >
++              <option value="">Portique Général (Tous les élèves)</option>
++              {sections.map(sec => (
++                <option key={sec.id} value={sec.id}>
++                  {sec.className} — {sec.sectionName}
++                </option>
++              ))}
++            </select>
++          </div>
+ 
+-            {/* Sound Toggle */}
++          {/* Mode Switcher Pill */}
++          <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/80 text-xs">
+             <button
+               type="button"
+-              onClick={() => setSoundEnabled(!soundEnabled)}
+-              className={`p-2.5 rounded-2xl border transition-all cursor-pointer ${
+-                soundEnabled
+-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+-                  : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
++              onClick={() => setScanMode('camera')}
++              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 font-medium cursor-pointer ${
++                scanMode === 'camera' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'text-slate-600 hover:text-slate-900'
+               }`}
+-              title={soundEnabled ? 'Bip sonore actif' : 'Bip sonore en sourdine'}
+             >
+-              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
++              <Camera className="w-3.5 h-3.5" />
++              <span>Caméra</span>
+             </button>
+-          </div>
+-        </div>
+-
+-        {/* Academic Session Bar */}
+-        <div className="mt-5 pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+-          <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-3">
+-            <div className="sm:w-72">
+-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+-                Classe / Portique actif
+-              </label>
+-              <select
+-                value={selectedSectionId}
+-                disabled={!!sessionId}
+-                onChange={e => setSelectedSectionId(e.target.value)}
+-                className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-[#2487B8]"
+-              >
+-                <option value="">Sélectionnez une classe...</option>
+-                {sections.map(sec => (
+-                  <option key={sec.id} value={sec.id}>
+-                    {sec.className} — {sec.sectionName}
+-                  </option>
+-                ))}
+-              </select>
+-            </div>
+-
+-            <div className="pt-2 sm:pt-4">
+-              {sessionId ? (
+-                <Button
+-                  size="sm"
+-                  onClick={handleEndSession}
+-                  className="h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs gap-1.5 shadow-xs"
+-                >
+-                  <Square className="w-3.5 h-3.5" /> Clôturer la Session
+-                </Button>
+-              ) : (
+-                <Button
+-                  size="sm"
+-                  onClick={handleStartSession}
+-                  disabled={!selectedSectionId || sessionStarting}
+-                  className="h-9 px-4 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs gap-1.5 shadow-xs"
+-                >
+-                  <Play className="w-3.5 h-3.5" /> {sessionStarting ? 'Ouverture...' : 'Ouvrir la Session'}
+-                </Button>
+-              )}
+-            </div>
+-          </div>
+-
+-          <div className="flex items-center gap-3">
+-            <Badge className={`text-xs px-3 py-1 font-bold border-none ${
+-              sessionId ? 'bg-emerald-500/15 text-emerald-700' : 'bg-slate-100 text-slate-600'
+-            }`}>
+-              {sessionId ? '● Session Enregistrée en Base' : '○ Mode Libre / Portique'}
+-            </Badge>
+-          </div>
+-        </div>
+-
+-        {(sectionsError || rosterError) && (
+-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
+-            <span className="flex items-center gap-1.5">
+-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+-              {sectionsError ?? rosterError}
+-            </span>
+             <button
+               type="button"
+-              onClick={() => (sectionsError ? loadSections() : setRosterRetry(n => n + 1))}
+-              className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 font-bold text-amber-900 hover:bg-amber-50 transition-colors cursor-pointer"
++              onClick={() => setScanMode('usb')}
++              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 font-medium cursor-pointer ${
++                scanMode === 'usb' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'text-slate-600 hover:text-slate-900'
++              }`}
+             >
+-              Réessayer
++              <Keyboard className="w-3.5 h-3.5" />
++              <span>Douchette USB</span>
+             </button>
+           </div>
+-        )}
+ 
+-        {/* Dynamic Class Roll-Call Meter (When a class is selected) */}
+-        {classRosterCount !== null && classRosterCount > 0 && (
+-          <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
+-            <div className="flex justify-between text-xs font-bold">
+-              <span className="text-slate-600">Avancement de l'appel pour cette classe</span>
+-              <span className="text-[#2487B8]">
+-                {acceptedCount} / {classRosterCount} élèves scannés ({Math.min(100, Math.round((acceptedCount / classRosterCount) * 100))}%)
+-              </span>
+-            </div>
+-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
+-              <div
+-                className="h-full bg-gradient-to-r from-[#2487B8] to-[#0EA5C4] rounded-full transition-all duration-500"
+-                style={{ width: `${Math.min(100, Math.round((acceptedCount / classRosterCount) * 100))}%` }}
+-              />
+-            </div>
+-          </div>
+-        )}
+-
+-        {sessionError && (
+-          <p className="text-xs font-bold text-rose-600 mt-3 flex items-center gap-1.5">
+-            <AlertCircle className="w-4 h-4" /> {sessionError}
+-          </p>
+-        )}
++          {/* Audio Mute/Unmute */}
++          <button
++            type="button"
++            onClick={() => setSoundEnabled(!soundEnabled)}
++            className={`p-2 rounded-xl border transition-all cursor-pointer ${
++              soundEnabled
++                ? 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
++                : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
++            }`}
++            title={soundEnabled ? 'Son actif' : 'Son coupé'}
++            aria-label="Toggle Sound"
++          >
++            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
++          </button>
++
++          {/* Fullscreen Mode */}
++          <button
++            type="button"
++            onClick={toggleFullscreen}
++            className="p-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-all cursor-pointer"
++            title={isFullscreen ? 'Quitter plein écran' : 'Plein écran Kiosque'}
++            aria-label="Toggle Fullscreen"
++          >
++            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
++          </button>
++        </div>
+       </div>
+ 
+-      {/* Main Unified Split Grid */}
++      {/* Main Grid: Viewfinder on Left, Student Confirmation on Right */}
+       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+-        {/* LEFT COLUMN: LIVE SCANNER VIEWPORT & INSTANT RESULT CARD */}
+-        <div className="lg:col-span-7 space-y-6">
+-          {/* Active Scanner Viewport Card */}
+-          <Card className="p-6 bg-slate-950 text-white rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[460px]">
+-            {/* Viewport Header */}
+-            <div className="flex items-center justify-between z-10 mb-4">
+-              <div className="flex items-center gap-2">
+-                <span className={`w-2.5 h-2.5 rounded-full ${scanMode === 'camera' && !cameraReady ? 'bg-rose-500' : 'bg-emerald-500 animate-pulse'}`} />
+-                <span className={`font-mono text-xs font-bold uppercase tracking-wider ${scanMode === 'camera' && !cameraReady ? 'text-rose-300' : 'text-emerald-400'}`}>
+-                  {scanMode === 'camera' ? (cameraReady ? 'Viseur WebRTC actif' : 'Caméra indisponible') : 'Récepteur Douchette USB Prêt'}
+-                </span>
+-              </div>
+-
+-              {scanMode === 'camera' && (
+-                <div className="flex items-center gap-2">
+-                  <Button
+-                    variant="outline"
+-                    size="sm"
+-                    onClick={() => setCameraFacing(prev => (prev === 'environment' ? 'user' : 'environment'))}
+-                    className="h-8 text-xs rounded-xl bg-white/10 hover:bg-white/20 border-white/20 text-white gap-1.5 font-bold"
+-                  >
+-                    <RefreshCw className="w-3.5 h-3.5" />
+-                    {cameraFacing === 'environment' ? 'Caméra Arrière' : 'Caméra Avant'}
+-                  </Button>
+-                </div>
+-              )}
+-            </div>
+-
+-            {/* Viewport Center Surface */}
++        {/* LEFT COLUMN: The Clean Scanner Viewport */}
++        <div className="lg:col-span-6 space-y-4">
++          <div className="relative rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 shadow-xl flex flex-col justify-between aspect-4/3 min-h-[360px]">
+             {scanMode === 'camera' ? (
+-              <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-black/80 flex items-center justify-center border border-white/10">
++              <div className="relative w-full h-full flex items-center justify-center">
+                 <video
+                   ref={videoRef}
+                   playsInline
+@@ -759,51 +665,63 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+                   className="w-full h-full object-cover"
+                 />
+ 
+-                {/* Animated Targeting Overlay */}
++                {/* Minimalist Centered Target Reticle */}
+                 <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6">
+-                  <div className="relative w-64 h-64 border-2 border-[#0EA5C4]/60 rounded-3xl shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] flex items-center justify-center">
++                  <div className="relative w-56 h-56 border border-white/20 rounded-2xl shadow-[0_0_0_9999px_rgba(15,23,42,0.65)] flex items-center justify-center">
+                     {/* Corners */}
+-                    <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-[#0EA5C4] rounded-tl-xl" />
+-                    <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-[#0EA5C4] rounded-tr-xl" />
+-                    <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-[#0EA5C4] rounded-bl-xl" />
+-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-[#0EA5C4] rounded-br-xl" />
+-
+-                    {/* Animated Scanning Line */}
+-                    <div className="absolute inset-x-2 h-0.5 bg-gradient-to-r from-transparent via-[#0EA5C4] to-transparent shadow-[0_0_14px_#0EA5C4] animate-bounce" />
+-                    <QrCode className="w-20 h-20 text-white/15" />
++                    <div className="absolute -top-0.5 -left-0.5 w-5 h-5 border-t-2 border-l-2 border-[#2487B8] rounded-tl-lg" />
++                    <div className="absolute -top-0.5 -right-0.5 w-5 h-5 border-t-2 border-r-2 border-[#2487B8] rounded-tr-lg" />
++                    <div className="absolute -bottom-0.5 -left-0.5 w-5 h-5 border-b-2 border-l-2 border-[#2487B8] rounded-bl-lg" />
++                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 border-b-2 border-r-2 border-[#2487B8] rounded-br-lg" />
++
++                    {/* Clean Laser Scan Indicator */}
++                    <div className="absolute inset-x-3 h-0.5 bg-[#2487B8] shadow-[0_0_8px_#2487B8] opacity-75 animate-pulse" />
++                    <QrCode className="w-14 h-14 text-white/10" />
+                   </div>
+-                  <p className="mt-4 text-xs font-bold text-white/90 bg-black/70 px-3.5 py-1 rounded-full backdrop-blur-md border border-white/10">
+-                    Présentez le badge QR devant l'objectif
++                  <p className="mt-4 text-xs font-medium text-white/90 bg-slate-900/80 px-4 py-1.5 rounded-full backdrop-blur-md border border-white/10">
++                    Présentez le badge QR face à la caméra
+                   </p>
+                 </div>
+ 
++                {/* Camera Flip Button */}
++                <div className="absolute top-3 right-3 z-10">
++                  <button
++                    type="button"
++                    onClick={() => setCameraFacing(prev => (prev === 'environment' ? 'user' : 'environment'))}
++                    className="p-2 rounded-xl bg-slate-900/70 hover:bg-slate-900 text-white backdrop-blur-md border border-white/15 transition-all text-xs flex items-center gap-1.5 cursor-pointer"
++                    title="Basculer caméra"
++                  >
++                    <RefreshCw className="w-3.5 h-3.5" />
++                    <span className="text-[11px] font-medium hidden sm:inline">Inverser</span>
++                  </button>
++                </div>
++
+                 {cameraError && (
+-                  <div className="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center p-6 text-center text-white">
+-                    <CameraOff className="w-10 h-10 text-rose-500 mb-2" />
+-                    <p className="text-xs font-bold text-rose-300 max-w-sm">{cameraError}</p>
++                  <div className="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 text-center text-white">
++                    <CameraOff className="w-10 h-10 text-rose-400 mb-2" />
++                    <p className="text-xs font-semibold text-rose-300 max-w-xs">{cameraError}</p>
+                     <Button
+                       size="sm"
+                       onClick={startCamera}
+                       className="mt-3 text-xs rounded-xl bg-white text-slate-900 font-bold hover:bg-slate-100"
+                     >
+-                      Réessayer la caméra
++                      Réessayer
+                     </Button>
+                   </div>
+                 )}
+               </div>
+             ) : (
+-              /* USB / Hardware Scanner Wedge Interface */
+-              <div className="py-14 text-center space-y-4">
+-                <div className="w-24 h-24 bg-gradient-to-br from-[#2487B8]/20 to-[#0EA5C4]/20 border-2 border-dashed border-[#0EA5C4]/40 rounded-3xl mx-auto flex items-center justify-center animate-pulse text-[#0EA5C4]">
+-                  <ScanLine className="w-10 h-10" />
++              /* USB Scanner Wedge State */
++              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
++                <div className="w-16 h-16 rounded-2xl bg-[#2487B8]/20 border border-[#2487B8]/30 flex items-center justify-center text-[#2487B8]">
++                  <ScanLine className="w-8 h-8 animate-pulse" />
+                 </div>
+                 <div>
+-                  <h3 className="text-lg font-black text-white">Prêt pour Douchette USB</h3>
+-                  <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+-                    Scannez le badge directement avec votre lecteur optique ou terminal USB. La capture est automatique.
++                  <h3 className="text-base font-bold text-white">Lecteur USB Connecté</h3>
++                  <p className="text-xs text-slate-400 max-w-xs mx-auto mt-1">
++                    Scannez le badge à l'aide de votre douchette code-barres. La capture est instantanée.
+                   </p>
+                 </div>
+-
+                 <form
+                   onSubmit={e => {
+                     e.preventDefault();
+@@ -812,286 +730,300 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
+                       setRawTokenInput('');
+                     }
+                   }}
+-                  className="max-w-md mx-auto pt-2"
++                  className="w-full max-w-xs"
+                 >
+                   <Input
+                     ref={usbInputRef}
++                    id="usbScannerInput"
++                    name="usbScannerInput"
+                     type="password"
+                     value={rawTokenInput}
+                     onChange={e => setRawTokenInput(e.target.value)}
+-                    placeholder="En attente du signal code-barres USB..."
+-                    className="h-11 text-center font-mono text-xs rounded-xl border-white/20 bg-white/10 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-[#0EA5C4]"
++                    placeholder="En attente de scan USB..."
++                    className="h-10 text-center font-mono text-xs rounded-xl border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:ring-1 focus:ring-[#2487B8]"
+                   />
+                 </form>
+               </div>
+             )}
++          </div>
+ 
+-            {/* Viewport Live Ticker Footer */}
+-            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 font-mono">
+-              <span>Scans Aujourd'hui : <strong className="text-white">{totalScans}</strong></span>
+-              <span>À l'heure : <strong className="text-emerald-400">{acceptedCount}</strong></span>
+-              <span>Retards : <strong className="text-amber-400">{lateCount}</strong></span>
+-            </div>
+-          </Card>
++          {/* Discreet Fallback Action for Forgotten Badges */}
++          <div className="flex items-center justify-between pt-1">
++            <button
++              type="button"
++              onClick={() => {
++                setManualModalOpen(true);
++                setManualError(null);
++                setManualSearchQuery('');
++              }}
++              className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-[#2487B8] px-3.5 py-2 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
++            >
++              <Keyboard className="w-4 h-4 text-slate-400" />
++              <span>Saisie manuelle (élève sans badge)</span>
++            </button>
+ 
+-          {/* Instant Student Feedback Splash Card */}
+-          <Card className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-md space-y-5">
+-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+-              <h3 className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+-                Dernier Scan Validé en Temps Réel
+-              </h3>
+-              {lastScan && (
+-                <span className="text-[11px] font-mono text-slate-400">
+-                  Horodatage : {lastScan.scannedAt}
+-                </span>
+-              )}
+-            </div>
++            <span className="text-xs font-mono text-slate-400">
++              {totalScans} scan{totalScans > 1 ? 's' : ''} aujourd'hui
++            </span>
++          </div>
++        </div>
+ 
++        {/* RIGHT COLUMN: Instant Student Welcome Card & Recent Entries */}
++        <div className="lg:col-span-6 space-y-4">
++          {/* Main Flash Result Card */}
++          <Card className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-sm min-h-[220px] flex flex-col justify-center">
+             {lastScan ? (
+-              <div className="space-y-4 animate-in fade-in-50 duration-200">
++              <div className="space-y-4">
++                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
++                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
++                    Dernier scan validé
++                  </span>
++                  <span className="text-xs font-mono text-slate-500">
++                    {lastScan.scannedAt}
++                  </span>
++                </div>
++
+                 <div className="flex items-center gap-4">
+-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm ${
+-                    lastScan.resultStatus === 'accepted'
+-                      ? lastScan.stagedStatus === 'late'
+-                        ? 'bg-amber-500 text-white'
+-                        : 'bg-[#2487B8] text-white'
+-                      : 'bg-rose-500 text-white'
+-                  }`}>
++                  <div
++                    className={`w-16 h-16 rounded-2xl flex items-center justify-center font-extrabold text-xl shadow-xs shrink-0 ${
++                      lastScan.resultStatus === 'accepted'
++                        ? lastScan.stagedStatus === 'late'
++                          ? 'bg-amber-100 text-amber-800'
++                          : 'bg-[#2487B8]/15 text-[#2487B8]'
++                        : 'bg-rose-100 text-rose-700'
++                    }`}
++                  >
+                     {lastScan.studentName.slice(0, 2).toUpperCase()}
+                   </div>
+                   <div>
+-                    <h4 className="text-lg font-black text-[#16212B]">{lastScan.studentName}</h4>
+-                    <p className="text-xs font-mono text-slate-500">{lastScan.matricule}</p>
+-                    <p className="text-xs font-bold text-[#2487B8] mt-0.5">{lastScan.className}</p>
++                    <h3 className="text-lg font-bold text-slate-900 leading-snug">
++                      {lastScan.studentName}
++                    </h3>
++                    <div className="flex items-center gap-2 mt-0.5">
++                      <span className="text-xs font-semibold text-[#2487B8]">{lastScan.className}</span>
++                      <span className="text-xs text-slate-300">·</span>
++                      <span className="text-xs font-mono text-slate-400">{lastScan.matricule}</span>
++                    </div>
+                   </div>
+                 </div>
+ 
+-                {/* Status Indicator Banner */}
+-                <div className={`p-4 rounded-2xl flex items-center gap-3.5 ${
+-                  lastScan.resultStatus === 'accepted'
+-                    ? lastScan.stagedStatus === 'late'
+-                      ? 'bg-amber-50 border border-amber-200 text-amber-900'
+-                      : 'bg-emerald-50 border border-emerald-200 text-emerald-900'
+-                    : 'bg-rose-50 border border-rose-200 text-rose-900'
+-                }`}>
++                {/* Status Indicator */}
++                <div
++                  className={`p-3.5 rounded-2xl flex items-center gap-3 ${
++                    lastScan.resultStatus === 'accepted'
++                      ? lastScan.stagedStatus === 'late'
++                        ? 'bg-amber-50 border border-amber-200/70 text-amber-900'
++                        : 'bg-emerald-50 border border-emerald-200/70 text-emerald-900'
++                      : 'bg-rose-50 border border-rose-200/70 text-rose-900'
++                  }`}
++                >
+                   {lastScan.resultStatus === 'accepted' ? (
+                     lastScan.stagedStatus === 'late' ? (
+-                      <Clock className="w-7 h-7 text-amber-600 shrink-0" />
++                      <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+                     ) : (
+-                      <CheckCircle2 className="w-7 h-7 text-emerald-600 shrink-0" />
++                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                     )
+                   ) : (
+-                    <XCircle className="w-7 h-7 text-rose-600 shrink-0" />
++                    <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                   )}
+-
+                   <div>
+-                    <p className="font-extrabold text-sm">
++                    <p className="text-sm font-bold">
+                       {lastScan.resultStatus === 'accepted'
+                         ? lastScan.stagedStatus === 'late'
+                           ? 'Arrivée Tardive Enregistrée'
+-                          : 'Présence Validée avec Succès'
++                          : 'Présence Validée'
+                         : (lastScan.rejectionReason || 'Badge Refusé ou Non Enregistré')}
+                     </p>
+-                    <p className="text-xs opacity-80 mt-0.5 font-medium">
+-                      Enregistré à {lastScan.scannedAt} · Base de données synchronisée
++                    <p className="text-xs opacity-75 mt-0.5">
++                      {lastScan.resultStatus === 'accepted' ? 'Statut synchronisé en base de données' : 'Vérifiez la validité du badge'}
+                     </p>
+                   </div>
+                 </div>
+ 
+-                {/* Guardian / Security Confirmation Info — only what the API confirmed */}
+-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/70 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-slate-700">
+-                  <div>
+-                    <span className="text-slate-400 font-medium">Tuteur légal : </span>
+-                    <strong className="text-slate-800 font-bold">{lastScan.guardianName || '—'}</strong>
+-                    {lastScan.guardianCin && (
+-                      <span className="text-slate-500 font-mono text-[11px] ml-1.5">({lastScan.guardianCin})</span>
++                {/* Subtle Guardian / SMS info */}
++                {lastScan.guardianName && (
++                  <p className="text-xs text-slate-500 pt-1">
++                    Tuteur légal : <span className="font-medium text-slate-700">{lastScan.guardianName}</span>
++                    {lastScan.smsDispatched && (
++                      <span className="ms-2 text-emerald-600 font-medium">· SMS envoyé</span>
+                     )}
+-                  </div>
+-
+-                  {lastScan.smsDispatched ? (
+-                    <span className="inline-flex items-center gap-1.5 text-emerald-700 font-bold text-[11px] bg-emerald-100/70 px-2.5 py-1 rounded-lg">
+-                      <Send className="w-3 h-3 text-emerald-600" /> SMS d'alerte délivré au parent
+-                    </span>
+-                  ) : (
+-                    <span className="inline-flex items-center gap-1.5 text-slate-500 font-semibold text-[11px] bg-slate-100 px-2.5 py-1 rounded-lg">
+-                      <Send className="w-3 h-3 text-slate-400" /> Notification non envoyée
+-                    </span>
+-                  )}
+-                </div>
++                  </p>
++                )}
+               </div>
+             ) : (
+-              <div className="py-12 text-center text-slate-400 text-xs font-medium">
+-                En attente du premier passage de badge...
++              /* Idle Waiting State */
++              <div className="text-center py-6 space-y-3">
++                <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto text-slate-400">
++                  <QrCode className="w-7 h-7" />
++                </div>
++                <div>
++                  <h3 className="text-base font-bold text-slate-800">En attente d'un badge</h3>
++                  <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
++                    Approchez la carte d'un élève devant la caméra pour enregistrer automatiquement son arrivée.
++                  </p>
++                </div>
+               </div>
+             )}
+           </Card>
+-        </div>
+-
+-        {/* RIGHT COLUMN: WORKSTATION COMPANION (KEYPAD, METRICS, REAL-TIME AUDIT) */}
+-        <div className="lg:col-span-5 space-y-6">
+-          {/* Live Metrics Counters */}
+-          <div className="grid grid-cols-3 gap-3">
+-            <Card className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-xs text-center">
+-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Présents</p>
+-              <p className="text-2xl font-black text-emerald-600 mt-1">{acceptedCount}</p>
+-            </Card>
+-            <Card className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-xs text-center">
+-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Retards</p>
+-              <p className="text-2xl font-black text-amber-500 mt-1">{lateCount}</p>
+-            </Card>
+-            <Card className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-xs text-center">
+-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rejetés</p>
+-              <p className="text-2xl font-black text-rose-600 mt-1">{rejectedCount}</p>
+-            </Card>
+-          </div>
+-
+-          {/* Quick Manual Entry & Numeric Keypad (When student forgot badge) */}
+-          <Card className="p-5 bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-4">
+-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+-              <div className="flex items-center gap-2">
+-                <Keyboard className="w-4 h-4 text-[#2487B8]" />
+-                <h3 className="font-extrabold text-xs text-[#16212B] uppercase tracking-wider">
+-                  Saisie Rapide Matricule (Sans Badge)
+-                </h3>
+-              </div>
+-              <Badge variant="neutral" className="text-[10px]">Secours Immédiat</Badge>
+-            </div>
+-
+-            <div className="space-y-3">
+-              <div className="flex gap-2">
+-                <Input
+-                  value={keypadInput}
+-                  onChange={e => setKeypadInput(e.target.value)}
+-                  onKeyDown={e => {
+-                    if (e.key === 'Enter') handleManualMatriculeSubmit();
+-                  }}
+-                  placeholder="Tapez le matricule de l'élève..."
+-                  className="h-10 text-center font-mono font-bold text-sm tracking-wider rounded-xl border-slate-200 focus:ring-2 focus:ring-[#2487B8]"
+-                />
+-                <Button
+-                  onClick={() => handleManualMatriculeSubmit()}
+-                  disabled={!keypadInput.trim() || isProcessing}
+-                  className="h-10 px-4 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs shrink-0"
+-                >
+-                  Valider
+-                </Button>
+-              </div>
+-
+-              {/* Tactical Numeric Touch Keypad for Tablets & Screens */}
+-              <div className="grid grid-cols-3 gap-2 pt-1">
+-                {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'OK'].map(key => (
+-                  <button
+-                    key={key}
+-                    type="button"
+-                    onClick={() => {
+-                      if (key === 'C') setKeypadInput('');
+-                      else if (key === 'OK') handleManualMatriculeSubmit();
+-                      else setKeypadInput(prev => prev + key);
+-                    }}
+-                    className={`h-10 rounded-xl font-black text-xs transition-all cursor-pointer ${
+-                      key === 'OK'
+-                        ? 'bg-[#2487B8] hover:bg-[#1B6C93] text-white shadow-xs'
+-                        : key === 'C'
+-                        ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/50'
+-                        : 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200/60'
+-                    }`}
+-                  >
+-                    {key}
+-                  </button>
+-                ))}
+-              </div>
+-            </div>
+-          </Card>
+ 
+-          {/* Real-time Session Scans Stream */}
+-          <Card className="p-5 bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-3.5">
+-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+-              <div className="flex items-center gap-2">
+-                <History className="w-4 h-4 text-[#2487B8]" />
+-                <h3 className="font-extrabold text-xs text-[#16212B] uppercase tracking-wider">
+-                  Journal des Scans en Direct
+-                </h3>
+-              </div>
+-              <span className="text-[10px] font-mono text-slate-400">
+-                {events.length} enregistrements
++          {/* Clean Recent Scans Feed */}
++          <Card className="p-5 bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-3">
++            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
++              <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider">
++                Derniers passages
++              </h4>
++              <span className="text-[11px] font-mono text-slate-400">
++                {events.length} enregistrés
+               </span>
+             </div>
+ 
+-            <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
+-              {events.map(item => (
++            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
++              {events.slice(0, 5).map(item => (
+                 <div
+                   key={item.id}
+-                  className="p-3 rounded-2xl border border-slate-100 bg-slate-50/80 hover:bg-slate-100/80 transition-colors flex items-center justify-between text-xs"
++                  className="p-2.5 rounded-xl border border-slate-100 bg-slate-50/60 flex items-center justify-between text-xs"
+                 >
+                   <div className="space-y-0.5">
+-                    <p className="font-bold text-[#16212B]">{item.studentName}</p>
+-                    <p className="text-[10px] text-slate-500 font-mono">
++                    <p className="font-semibold text-slate-900">{item.studentName}</p>
++                    <p className="text-[11px] text-slate-400 font-mono">
+                       {item.className} · {item.scannedAt}
+                     </p>
+                   </div>
+ 
+-                  <Badge className={`text-[10px] font-bold border-none ${
+-                    item.resultStatus === 'accepted'
+-                      ? item.stagedStatus === 'late'
+-                        ? 'bg-amber-500/15 text-amber-700'
+-                        : 'bg-emerald-500/15 text-emerald-700'
+-                      : 'bg-rose-500/15 text-rose-700'
+-                  }`}>
++                  <span
++                    className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
++                      item.resultStatus === 'accepted'
++                        ? item.stagedStatus === 'late'
++                          ? 'bg-amber-100 text-amber-800'
++                          : 'bg-emerald-100 text-emerald-800'
++                        : 'bg-rose-100 text-rose-800'
++                    }`}
++                  >
+                     {item.resultStatus === 'accepted'
+                       ? item.stagedStatus === 'late'
+                         ? 'Retard'
+                         : 'Présent'
+                       : 'Rejeté'}
+-                  </Badge>
++                  </span>
+                 </div>
+               ))}
+ 
+               {events.length === 0 && (
+-                <p className="text-center text-slate-400 text-xs py-8">
+-                  Aucun scan enregistré pour cette session.
++                <p className="text-center text-slate-400 text-xs py-6">
++                  Aucun passage enregistré pour l'instant.
+                 </p>
+               )}
+             </div>
+           </Card>
++        </div>
++      </div>
+ 
+-          {/* Emergency Muster & Security Quick Action */}
+-          <div className={`p-4 rounded-2xl flex items-center justify-between gap-3 transition-all ${
+-            emergencyLockdown ? 'bg-rose-600 text-white shadow-lg' : 'bg-slate-900 text-white'
+-          }`}>
+-            <div className="flex items-center gap-3">
+-              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center font-bold shrink-0">
+-                {emergencyLockdown ? <Flame className="w-5 h-5 text-amber-300 animate-bounce" /> : <ShieldCheck className="w-5 h-5 text-emerald-400" />}
+-              </div>
+-              <div>
+-                <h4 className="font-black text-xs uppercase tracking-wider text-white">
+-                  {emergencyLockdown ? 'Protocole Alerte Actif' : 'Effectif & Sécurité'}
+-                </h4>
+-                <p className="text-[11px] text-white/80">
+-                  Présence signalée : <strong className="text-white font-bold">{headcountError || !onsiteHeadcount ? 'Indisponible' : onsiteHeadcount.headcount}</strong>
+-                </p>
+-                {onsiteHeadcount && !headcountError && (
+-                  <p className="text-[10px] text-white/70">
+-                    {onsiteHeadcount.manualUnverified} présence(s) manuelle(s) à vérifier · Actualisé à {new Date(onsiteHeadcount.asOf).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+-                  </p>
+-                )}
++      {/* Bottom Summary Strip: Counts + Safety Indicator */}
++      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white border border-slate-200/80 rounded-2xl text-xs text-slate-600 shadow-2xs">
++        <div className="flex items-center gap-4 flex-wrap">
++          <span className="font-medium text-slate-500">Bilan de la séance :</span>
++          <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
++            <span className="w-2 h-2 rounded-full bg-emerald-500" />
++            {acceptedCount} Présent{acceptedCount > 1 ? 's' : ''}
++          </span>
++          <span className="inline-flex items-center gap-1 font-bold text-amber-700">
++            <span className="w-2 h-2 rounded-full bg-amber-500" />
++            {lateCount} Retard{lateCount > 1 ? 's' : ''}
++          </span>
++          {rejectedCount > 0 && (
++            <span className="inline-flex items-center gap-1 font-bold text-rose-700">
++              <span className="w-2 h-2 rounded-full bg-rose-500" />
++              {rejectedCount} Rejeté{rejectedCount > 1 ? 's' : ''}
++            </span>
++          )}
++        </div>
++
++        {/* Discreet Campus Headcount for Safety/Evacuation */}
++        {onsiteHeadcount && !headcountError && (
++          <div className="flex items-center gap-1.5 text-slate-500">
++            <ShieldCheck className="w-4 h-4 text-emerald-600" />
++            <span>Effectif présent sur le campus : <strong className="font-bold text-slate-900">{onsiteHeadcount.headcount}</strong> élèves</span>
++          </div>
++        )}
++      </div>
++
++      {/* Clean Modal: Manual Student Entry (For forgotten badges) */}
++      {manualModalOpen && (
++        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
++          <div
++            role="dialog"
++            aria-modal="true"
++            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4"
++          >
++            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
++              <div className="flex items-center gap-2">
++                <Keyboard className="w-4 h-4 text-[#2487B8]" />
++                <h3 className="font-bold text-sm text-slate-900">
++                  Saisie manuelle (Élève sans badge)
++                </h3>
+               </div>
++              <button
++                type="button"
++                onClick={() => setManualModalOpen(false)}
++                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
++              >
++                <X className="w-4 h-4" />
++              </button>
+             </div>
+ 
+-            <Button
+-              size="sm"
+-              onClick={() => setEmergencyLockdown(!emergencyLockdown)}
+-              className={`h-8 text-xs font-bold rounded-xl gap-1.5 shrink-0 ${
+-                emergencyLockdown
+-                  ? 'bg-white text-rose-700 hover:bg-slate-100'
+-                  : 'bg-rose-600 hover:bg-rose-700 text-white'
+-              }`}
++            <p className="text-xs text-slate-500">
++              Saisissez le nom complet ou le matricule de l'élève pour valider manuellement son entrée.
++            </p>
++
++            <form
++              onSubmit={e => {
++                e.preventDefault();
++                handleManualSubmit();
++              }}
++              className="space-y-4"
+             >
+-              <AlertTriangle className="w-3.5 h-3.5" />
+-              {emergencyLockdown ? 'Lever l\'alerte' : 'Alerte Urgence'}
+-            </Button>
++              <div>
++                <Input
++                  id="manualSearchInput"
++                  name="manualSearchInput"
++                  autoFocus
++                  value={manualSearchQuery}
++                  onChange={e => setManualSearchQuery(e.target.value)}
++                  placeholder="Ex: Fatima El Ghazi ou ATL-2526-0025..."
++                  className="h-10 text-xs rounded-xl border-slate-200 focus:ring-1 focus:ring-[#2487B8]"
++                />
++              </div>
++
++              {manualError && (
++                <p className="text-xs font-medium text-rose-600 flex items-center gap-1.5">
++                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
++                  {manualError}
++                </p>
++              )}
++
++              <div className="flex items-center justify-end gap-2 pt-2">
++                <Button
++                  type="button"
++                  variant="outline"
++                  size="sm"
++                  onClick={() => setManualModalOpen(false)}
++                  className="h-9 px-4 rounded-xl text-xs"
++                >
++                  Annuler
++                </Button>
++                <Button
++                  type="submit"
++                  size="sm"
++                  disabled={!manualSearchQuery.trim() || isProcessing}
++                  className="h-9 px-4 rounded-xl bg-[#2487B8] hover:bg-[#1B6C93] text-white font-bold text-xs"
++                >
++                  {isProcessing ? 'Validation...' : 'Valider la Présence'}
++                </Button>
++              </div>
++            </form>
+           </div>
+         </div>
+-      </div>
++      )}
+     </div>
+   );
+ }

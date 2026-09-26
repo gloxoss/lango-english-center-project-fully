@@ -1,0 +1,265 @@
+{
+ "reads": [
+  {
+   "path": "/api/settings",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/settings/values",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/settings/branches",
+   "atlasAdmin": 200,
+   "teacher": 200,
+   "receptionist": 200,
+   "accountant": 200,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/settings/custom-fields",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/settings/numbering",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/settings/providers",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/settings/addons",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/settings/permissions",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/academics/session-years",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/academics/semesters",
+   "atlasAdmin": 200,
+   "teacher": 200,
+   "receptionist": 403,
+   "accountant": 200,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/academics/grading-policies",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/settings/security/login-events",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/settings/scheduled-jobs",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/settings/values/accounting.defaults",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/settings/cndp-filing",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/settings/subscription",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/audit-logs",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  },
+  {
+   "path": "/api/users",
+   "atlasAdmin": 200,
+   "teacher": 403,
+   "receptionist": 403,
+   "accountant": 403,
+   "langoAdmin": 200,
+   "langoSeesAtlasIds": "no"
+  }
+ ],
+ "crossTenant": [
+  {
+   "method": "PATCH",
+   "path": "/api/settings/custom-fields/2f9f01dd-bdc2-4107-b007-23f0dec2638e",
+   "status": 404,
+   "code": "CUSTOM_FIELD_NOT_FOUND"
+  },
+  {
+   "method": "GET",
+   "path": "/api/settings/custom-fields/2f9f01dd-bdc2-4107-b007-23f0dec2638e",
+   "status": 404,
+   "code": "CUSTOM_FIELD_NOT_FOUND"
+  },
+  {
+   "method": "PATCH",
+   "path": "/api/settings/numbering/bebcde73-ad40-442d-88d4-10b4cc3ba9d0",
+   "status": 404,
+   "code": "NUMBERING_SERIES_NOT_FOUND"
+  },
+  {
+   "method": "GET",
+   "path": "/api/settings/numbering/bebcde73-ad40-442d-88d4-10b4cc3ba9d0",
+   "status": 404,
+   "code": "NUMBERING_SERIES_NOT_FOUND"
+  },
+  {
+   "method": "PUT",
+   "path": "/api/academics/session-years",
+   "status": 404,
+   "code": ""
+  },
+  {
+   "method": "PUT",
+   "path": "/api/academics/semesters",
+   "status": 404,
+   "code": ""
+  },
+  {
+   "method": "PUT",
+   "path": "/api/settings/branches/a5d6ddc6-db50-4872-8c8f-271ba6693bc5",
+   "status": 404,
+   "code": "NOT_FOUND"
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/settings/custom-fields/2f9f01dd-bdc2-4107-b007-23f0dec2638e",
+   "status": 404,
+   "code": "CUSTOM_FIELD_NOT_FOUND"
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/academics/semesters?id=84e7f8d7-82e3-4637-b873-89f837eb39d3",
+   "status": 404,
+   "code": ""
+  },
+  {
+   "method": "DELETE",
+   "path": "/api/settings/branches/a5d6ddc6-db50-4872-8c8f-271ba6693bc5",
+   "status": 404,
+   "code": "NOT_FOUND"
+  }
+ ],
+ "roleWrites": [
+  {
+   "who": "teacher",
+   "method": "PATCH",
+   "path": "/api/settings/values/academic.passThreshold",
+   "status": 403,
+   "code": "FORBIDDEN"
+  },
+  {
+   "who": "receptionist",
+   "method": "POST",
+   "path": "/api/settings",
+   "status": 403,
+   "code": "FORBIDDEN"
+  },
+  {
+   "who": "accountant",
+   "method": "PUT",
+   "path": "/api/academics/grading-policies",
+   "status": 403,
+   "code": "FORBIDDEN"
+  },
+  {
+   "who": "teacher",
+   "method": "POST",
+   "path": "/api/academics/session-years",
+   "status": 403,
+   "code": "FORBIDDEN"
+  },
+  {
+   "who": "accountant",
+   "method": "POST",
+   "path": "/api/settings/custom-fields",
+   "status": 403,
+   "code": "FORBIDDEN"
+  }
+ ]
+}

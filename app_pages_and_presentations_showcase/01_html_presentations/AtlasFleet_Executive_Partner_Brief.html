@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AtlasFleet Maroc — Dossier Partenaire Exécutif</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .module-card { break-inside: avoid; page-break-inside: avoid; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: #0f172a !important; padding: 0 !important; }
+            .print-container { border: none !important; shadow: none !important; padding: 0 !important; max-width: 100% !important; }
+            .page-break { page-break-before: always; }
+            .module-card { break-inside: avoid !important; page-break-inside: avoid !important; margin-bottom: 0.75rem !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased py-10 px-4 sm:px-8">
+
+    <div class="max-w-4xl mx-auto bg-white border border-slate-200 rounded-2xl p-8 sm:p-12 shadow-sm space-y-10">
+        
+        <!-- Header Actions -->
+        <div class="flex items-center justify-between border-b border-slate-200 pb-6">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-sky-600 flex items-center justify-center font-bold text-white text-base shadow-sm">
+                    AF
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-900">AtlasFleet Maroc</h1>
+                    <p class="text-xs text-slate-500">Système d'Exploitation pour Agences de Location & Flottes B2B</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 no-print">
+                <button onclick="window.print()" class="inline-flex items-center space-x-1.5 px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold shadow-sm transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>Imprimer en PDF</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Executive Meta Card -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div>
+                <span class="text-slate-400 block">Type de Document</span>
+                <span class="font-semibold text-slate-800">Dossier Partenaire</span>
+            </div>
+            <div>
+                <span class="text-slate-400 block">Version Logicielle</span>
+                <span class="font-semibold text-slate-800 font-mono">v7.0 Multi-Tenant</span>
+            </div>
+            <div>
+                <span class="text-slate-400 block">Marché Cible</span>
+                <span class="font-semibold text-slate-800">Maroc & MENA / Europe</span>
+            </div>
+            <div>
+                <span class="text-slate-400 block">Cadre Légal</span>
+                <span class="font-semibold text-emerald-700 font-mono">TVA 20% • CNDP 09-08</span>
+            </div>
+        </div>
+
+        <!-- Section 1 -->
+        <section class="space-y-3">
+            <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-sky-600"></span>
+                <span>1. Résumé Exécutif & Vision</span>
+            </h2>
+            <p class="text-sm text-slate-600 leading-relaxed">
+                <strong>AtlasFleet</strong> est une solution logicielle d'exploitation tout-en-un conçue spécifiquement pour digitaliser les agences de location de voitures et gestionnaires de flottes au Maroc.
+            </p>
+            <p class="text-sm text-slate-600 leading-relaxed">
+                Aujourd'hui, la grande majorité des agences indépendantes gèrent encore leur parc sur cahiers, fichiers Excel ou anciens logiciels de bureau non connectés. AtlasFleet remplace ces outils disparates par une plateforme web sécurisée, conforme aux exigences de la <strong>Direction Générale des Impôts (DGI)</strong> et de la <strong>CNDP (Commission Nationale de contrôle de la protection des Données à Caractère Personnel - Loi 09-08)</strong>.
+            </p>
+        </section>
+
+        <!-- Section 2 -->
+        <section class="space-y-4">
+            <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-sky-600"></span>
+                <span>2. État d'Avancement Réel (Où en sommes-nous ?)</span>
+            </h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left border border-slate-200 rounded-lg overflow-hidden">
+                    <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                        <tr>
+                            <th class="py-2.5 px-3">Module</th>
+                            <th class="py-2.5 px-3">Statut</th>
+                            <th class="py-2.5 px-3">Détail des Réalisations</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-600">
+                        <tr>
+                            <td class="py-2.5 px-3 font-semibold text-slate-800">Infra & Docker</td>
+                            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">100% Opérationnel</span></td>
+                            <td class="py-2.5 px-3">Conteneur PHP 8.2 + MariaDB ultra-rapide avec cache et synchronisation continue.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2.5 px-3 font-semibold text-slate-800">Données Réelles Maroc</td>
+                            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">Opérationnel</span></td>
+                            <td class="py-2.5 px-3">16 véhicules réels (Clio 5, Duster, Golf 8...), plaques marocaines (14589 | أ | 6), CIN et ICE.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2.5 px-3 font-semibold text-slate-800">Page 1 : Dashboard</td>
+                            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">Terminé</span></td>
+                            <td class="py-2.5 px-3">CA mensuel en DH, taux d'occupation, alertes CNDP, contrats récents.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2.5 px-3 font-semibold text-slate-800">Page 2 : Flotte Véhicules</td>
+                            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">Terminé</span></td>
+                            <td class="py-2.5 px-3">Inventaire haute densité, suivi kilométrique, échéancier Assurance & Contrôle Technique.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2.5 px-3 font-semibold text-slate-800">Page 3 : Contrats</td>
+                            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">Terminé</span></td>
+                            <td class="py-2.5 px-3">Dossiers de location #LOC-XXXXX, calcul automatique TVA 20%, impression de contrats.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2.5 px-3 font-semibold text-slate-800">Page 4 : Répertoire Clients</td>
+                            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">Terminé</span></td>
+                            <td class="py-2.5 px-3">Particuliers (CIN) et Entreprises (ICE/SARL), historique de location et solvabilité.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2.5 px-3 font-semibold text-slate-800">Page 5 : Chauffeurs</td>
+                            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800">Terminé</span></td>
+                            <td class="py-2.5 px-3">Permis marocains, assignations de véhicules, consentement géolocalisation CNDP.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 3 -->
+        <section class="space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full bg-sky-600"></span>
+                        <span>3. Architecture Complète des Fonctionnalités de la Plateforme</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Inventaire exhaustif des 6 piliers d'exploitation et des 27 modules connectés au système</p>
+                </div>
+                <div class="flex items-center space-x-2 text-[11px] font-mono text-slate-600">
+                    <span class="bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 font-semibold">27 Modules</span>
+                    <span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-md border border-emerald-200 font-semibold">100% Natif Maroc</span>
+                </div>
+            </div>
+
+            <!-- PILIER 1 : PARC AUTOMOBILE & LOGISTIQUE -->
+            <div class="space-y-3">
+                <div class="flex items-center space-x-2">
+                    <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Pilier A</span>
+                    <span class="text-xs font-bold text-slate-800">Parc Automobile, Immatriculation & Acquisition</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+                    
+                    <!-- Module 1 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 16v3a2 2 0 01-2 2H7a2 2 0 01-2-2v-3m14-4V7a2 2 0 00-2-2H7a2 2 0 00-2 2v5m14 0H5m14 0a2 2 0 012 2v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1a2 2 0 012-2"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">01. Inventaire Flotte & Fiches Véhicules</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">VehiclesController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">Parc</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Fiche technique détaillée :</strong> Marque, modèle, finition, motorisation (Diesel, Essence, Hybride, Électrique), boîte manuelle/auto, puissance fiscale (CV).</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Compteur kilométrique en direct :</strong> Relevé odométrique synchronisé à chaque check-in et check-out.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Groupes & Catégories :</strong> Classification Économique, Citadine, Berline, SUV 4x4, Utilitaire et VIP.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Statut instantané :</strong> Disponible, En location, En révision atelier, ou Hors service.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 2 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">02. Immatriculations & Plaques Marocaines</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">Format National</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">Matricule</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Matricule officiel marocain :</strong> Rendu bilingue certifié <span class="font-mono bg-slate-100 px-1 py-0.5 rounded text-slate-800 border border-slate-200 font-semibold">14589 | أ | 6</span> avec découpage Numéro | Lettre arabe | Préfecture.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Immatriculations spéciales :</strong> Prise en charge des plaques WW provisoires, corps diplomatique, et utilitaires.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Numéro de Châssis (VIN) :</strong> Enregistrement inviolable du numéro de série constructeur pour conformité d'assurance.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 3 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">03. Conformité Papiers & Échéancier Légal</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">Alertes J-30/J-7</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">Légal</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Assurance Automobile :</strong> Police Tous Risques ou RC, compagnie (Wafa, RMA, AXA, Sanlam), quittances et rappels J-30 et J-7.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Visite Technique Annuelle :</strong> Contrôle technique obligatoire pour véhicules de location, centre agréé et date limite.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Vignette Fiscale DGI :</strong> Enregistrement du paiement annuel et archivage de la quittance fiscale dématérialisée.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 4 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">04. Acquisition, Financement & LLD</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">AcquisitionController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">Investissement</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Mode d'acquisition :</strong> Achat comptant, crédit bancaire ou leasing / location longue durée (LLD).</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Amortissement comptable :</strong> Suivi de la valeur vénale résiduelle et calcul des mensualités de remboursement.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Date de mise en circulation & valeur d'achat :</strong> Historique initial pour le calcul du TCO global.</span></li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- PILIER 2 : RÉSERVATIONS & CONTRATS -->
+            <div class="space-y-3 pt-2">
+                <div class="flex items-center space-x-2">
+                    <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Pilier B</span>
+                    <span class="text-xs font-bold text-slate-800">Devis, Réservations, Contrats & Cautions</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+                    
+                    <!-- Module 5 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">05. Devis & Proformas de Réservation</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">BookingQuotationController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-sky-50 text-sky-700 px-2 py-0.5 rounded border border-sky-200">Commercial</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Chiffrage instantané :</strong> Calcul des tarifs journaliers, options et durée avec date limite de validité du devis.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Conversion en Contrat en 1 Clic :</strong> Dès validation client, transformation directe du devis en contrat sans double saisie.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Envoi direct par PDF & WhatsApp :</strong> Export instantané de devis chiffré prêt pour validation d'entreprise ou particulier.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 6 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">06. Contrats de Location (#LOC-XXXXX)</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">BookingsController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Coeur Métier</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Édition Express en 60 secondes :</strong> Dossier numéroté bilingue Français / Arabe conforme à la législation marocaine.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Conducteur Principal & Second Conducteur :</strong> Vérification automatique des permis et ancienneté requise.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Planning & Calendrier des Réservations :</strong> Vue graphique dynamique des disponibilités sans conflit d'agenda.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Grille Tarifaire Dégressive :</strong> Tarifs journaliers, forfaits week-end, mensuels, saisonniers et options additionnelles.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 7 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">07. Check-in & Check-out Opérationnel</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">État des Lieux</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">Opérations</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Prise en charge précise :</strong> Heure de départ, agence (ou livraison aéroport), kilométrage et niveau réservoir (1/4, 1/2, plein).</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Restitution & Pénalités :</strong> Calcul immédiat des kilomètres excédentaires, heures de retard et carburant manquant.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Gestion des motifs de retard :</strong> Traçabilité des raisons de prolongation (`ReasonController`).</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 8 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">08. Cautions & Dépôts de Garantie</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">Sécurisation Bancaire</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Garantie</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Multi-modalités de caution :</strong> Empreinte carte bancaire TPE (pré-autorisation), chèque de garantie bancaire ou espèces.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Cycle de restitution :</strong> Statuts En attente, Restituée au retour, ou Retenue pour franchise d'accident / réparations.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Reçu de caution légal :</strong> Décharge signée remise au locataire attestant de la prise et restitution de garantie.</span></li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- PILIER 3 : FINANCES, FISCALITÉ MAROCAINE (TVA 20%) & RENTABILITÉ -->
+            <div class="space-y-3 pt-2">
+                <div class="flex items-center space-x-2">
+                    <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Pilier C</span>
+                    <span class="text-xs font-bold text-slate-800">Finances, Facturation Conforme DGI & Rentabilité Flotte</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+                    
+                    <!-- Module 9 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">09. Facturation Conforme DGI (TVA 20%)</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">Loi de Finances Maroc</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">Fisc DGI</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Mentions légales obligatoires :</strong> Édition automatique avec l'<strong>ICE (15 chiffres)</strong>, <strong>IF</strong>, <strong>RC</strong> et <strong>Patente</strong> de l'agence.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Calcul automatique TVA 20% :</strong> Ventilation rigoureuse Base Hors Taxe (HT) + TVA 20% = Total TTC.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Factures d'acompte & solde :</strong> Traçabilité des avances à la réservation et factures de clôture finale avec reçu.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 10 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">10. Trésorerie & Journal des Recettes</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">IncomeController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Encaissements</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Multi-canaux de paiement :</strong> Espèces (Cash en DH avec reçu de caisse), Virement bancaire avec RIB, Chèque bancaire et TPE.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Suivi des soldes débiteurs :</strong> Tableau des impayés et relances clients avec échéances de règlement à 30 jours.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Journal de caisse quotidien :</strong> Rapprochement des espèces encaissées par chaque agent de comptoir en fin de journée.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 11 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">11. Journal des Dépenses d'Exploitation</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">ExpenseController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">Charges</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Catégorisation analytique :</strong> Loyers d'agences, salaires, réparations, pièces de rechange, carburant, assurances, impôts.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Imputation par véhicule ou agence :</strong> Chaque facture fournisseur est rattachée à son immatriculation pour suivi du coût réel.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Archivage des justificatifs :</strong> Scan des factures d'achat et quittances fournisseurs attachées à chaque dépense.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 12 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">12. Rentabilité Nette par Voiture (TCO)</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">Marge Réelle</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Bénéfice</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Compte d'exploitation par véhicule :</strong> `Recettes générées - (Entretien + Assurance + Carburant + Vignette) = Marge Nette`.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Coût de Revient Kilométrique :</strong> Calcul du coût réel par kilomètre roulé (DH/km) pour ajuster les grilles tarifaires.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Aide à la décision de renouvellement :</strong> Détection des véhicules devenus trop coûteux à entretenir pour revente d'occasion.</span></li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- PILIER 4 : CLIENTS, CONDUCTEURS & GESTION DU RISQUE -->
+            <div class="space-y-3 pt-2">
+                <div class="flex items-center space-x-2">
+                    <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Pilier D</span>
+                    <span class="text-xs font-bold text-slate-800">Clients, Comptes Entreprises, Chauffeurs & Risques</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+                    
+                    <!-- Module 13 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">13. Répertoire Clients Particuliers & B2B</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">CustomersController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">CRM</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Particuliers :</strong> CIN nationale marocaine, Passeport pour MRE / touristes étrangers, permis de conduire, adresse et téléphone.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Comptes Entreprises (B2B) :</strong> Raison sociale SARL/SA, <strong>ICE vérifié</strong>, nom du gestionnaire, facturation mensuelle groupée.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Passeport numérique de pièces jointes :</strong> Archivage sécurisé des scans de pièces d'identité et justificatifs de domicile.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 14 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">14. Gestion des Risques & Liste Noire (Blacklist)</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">Sécurité Agence</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-200">Anti-Fraude</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Signalement des incidents :</strong> Mauvais payeurs, dégradations volontaires, alcool au volant, conduite dangereuse, litige judiciaire.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Blocage instantané au comptoir :</strong> Alerte rouge bloquante dès qu'un agent tente d'établir un contrat au nom d'un client listé.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Scoring de solvabilité :</strong> Historique des retards de paiement et notation interne de fiabilité client.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 15 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">15. Chauffeurs, Missions & Permis Marocains</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">DriversController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">RH</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Fiches conducteurs :</strong> Catégories de permis marocain (B, C, D), validité médicale, date d'expiration et numéro d'autorisation.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Planning des missions :</strong> Assignation des transferts aéroports, délégations d'affaires et chauffeurs privés dédiés.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Conformité CNDP Chauffeurs :</strong> Formulaire d'information et accord formel de traçabilité GPS pendant le service.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 16 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">16. Notes Internes & Journal de Bord Agence</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">NotesController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">Interne</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Consignes de transmission :</strong> Notes confidentielles entre équipes de jour et équipes de nuit ou entre agences d'une même ville.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Remarques d'exploitation :</strong> Anomalies constatées sur un véhicule à vérifier (ex: vibration légère, bruit train avant).</span></li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- PILIER 5 : ATELIER, MAINTENANCE, CARBURANT & SINISTRES -->
+            <div class="space-y-3 pt-2">
+                <div class="flex items-center space-x-2">
+                    <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Pilier E</span>
+                    <span class="text-xs font-bold text-slate-800">Atelier, Maintenance, Stock Pièces, Carburant & Sinistres</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+                    
+                    <!-- Module 17 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">17. Maintenance & Vidanges Kilométriques</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">ServiceReminderController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">Entretien</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Programmation des vidanges moteur :</strong> Intervalle 10 000 km ou 15 000 km avec compte à rebours kilométrique automatique.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Organes de sécurité :</strong> Échéancier des plaquettes et disques de freins, courroie de distribution, filtres et pneus.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Alertes visuelles en 3 seuils :</strong> Vert (conforme), Orange (approche à 1 000 km), Rouge (vidange dépassée, blocage réservation).</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 18 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">18. Stock Pièces Détachées & Ordres de Travail</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">PartsController & WorkOrders</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">Magasin</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Gestion de stock atelier :</strong> Suivi des bidons d'huile moteur, filtres à huile, ampoules, essuie-glaces et plaquettes.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Bons d'intervention & mécaniciens :</strong> Fiches d'heures de main-d'œuvre internes et pièces consommées déduites du stock.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Alertes de réapprovisionnement :</strong> Signalement automatique dès qu'une référence de consommable passe sous le seuil critique.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 19 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">19. Pannes, Remorquage & Véhicule de Relais</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">VehicleBreakdownController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-200">Urgence 24/7</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Assistance routière :</strong> Prise en charge des pannes sur réseau autoroutier ou urbain avec dépanneuse partenaire.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Véhicule de remplacement instantané :</strong> Avenant direct au contrat de location transférant le locataire sur une nouvelle voiture.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Imputation des coûts d'assistance :</strong> Enregistrement des frais de remorquage sur le dossier de charge du véhicule.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 20 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">20. Carburant, L/100km & Cartes Stations</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">FuelController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">Consommation</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Suivi des pleins :</strong> Date, station-service, volume en litres, montant en DH et odomètre au moment du plein.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Calcul automatique L/100 km :</strong> Détection immédiate des surconsommations par rapport à la moyenne théorique.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Cartes pétrolières au Maroc :</strong> Gestion des cartes prépayées (Afriquia, TotalEnergies, Shell, Winxo) remises aux conducteurs.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 21 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">21. Sinistres, Accidents & PV Radar (NARSA)</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">Contentieux Routier</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-200">Litiges</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Attribution automatique PV NARSA :</strong> Recherche par date/heure et matricule pour identifier le client responsable du flash radar.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Dénonciation légale du conducteur :</strong> Édition du formulaire officiel pour transmission aux autorités afin d'exonérer l'agence.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Gestion des sinistres :</strong> Constat amiable, photos des dégâts carrosserie, suivi expertises et franchise retenue sur caution.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 22 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">22. Fournisseurs & Garages Partenaires</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">VendorController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">Partenaires</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Annuaire des prestataires :</strong> Concessionnaires automobiles, centres de contrôle technique, pneumaticiens, carrossiers et assureurs.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Conditions de paiement :</strong> Suivi des délais de règlement négociés (comptant, 30 jours, fin de mois) et des factures en souffrance.</span></li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- PILIER 6 : TÉLÉMATIQUE, SAAS MULTI-TENANT & WEB -->
+            <div class="space-y-3 pt-2">
+                <div class="flex items-center space-x-2">
+                    <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Pilier F</span>
+                    <span class="text-xs font-bold text-slate-800">Télématique GPS CNDP, SaaS Multi-Tenant & Réservation Web</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+                    
+                    <!-- Module 23 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">23. Radar GPS & Traçabilité Conforme CNDP</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">Loi marocaine 09-08</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">Loi CNDP</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Radar Flotte en direct :</strong> Géolocalisation temps réel sur carte du Maroc (Casablanca, Marrakech, Tanger...), vitesse et statut contact.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Géofencing & Sortie de Territoire :</strong> Alertes automatiques en cas de tentative de sortie des frontières marocaines ou de zone interdite.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Audit cryptographique SHA-256 :</strong> Journal inviolable de chaque consultation de coordonnées GPS conforme aux contrôles de la CNDP.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 24 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">24. Notifications SMS & Alertes WhatsApp</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">Twilio & Messages</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-sky-50 text-sky-700 px-2 py-0.5 rounded border border-sky-200">Communication</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Confirmations automatiques :</strong> Envoi instantané au client par SMS/WhatsApp dès création du contrat avec lien PDF.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Rappels de restitution :</strong> Notification envoyée au locataire 3h avant l'heure convenue de fin de contrat.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Alertes internes d'urgence :</strong> Notification au gérant en cas de sortie de zone GPS, excès de vitesse ou panne signalée.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 25 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">25. Rapports Décisionnels & Exports Comptables</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">ReportsController</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">Audit & BI</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Tableau de Bord Exécutif :</strong> CA du mois en DH, taux d'occupation de la flotte en %, nombre de jours loués.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Export Comptable Excel (.xlsx) :</strong> Fichier récapitulatif mensuel avec détail de la TVA collectée à 20% pour le cabinet comptable.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Audit Logs & Traçabilité :</strong> Historique complet des actions par utilisateur (création de facture, modification, annulation).</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 26 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">26. SaaS Multi-Tenant & Marque Blanche</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">Whitelabeling</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded border border-indigo-200">SaaS Cloud</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Isolation étanche des données :</strong> Clé de séparation stricte par locataire (<span class="font-mono text-slate-800">tenant_id</span>). Sécurité totale inter-agences.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Marque Blanche personnalisée :</strong> Intégration du logo de l'agence, charte graphique, entêtes de factures et domaine dédié.</span></li>
+                            <li class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Matrice des Rôles & Permissions :</strong> Super Admin, Gérant d'agence, Agent de comptoir, Chauffeur, Mécanicien atelier.</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Module 27 -->
+                    <div class="module-card bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition md:col-span-2">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-xs">27. Portail Web Public & Moteur de Réservation en Ligne</h3>
+                                    <span class="text-[10px] text-slate-400 font-mono">Storefront E-Commerce</span>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">E-Commerce B2C</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-slate-600 pt-1">
+                            <div class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Vitrine connectée au stock :</strong> Affichage en direct des véhicules réellement disponibles sans faux espoir client.</span></div>
+                            <div class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Moteur de calcul tarifaire :</strong> Devis instantané TTC selon les dates choisies, options et lieu de prise en charge.</span></div>
+                            <div class="flex items-start space-x-2"><svg class="w-3.5 h-3.5 text-sky-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span><strong>Paiement en ligne sécurisé CMI :</strong> Encaissement d'acompte par carte bancaire marocaine et internationale pour bloquer la réservation.</span></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Section 4 -->
+        <section class="space-y-4">
+            <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-sky-600"></span>
+                <span>4. Modèle Économique & Tarification Conseillée</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div class="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+                    <div class="font-bold text-slate-900 text-sm">Pack Démarrage</div>
+                    <div class="text-2xl font-bold font-mono text-sky-700">490 DH<span class="text-xs font-normal text-slate-400"> / mois</span></div>
+                    <p class="text-slate-500">Pour petite agence (jusqu'à 10 véhicules). Flotte, contrats, facturation TVA 20%.</p>
+                </div>
+                <div class="p-4 rounded-xl border-2 border-sky-600 bg-sky-50/50 space-y-3 relative">
+                    <span class="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-sky-600 text-white font-bold text-[9px]">BEST-SELLER</span>
+                    <div class="font-bold text-slate-900 text-sm">Pack Professionnel</div>
+                    <div class="text-2xl font-bold font-mono text-sky-700">990 DH<span class="text-xs font-normal text-slate-400"> / mois</span></div>
+                    <p class="text-slate-500">Pour 11 à 30 véhicules. Pack Démarrage + GPS en direct + alertes révisions.</p>
+                </div>
+                <div class="p-4 rounded-xl border border-slate-200 bg-white space-y-3">
+                    <div class="font-bold text-slate-900 text-sm">Pack Entreprise</div>
+                    <div class="text-2xl font-bold font-mono text-sky-700">1 890 DH<span class="text-xs font-normal text-slate-400"> / mois</span></div>
+                    <p class="text-slate-500">Flottes de 31 à 100+ véhicules. Tout inclus + site vitrine public + API WhatsApp.</p>
+                </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-100 border border-slate-200 text-xs space-y-1">
+                <div class="font-bold text-slate-800">Alternative : Vente de Licence Définitive (On-Premise)</div>
+                <div class="text-slate-600">
+                    Pour les grands comptes ou franchises souhaitant héberger la solution sur leur propre serveur : <strong>25 000 DH à 45 000 DH</strong> par agence + contrat de maintenance annuel de <strong>5 000 DH à 8 000 DH / an</strong>.
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5 -->
+        <section class="space-y-3">
+            <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-sky-600"></span>
+                <span>5. Les 5 Arguments Commerciaux pour Promouvoir le Produit</span>
+            </h2>
+            <ul class="space-y-2 text-xs text-slate-600">
+                <li class="flex items-start space-x-2">
+                    <span class="text-emerald-600 font-bold">✓</span>
+                    <span><strong>Conformité légale DGI & CNDP immédiate :</strong> Factures avec TVA 20%, ICE, IF et registre de géolocalisation inviolable.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                    <span class="text-emerald-600 font-bold">✓</span>
+                    <span><strong>Hausse du taux d'occupation de 15% à 25% :</strong> Visualisation en temps réel des véhicules disponibles sans trou de planning.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                    <span class="text-emerald-600 font-bold">✓</span>
+                    <span><strong>Protection contre les mauvais payeurs :</strong> Gestion rigoureuse des CIN, cautions carte bancaire et blacklist.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                    <span class="text-emerald-600 font-bold">✓</span>
+                    <span><strong>Économies substantielles sur l'entretien :</strong> Ne manquez plus aucune vidange ou révision moteur.</span>
+                </li>
+                <li class="flex items-start space-x-2">
+                    <span class="text-emerald-600 font-bold">✓</span>
+                    <span><strong>Accessible 24h/24 sur Mobile & PC :</strong> Créez un contrat ou vérifiez un véhicule depuis l'aéroport ou chez vous.</span>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Footer -->
+        <div class="border-t border-slate-200 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
+            <div>AtlasFleet Maroc © 2026 • Document Confidentiel Partenaires</div>
+            <div class="font-mono">contact@atlas-fleet.ma</div>
+        </div>
+
+    </div>
+
+</body>
+</html>

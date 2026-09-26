@@ -1,0 +1,55 @@
+{
+  "date": "2026-09-25T23:52:18.609Z",
+  "results": [
+    {
+      "id": "E1",
+      "status": "PASS",
+      "note": "scanner nav entry found (1 link(s))"
+    },
+    {
+      "id": "E2",
+      "status": "PASS",
+      "note": "landed on scanner (attendance/scanner), no bounce"
+    },
+    {
+      "id": "E3",
+      "status": "PASS",
+      "note": "scanner page has rendered content (no 500/error)"
+    },
+    {
+      "id": "E4",
+      "status": "PASS",
+      "note": "AR RTL scanner accessible (attendance/scanner)"
+    },
+    {
+      "id": "C1",
+      "status": "PASS",
+      "note": "register page loaded with slot=42ec3130… date=2026-09-26"
+    },
+    {
+      "id": "C2",
+      "status": "PASS",
+      "note": "register page renders on 390px"
+    },
+    {
+      "id": "C3",
+      "status": "PASS",
+      "note": "AR RTL register accessible (attendance/registres?slot=42ec3130-c087-4206-806e-61f87128dc56&date=2026-09-26)"
+    },
+    {
+      "id": "C4",
+      "status": "PASS",
+      "note": "verify-and-stage returns 401 (API exists, not 404)"
+    },
+    {
+      "id": "C5",
+      "status": "PASS",
+      "note": "scanner-sessions returns 401 (not 404)"
+    },
+    {
+      "id": "C6",
+      "status": "PASS",
+      "note": "onsite returns 401 on bad UUID (param handled)"
+    }
+  ]
+}

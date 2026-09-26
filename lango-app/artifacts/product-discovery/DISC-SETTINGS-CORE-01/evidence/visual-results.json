@@ -1,0 +1,2480 @@
+[
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/access-reset",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/access-reset",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_access-reset.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/accounting-defaults",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/accounting-defaults",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_accounting-defaults.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/attendance",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/attendance",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_attendance.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/audit-logs",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/audit-logs",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_audit-logs.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/branches",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/entitlements?addon=multi-branch",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_branches.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/cndp",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/cndp",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_cndp.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/custom-fields",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/custom-fields",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_custom-fields.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/documents",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/documents",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_documents.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/domain",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/domain",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_domain.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/drafts",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/drafts",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_drafts.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/entitlements",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/entitlements",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_entitlements.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/exports",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/exports",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_exports.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/jobs",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/jobs",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_jobs.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/live-classrooms",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/live-classrooms",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_live-classrooms.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/migration",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/migration",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_migration.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/notifications",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/notifications",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_notifications.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/numbering",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/numbering",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_numbering.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/onboarding",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/onboarding",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_onboarding.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": true,
+  "keys": [
+   "SMS.ma",
+   "Settings.mod_documents_title",
+   "Settings.mod_documents_desc"
+  ],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "IntlError: MISSING_MESSAGE: Could not resolve `Settings.mod_documents_title` in messages for locale `fr`.\n    at getFallbackFromErrorAndNoti",
+   "IntlError: MISSING_MESSAGE: Could not resolve `Settings.mod_documents_desc` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotif",
+   "IntlError: MISSING_MESSAGE: Could not resolve `Settings.mod_documents_title` in messages for locale `fr`.\n    at getFallbackFromErrorAndNoti"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/payment-methods",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/payment-methods",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_payment-methods.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/permissions",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/permissions",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_permissions.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/policies",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/policies",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_policies.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/providers",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/providers",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_providers.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/scanner-devices",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/scanner-devices",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_scanner-devices.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/scheduled-jobs",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/scheduled-jobs",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_scheduled-jobs.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/security/2fa",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/security/2fa",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_security_2fa.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/security/login-events",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/security/login-events",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_security_login-events.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/security",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/security",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_security.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/staff",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/staff",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_staff.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/subscription",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/subscription",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_subscription.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/translations",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/translations",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_translations.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/users",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/users",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_users.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/values",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/values",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_values.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/website/menu",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/entitlements?addon=school-website-cms",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_website_menu.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/website/news",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/entitlements?addon=school-website-cms",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_website_news.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/website",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/entitlements?addon=school-website-cms",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_website.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/settings/website/pages",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/entitlements?addon=school-website-cms",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__settings_website_pages.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/academics/calendar",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/academics/calendar",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__academics_calendar.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/academics/semesters",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/academics/semesters",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__academics_semesters.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/academics/grading/policies",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/academics/grading/policies",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__academics_grading_policies.png"
+ },
+ {
+  "variant": "desktop-fr",
+  "route": "/dashboard/students/matricules",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/students/matricules",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "desktop-fr__students_matricules.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/access-reset",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/access-reset",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_access-reset.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/accounting-defaults",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/accounting-defaults",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_accounting-defaults.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/attendance",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/attendance",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_attendance.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/audit-logs",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/audit-logs",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_audit-logs.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/branches",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/entitlements?addon=multi-branch",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_branches.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/cndp",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/cndp",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_cndp.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/custom-fields",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/custom-fields",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_custom-fields.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/documents",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/documents",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_documents.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/domain",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/domain",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_domain.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/drafts",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/drafts",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_drafts.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/entitlements",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/entitlements",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_entitlements.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/exports",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/exports",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_exports.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/jobs",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/jobs",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_jobs.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/live-classrooms",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/live-classrooms",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_live-classrooms.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/migration",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/migration",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_migration.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/notifications",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/notifications",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_notifications.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/numbering",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/numbering",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_numbering.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/onboarding",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/onboarding",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_onboarding.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": true,
+  "keys": [
+   "SMS.ma",
+   "Settings.mod_documents_title",
+   "Settings.mod_documents_desc"
+  ],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "IntlError: MISSING_MESSAGE: Could not resolve `Settings.mod_documents_title` in messages for locale `fr`.\n    at getFallbackFromErrorAndNoti",
+   "IntlError: MISSING_MESSAGE: Could not resolve `Settings.mod_documents_desc` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotif",
+   "IntlError: MISSING_MESSAGE: Could not resolve `Settings.mod_documents_title` in messages for locale `fr`.\n    at getFallbackFromErrorAndNoti"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/payment-methods",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/payment-methods",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_payment-methods.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/permissions",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/permissions",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_permissions.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/policies",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/policies",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_policies.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/providers",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/providers",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_providers.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/scanner-devices",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/scanner-devices",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_scanner-devices.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/scheduled-jobs",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/scheduled-jobs",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_scheduled-jobs.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/security/2fa",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/security/2fa",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_security_2fa.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/security/login-events",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/security/login-events",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_security_login-events.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/security",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/security",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_security.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/staff",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/staff",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_staff.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/subscription",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/subscription",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_subscription.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/translations",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/translations",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_translations.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/users",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/users",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_users.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/values",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/values",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_values.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/website/menu",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/entitlements?addon=school-website-cms",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_website_menu.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/website/news",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/entitlements?addon=school-website-cms",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_website_news.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/website",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/entitlements?addon=school-website-cms",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_website.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/settings/website/pages",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/settings/entitlements?addon=school-website-cms",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__settings_website_pages.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/academics/calendar",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/academics/calendar",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__academics_calendar.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/academics/semesters",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/academics/semesters",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__academics_semesters.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/academics/grading/policies",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/academics/grading/policies",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__academics_grading_policies.png"
+ },
+ {
+  "variant": "mobile390-fr",
+  "route": "/dashboard/students/matricules",
+  "status": 200,
+  "finalUrl": "/fr/dashboard/students/matricules",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "ltr",
+  "file": "mobile390-fr__students_matricules.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/access-reset",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/access-reset",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_access-reset.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/accounting-defaults",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/accounting-defaults",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_accounting-defaults.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/attendance",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/attendance",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": true,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_attendance.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/audit-logs",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/audit-logs",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_audit-logs.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/branches",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/entitlements?addon=multi-branch",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_branches.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/cndp",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/cndp",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_cndp.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/custom-fields",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/custom-fields",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_custom-fields.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/documents",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/documents",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_documents.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/domain",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/domain",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_domain.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/drafts",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/drafts",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_drafts.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/entitlements",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/entitlements",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_entitlements.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/exports",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/exports",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_exports.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/jobs",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/jobs",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_jobs.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/live-classrooms",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/live-classrooms",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_live-classrooms.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/migration",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/migration",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_migration.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/notifications",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/notifications",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_notifications.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/numbering",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/numbering",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_numbering.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/onboarding",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/onboarding",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_onboarding.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": true,
+  "keys": [
+   "SMS.ma",
+   "Settings.mod_documents_title",
+   "Settings.mod_documents_desc"
+  ],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "IntlError: MISSING_MESSAGE: Could not resolve `Settings.mod_documents_title` in messages for locale `ar`.\n    at getFallbackFromErrorAndNoti",
+   "IntlError: MISSING_MESSAGE: Could not resolve `Settings.mod_documents_desc` in messages for locale `ar`.\n    at getFallbackFromErrorAndNotif",
+   "IntlError: MISSING_MESSAGE: Could not resolve `Settings.mod_documents_title` in messages for locale `ar`.\n    at getFallbackFromErrorAndNoti"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/payment-methods",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/payment-methods",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_payment-methods.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/permissions",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/permissions",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_permissions.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/policies",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/policies",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_policies.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/providers",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/providers",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_providers.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/scanner-devices",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/scanner-devices",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_scanner-devices.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/scheduled-jobs",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/scheduled-jobs",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_scheduled-jobs.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/security/2fa",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/security/2fa",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_security_2fa.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/security/login-events",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/security/login-events",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_security_login-events.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/security",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/security",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_security.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/staff",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/staff",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_staff.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/subscription",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/subscription",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_subscription.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/translations",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/translations",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_translations.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/users",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/users",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_users.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/values",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/values",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_values.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/website/menu",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/entitlements?addon=school-website-cms",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_website_menu.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/website/news",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/entitlements?addon=school-website-cms",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_website_news.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/website",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/entitlements?addon=school-website-cms",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_website.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/settings/website/pages",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/settings/entitlements?addon=school-website-cms",
+  "redirected": true,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__settings_website_pages.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/academics/calendar",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/academics/calendar",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__academics_calendar.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/academics/semesters",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/academics/semesters",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__academics_semesters.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/academics/grading/policies",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/academics/grading/policies",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__academics_grading_policies.png"
+ },
+ {
+  "variant": "desktop-ar",
+  "route": "/dashboard/students/matricules",
+  "status": 200,
+  "finalUrl": "/ar/dashboard/students/matricules",
+  "redirected": false,
+  "h1": "Groupe Scolaire Atlas",
+  "skeleton": 0,
+  "loading": "",
+  "overflowX": 0,
+  "overlay": false,
+  "keys": [],
+  "comingSoon": false,
+  "api5xx": [],
+  "consoleErrors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "dir": "rtl",
+  "file": "desktop-ar__students_matricules.png"
+ }
+]

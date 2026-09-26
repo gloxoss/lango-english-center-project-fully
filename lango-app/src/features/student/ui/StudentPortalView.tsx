@@ -52,24 +52,29 @@ type AttendanceData = {
 };
 
 type ResultItem = {
-  assessmentResultId: string;
-  assessmentPlanId: string;
-  assessmentPlanName: string | null;
-  criteriaId: string;
-  criteriaName: string;
-  subjectName: string;
+  assessmentId?: string;
+  assessmentResultId?: string;
+  title?: string;
+  assessmentPlanName?: string | null;
+  criteriaName?: string;
+  type?: string;
+  subject?: string | null;
+  subjectName?: string | null;
   score: number | null;
-  scoreOutOf: number;
-  percentage: number | null;
-  normalizedScore20: number | null;
-  gradeLetter: string | null;
+  maximumScore?: number | null;
+  scoreOutOf?: number;
+  normalizedScore20?: number | null;
+  grade?: string | null;
+  gradeLetter?: string | null;
   status: string;
-  moderationState: string;
-  publishedAt: string | null;
-  date: string | null;
+  moderationState?: string;
+  publishedAt?: string | null;
+  date?: string | null;
+  gradedAt?: string;
 };
 
 type SubjectSummaryItem = {
+  subjectId?: string | null;
   subjectName: string;
   count: number;
   provisionalAverage20: number | null;
@@ -78,29 +83,37 @@ type SubjectSummaryItem = {
 
 type ResultsData = {
   results: ResultItem[];
-  subjectSummary: SubjectSummaryItem[];
+  subjectSummary?: SubjectSummaryItem[];
+  summary?: SubjectSummaryItem[];
+  subjects?: SubjectSummaryItem[];
 };
 
 type ExamScheduleItem = {
   id: string;
-  assessmentScheduleId: string;
+  assessmentScheduleId?: string;
   title: string;
-  subject: string;
-  hall: string | null;
-  seatNumber: string | null;
-  deskNumber: string | null;
-  candidateNumber: string | null;
+  subject: string | null;
+  hall?: string | null;
+  seatNumber?: string | null;
+  deskNumber?: string | null;
+  candidateNumber?: string | null;
+  seat?: {
+    seatNumber: string;
+    deskLabel?: string | null;
+    candidateNumber?: string | null;
+  } | null;
   startTime: string;
   endTime: string;
-  instructions: string | null;
+  instructions?: string | null;
 };
 
 type OnlineExamItem = {
   id: string;
   title: string;
-  subject: string;
-  duration: number | null;
-  totalMarks: number | null;
+  subject: string | null;
+  duration?: number | null;
+  durationMinutes?: number | null;
+  totalMarks?: number | string | null;
   takeUrl: string;
   isOpen: boolean;
   isExpired: boolean;
@@ -116,23 +129,37 @@ type HomeworkItem = {
   id: string;
   title: string;
   description: string | null;
-  subjectName: string;
-  teacherName: string;
-  dueDate: string;
-  maxScore: number | null;
-  submissionStatus: 'pending' | 'submitted' | 'graded';
-  isOverdue: boolean;
-  score: number | null;
-  feedback: string | null;
-  attachments?: { name: string; url: string }[];
+  subjectName?: string;
+  teacherName?: string;
+  dueDate?: string;
+  closeAt?: string | null;
+  createdAt?: string;
+  maxScore?: number | null;
+  maximumScore?: string | number | null;
+  submissionStatus?: 'pending' | 'submitted' | 'graded';
+  isOverdue?: boolean;
+  score?: number | null;
+  feedback?: string | null;
+  submission?: {
+    id?: string;
+    attemptNumber?: number;
+    status: string;
+    score: string | number | null;
+    feedbackText: string | null;
+    isLate?: boolean;
+    submittedAt?: string;
+  } | null;
+  attachments?: { name: string; url: string; size?: number; type?: string }[];
 };
 type HomeworkData = HomeworkItem[];
 
 type ReportCardItem = {
   id: string;
   termLabel: string;
-  academicYear: string;
-  generalAverage20: number | null;
+  academicYear?: string;
+  schoolYear?: string | null;
+  generalAverage?: number | null;
+  generalAverage20?: number | null;
   mention: string | null;
   decision: string | null;
   rank: number | null;
@@ -324,16 +351,18 @@ export function StudentPortalView() {
     if (!resultsData?.results) return {};
     const groups: Record<string, ResultItem[]> = {};
     for (const r of resultsData.results) {
-      const list = groups[r.subjectName] ?? [];
+      const subject = r.subjectName ?? r.subject ?? 'Autre';
+      const list = groups[subject] ?? [];
       list.push(r);
-      groups[r.subjectName] = list;
+      groups[subject] = list;
     }
     return groups;
   }, [resultsData]);
 
   const summaryBySubject = useMemo(() => {
-    if (!resultsData?.subjectSummary) return new Map<string, SubjectSummaryItem>();
-    return new Map(resultsData.subjectSummary.map((s) => [s.subjectName, s]));
+    const list = resultsData?.subjectSummary ?? resultsData?.summary ?? resultsData?.subjects;
+    if (!list) return new Map<string, SubjectSummaryItem>();
+    return new Map(list.map((s) => [s.subjectName, s]));
   }, [resultsData]);
 
   if (error) {
@@ -522,13 +551,14 @@ export function StudentPortalView() {
                   if (!nextExam) {
                     return <p className="text-sm text-slate-400 mt-1">{tStudent('noUpcomingExam')}</p>;
                   }
+                  const seat = nextExam.seat?.seatNumber ?? nextExam.seatNumber;
                   return (
                     <div className="mt-1">
                       <p className="text-sm font-bold text-slate-900 truncate">{nextExam.title}</p>
                       <p className="text-xs text-slate-500 mt-0.5 truncate">
-                        {nextExam.subject}
+                        {nextExam.subject ?? '—'}
                         {nextExam.hall ? ` · ${nextExam.hall}` : ''}
-                        {nextExam.seatNumber ? ` · ${tStudent('seatNumber', { seat: nextExam.seatNumber })}` : ''}
+                        {seat ? ` · ${tStudent('seatNumber', { seat })}` : ''}
                       </p>
                       <p className="text-xs font-medium text-indigo-600 mt-1">
                         {formatTimeRange(nextExam.startTime, nextExam.endTime)}
@@ -558,21 +588,22 @@ export function StudentPortalView() {
                   if (!latestGrade) {
                     return <p className="text-sm text-slate-400 mt-1">{tStudent('noPublishedGrade')}</p>;
                   }
+                  const subj = latestGrade.subjectName ?? latestGrade.subject ?? '—';
+                  const title = latestGrade.title ?? latestGrade.assessmentPlanName ?? latestGrade.criteriaName ?? 'Évaluation';
+                  const max = latestGrade.maximumScore ?? latestGrade.scoreOutOf ?? 20;
                   return (
                     <div className="mt-1">
                       <div className="flex items-baseline justify-between gap-2">
-                        <p className="text-sm font-bold text-slate-900 truncate">{latestGrade.subjectName}</p>
+                        <p className="text-sm font-bold text-slate-900 truncate">{subj}</p>
                         <span className="text-sm font-extrabold text-[#17A673]">
                           {latestGrade.status === 'exempted'
                             ? tStudent('statusExempted')
                             : latestGrade.status === 'absent'
                             ? tStudent('statusAbsent')
-                            : `${latestGrade.normalizedScore20 ?? latestGrade.score} / 20`}
+                            : `${latestGrade.score} / ${max}`}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">
-                        {latestGrade.assessmentPlanName ?? latestGrade.criteriaName}
-                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5 truncate">{title}</p>
                     </div>
                   );
                 })()}
@@ -594,17 +625,25 @@ export function StudentPortalView() {
                   <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#0066FF] group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-transform" />
                 </div>
                 {(() => {
-                  const nextHw = homeworkData?.find((hw) => hw.submissionStatus === 'pending');
+                  const nextHw = homeworkData?.find((hw) => {
+                    const isSubmitted = hw.submission
+                      ? hw.submission.status === 'submitted' || hw.submission.status === 'graded'
+                      : hw.submissionStatus === 'submitted' || hw.submissionStatus === 'graded';
+                    return !isSubmitted;
+                  });
                   if (!nextHw) {
                     return <p className="text-sm text-slate-400 mt-1">{tStudent('noPendingHomework')}</p>;
                   }
+                  const due = nextHw.closeAt || nextHw.dueDate;
                   return (
                     <div className="mt-1">
                       <p className="text-sm font-bold text-slate-900 truncate">{nextHw.title}</p>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">{nextHw.subjectName}</p>
-                      <p className="text-xs font-medium text-emerald-700 mt-1">
-                        {tStudent('dueAt', { date: formatDate(nextHw.dueDate) })}
-                      </p>
+                      {nextHw.subjectName && <p className="text-xs text-slate-500 mt-0.5 truncate">{nextHw.subjectName}</p>}
+                      {due && (
+                        <p className="text-xs font-medium text-emerald-700 mt-1">
+                          {tStudent('dueAt', { date: formatDate(due) })}
+                        </p>
+                      )}
                     </div>
                   );
                 })()}
@@ -790,46 +829,50 @@ export function StudentPortalView() {
                       </div>
 
                       <div className="divide-y divide-slate-100">
-                        {list.map((r) => (
-                          <div key={r.assessmentResultId} className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <div>
-                              <p className="text-sm font-semibold text-slate-800">
-                                {r.assessmentPlanName ?? r.criteriaName}
-                              </p>
-                              <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
-                                <span>{r.criteriaName}</span>
-                                {(r.date || r.publishedAt) && (
-                                  <>
-                                    <span>·</span>
-                                    <span>{formatDate(r.date || r.publishedAt)}</span>
-                                  </>
+                        {list.map((r, rIdx) => {
+                          const max = r.maximumScore ?? r.scoreOutOf ?? 20;
+                          const title = r.title ?? r.assessmentPlanName ?? r.criteriaName ?? 'Évaluation';
+                          const subLabel = r.criteriaName ?? r.type ?? '';
+                          const dateVal = r.gradedAt || r.date || r.publishedAt;
+                          return (
+                            <div key={r.assessmentId ?? r.assessmentResultId ?? rIdx} className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                              <div>
+                                <p className="text-sm font-semibold text-slate-800">{title}</p>
+                                <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
+                                  {subLabel && <span>{subLabel}</span>}
+                                  {dateVal && (
+                                    <>
+                                      {subLabel && <span>·</span>}
+                                      <span>{formatDate(dateVal)}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 self-start sm:self-auto">
+                                {r.status === 'exempted' ? (
+                                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700">
+                                    {tStudent('statusExempted')}
+                                  </span>
+                                ) : r.status === 'absent' ? (
+                                  <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700">
+                                    {tStudent('statusAbsent')}
+                                  </span>
+                                ) : (
+                                  <div className="text-end">
+                                    <span className="text-sm font-extrabold text-slate-900">
+                                      {r.score !== null ? `${r.score} / ${max}` : '—'}
+                                    </span>
+                                    {r.normalizedScore20 !== null && max !== 20 && (
+                                      <span className="text-xs text-slate-500 ms-1.5 font-medium">
+                                        ({r.normalizedScore20} / 20)
+                                      </span>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-2 self-start sm:self-auto">
-                              {r.status === 'exempted' ? (
-                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700">
-                                  {tStudent('statusExempted')}
-                                </span>
-                              ) : r.status === 'absent' ? (
-                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700">
-                                  {tStudent('statusAbsent')}
-                                </span>
-                              ) : (
-                                <div className="text-end">
-                                  <span className="text-sm font-extrabold text-slate-900">
-                                    {r.score !== null ? `${r.score} / ${r.scoreOutOf}` : '—'}
-                                  </span>
-                                  {r.normalizedScore20 !== null && r.scoreOutOf !== 20 && (
-                                    <span className="text-xs text-slate-500 ms-1.5 font-medium">
-                                      ({r.normalizedScore20} / 20)
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -859,43 +902,50 @@ export function StudentPortalView() {
                 <p className="px-5 py-6 text-sm text-slate-500">{tStudent('noUpcomingExams')}</p>
               ) : (
                 <div className="divide-y divide-slate-100">
-                  {examsData!.upcoming.map((s) => (
-                    <div key={s.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-bold text-slate-900">{s.title}</p>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700">
-                            {s.subject}
-                          </span>
+                  {examsData!.upcoming.map((s) => {
+                    const seat = s.seat?.seatNumber ?? s.seatNumber;
+                    const desk = s.seat?.deskLabel ?? s.deskNumber;
+                    const cand = s.seat?.candidateNumber ?? s.candidateNumber;
+                    return (
+                      <div key={s.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-bold text-slate-900">{s.title}</p>
+                            {s.subject && (
+                              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700">
+                                {s.subject}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs font-medium text-slate-500 mt-1">
+                            {formatTimeRange(s.startTime, s.endTime)}
+                          </p>
                         </div>
-                        <p className="text-xs font-medium text-slate-500 mt-1">
-                          {formatTimeRange(s.startTime, s.endTime)}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                          {s.hall && (
+                            <span className="px-2.5 py-1 bg-slate-100 rounded-lg font-medium">
+                              {tStudent('hall', { hall: s.hall })}
+                            </span>
+                          )}
+                          {seat && (
+                            <span className="px-2.5 py-1 bg-blue-50 text-[#0066FF] rounded-lg font-bold">
+                              {tStudent('seatNumber', { seat })}
+                            </span>
+                          )}
+                          {desk && (
+                            <span className="px-2.5 py-1 bg-slate-100 rounded-lg">
+                              {tStudent('desk', { desk })}
+                            </span>
+                          )}
+                          {cand && (
+                            <span className="px-2.5 py-1 bg-slate-100 rounded-lg">
+                              {tStudent('candidateNumber', { cand })}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                        {s.hall && (
-                          <span className="px-2.5 py-1 bg-slate-100 rounded-lg font-medium">
-                            {tStudent('hall', { hall: s.hall })}
-                          </span>
-                        )}
-                        {s.seatNumber && (
-                          <span className="px-2.5 py-1 bg-blue-50 text-[#0066FF] rounded-lg font-bold">
-                            {tStudent('seatNumber', { seat: s.seatNumber })}
-                          </span>
-                        )}
-                        {s.deskNumber && (
-                          <span className="px-2.5 py-1 bg-slate-100 rounded-lg">
-                            {tStudent('desk', { desk: s.deskNumber })}
-                          </span>
-                        )}
-                        {s.candidateNumber && (
-                          <span className="px-2.5 py-1 bg-slate-100 rounded-lg">
-                            {tStudent('candidateNumber', { cand: s.candidateNumber })}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -910,41 +960,46 @@ export function StudentPortalView() {
                 <p className="px-5 py-6 text-sm text-slate-500">{tStudent('noOnlineExams')}</p>
               ) : (
                 <div className="divide-y divide-slate-100">
-                  {examsData!.onlineExams.map((oe) => (
-                    <div key={oe.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-bold text-slate-900">{oe.title}</p>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
-                            {oe.subject}
-                          </span>
+                  {examsData!.onlineExams.map((oe) => {
+                    const duration = oe.durationMinutes ?? oe.duration;
+                    return (
+                      <div key={oe.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-bold text-slate-900">{oe.title}</p>
+                            {oe.subject && (
+                              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
+                                {oe.subject}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                            {duration && <span>{tStudent('duration', { min: duration })}</span>}
+                            {oe.totalMarks && <span>· {tStudent('marks', { marks: oe.totalMarks })}</span>}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
-                          {oe.duration && <span>{tStudent('duration', { min: oe.duration })}</span>}
-                          {oe.totalMarks && <span>· {tStudent('marks', { marks: oe.totalMarks })}</span>}
+                        <div className="self-start sm:self-auto">
+                          {oe.isOpen ? (
+                            <a
+                              href={oe.takeUrl}
+                              className="min-h-[44px] px-4 py-2 bg-[#0066FF] hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition"
+                            >
+                              <span>{tStudent('startExam')}</span>
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          ) : oe.isExpired ? (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">
+                              {tStudent('examExpired')}
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
+                              {tStudent('examNotOpen')}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <div className="self-start sm:self-auto">
-                        {oe.isOpen ? (
-                          <a
-                            href={oe.takeUrl}
-                            className="min-h-[44px] px-4 py-2 bg-[#0066FF] hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition"
-                          >
-                            <span>{tStudent('startExam')}</span>
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        ) : oe.isExpired ? (
-                          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">
-                            {tStudent('examExpired')}
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">
-                            {tStudent('examNotOpen')}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -963,7 +1018,7 @@ export function StudentPortalView() {
                     <div key={s.id} className="px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-semibold text-slate-800">{s.title}</p>
-                        <p className="text-xs text-slate-500">{s.subject} · {formatTimeRange(s.startTime, s.endTime)}</p>
+                        <p className="text-xs text-slate-500">{s.subject ? `${s.subject} · ` : ''}{formatTimeRange(s.startTime, s.endTime)}</p>
                       </div>
                       {s.hall && (
                         <span className="text-xs text-slate-500 bg-slate-50 px-2 py-0.5 rounded self-start sm:self-auto">
@@ -996,22 +1051,30 @@ export function StudentPortalView() {
             ) : (
               <div className="space-y-4">
                 {homeworkData!.map((hw) => {
-                  const isSubmitted = hw.submissionStatus === 'submitted' || hw.submissionStatus === 'graded';
+                  const isSubmitted = hw.submission
+                    ? hw.submission.status === 'submitted' || hw.submission.status === 'graded'
+                    : hw.submissionStatus === 'submitted' || hw.submissionStatus === 'graded';
+                  const due = hw.closeAt || hw.dueDate;
+                  const isOverdue = hw.isOverdue ?? (due && !isSubmitted ? new Date(due).getTime() < Date.now() : false);
+                  const max = hw.maximumScore ?? hw.maxScore;
+                  const score = hw.submission?.score ?? hw.score;
                   return (
                     <div key={hw.id} className="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm space-y-3">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-                            {hw.subjectName}
-                          </span>
-                          <span className="text-xs text-slate-500">{hw.teacherName}</span>
+                          {hw.subjectName && (
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                              {hw.subjectName}
+                            </span>
+                          )}
+                          {hw.teacherName && <span className="text-xs text-slate-500">{hw.teacherName}</span>}
                         </div>
                         <div className="self-start sm:self-auto">
                           {isSubmitted ? (
                             <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#DDF5EC] text-[#17A673]">
                               {tStudent('statusSubmitted')}
                             </span>
-                          ) : hw.isOverdue ? (
+                          ) : isOverdue ? (
                             <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700">
                               {tStudent('statusOverdue')}
                             </span>
@@ -1032,11 +1095,11 @@ export function StudentPortalView() {
 
                       <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
                         <span className="font-medium text-slate-500">
-                          {tStudent('dueAt', { date: formatDate(hw.dueDate) })}
+                          {due ? tStudent('dueAt', { date: formatDate(due) }) : '—'}
                         </span>
-                        {hw.maxScore !== null && (
+                        {max !== undefined && max !== null && (
                           <span className="font-semibold text-slate-700">
-                            {hw.score !== null ? `${hw.score} / ${hw.maxScore}` : `${hw.maxScore} pts`}
+                            {score !== null && score !== undefined ? `${score} / ${max}` : `${max} pts`}
                           </span>
                         )}
                       </div>
@@ -1092,69 +1155,73 @@ export function StudentPortalView() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {reportCardsData!.map((rc) => (
-                  <div key={rc.id} className="p-6 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col justify-between gap-5">
-                    <div>
-                      <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
-                        <div>
-                          <h3 className="text-lg font-bold text-slate-900">{rc.termLabel}</h3>
-                          <p className="text-xs text-slate-500 mt-0.5">{rc.academicYear}</p>
+                {reportCardsData!.map((rc) => {
+                  const avg = rc.generalAverage20 ?? rc.generalAverage;
+                  const year = rc.academicYear || rc.schoolYear;
+                  return (
+                    <div key={rc.id} className="p-6 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col justify-between gap-5">
+                      <div>
+                        <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                          <div>
+                            <h3 className="text-lg font-bold text-slate-900">{rc.termLabel}</h3>
+                            {year && <p className="text-xs text-slate-500 mt-0.5">{year}</p>}
+                          </div>
+                          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-[#0066FF]">
+                            {tStudent('issuedOn', { date: formatDate(rc.issuedDate) })}
+                          </span>
                         </div>
-                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-[#0066FF]">
-                          {tStudent('issuedOn', { date: formatDate(rc.issuedDate) })}
-                        </span>
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-3 mt-4">
-                        <div className="p-3 bg-slate-50 rounded-xl">
-                          <p className="text-xs text-slate-500 font-medium">{tStudent('generalAverageLabel', { avg: '' }).replace(/:.*$/, '').trim()}</p>
-                          <p className="text-xl font-extrabold text-[#0066FF] mt-0.5">
-                            {rc.generalAverage20 !== null ? `${rc.generalAverage20} / 20` : '—'}
-                          </p>
-                        </div>
-                        {rc.rank !== null && rc.classSize !== null && (
+                        <div className="grid grid-cols-2 gap-3 mt-4">
                           <div className="p-3 bg-slate-50 rounded-xl">
-                            <p className="text-xs text-slate-500 font-medium">{tStudent('rankLabel', { rank: '', total: '' }).replace(/:.*$/, '').trim()}</p>
-                            <p className="text-xl font-extrabold text-slate-800 mt-0.5">
-                              {rc.rank} / {rc.classSize}
+                            <p className="text-xs text-slate-500 font-medium">{tStudent('generalAverageLabel', { avg: '' }).replace(/:.*$/, '').trim()}</p>
+                            <p className="text-xl font-extrabold text-[#0066FF] mt-0.5">
+                              {avg !== null && avg !== undefined ? `${avg} / 20` : '—'}
                             </p>
                           </div>
-                        )}
-                        {rc.mention && (
-                          <div className="p-3 bg-slate-50 rounded-xl">
-                            <p className="text-xs text-slate-500 font-medium">{tStudent('mentionLabel', { mention: '' }).replace(/:.*$/, '').trim()}</p>
-                            <p className="text-sm font-bold text-slate-800 mt-0.5">{rc.mention}</p>
-                          </div>
-                        )}
-                        {rc.decision && (
-                          <div className="p-3 bg-slate-50 rounded-xl">
-                            <p className="text-xs text-slate-500 font-medium">{tStudent('decisionLabel', { decision: '' }).replace(/:.*$/, '').trim()}</p>
-                            <p className="text-sm font-bold text-emerald-700 mt-0.5">{rc.decision}</p>
-                          </div>
-                        )}
+                          {rc.rank !== null && rc.classSize !== null && (
+                            <div className="p-3 bg-slate-50 rounded-xl">
+                              <p className="text-xs text-slate-500 font-medium">{tStudent('rankLabel', { rank: '', total: '' }).replace(/:.*$/, '').trim()}</p>
+                              <p className="text-xl font-extrabold text-slate-800 mt-0.5">
+                                {rc.rank} / {rc.classSize}
+                              </p>
+                            </div>
+                          )}
+                          {rc.mention && (
+                            <div className="p-3 bg-slate-50 rounded-xl">
+                              <p className="text-xs text-slate-500 font-medium">{tStudent('mentionLabel', { mention: '' }).replace(/:.*$/, '').trim()}</p>
+                              <p className="text-sm font-bold text-slate-800 mt-0.5">{rc.mention}</p>
+                            </div>
+                          )}
+                          {rc.decision && (
+                            <div className="p-3 bg-slate-50 rounded-xl">
+                              <p className="text-xs text-slate-500 font-medium">{tStudent('decisionLabel', { decision: '' }).replace(/:.*$/, '').trim()}</p>
+                              <p className="text-sm font-bold text-emerald-700 mt-0.5">{rc.decision}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleDownloadPdf(rc.id, rc.termLabel)}
-                      disabled={downloadingId === rc.id}
-                      className="min-h-[44px] w-full px-4 py-2.5 bg-[#0066FF] text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-50 transition cursor-pointer"
-                    >
-                      {downloadingId === rc.id ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          <span>{tStudent('downloadingPdf')}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Download className="w-4 h-4" />
-                          <span>{tStudent('downloadPdf')}</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                ))}
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadPdf(rc.id, rc.termLabel)}
+                        disabled={downloadingId === rc.id}
+                        className="min-h-[44px] w-full px-4 py-2.5 bg-[#0066FF] text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-50 transition cursor-pointer"
+                      >
+                        {downloadingId === rc.id ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            <span>{tStudent('downloadingPdf')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-4 h-4" />
+                            <span>{tStudent('downloadPdf')}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -1,0 +1,15 @@
+{
+  "text": "Présences & Absences\n\nMinutes de grâce, heure de référence du scan, seuils de signalement et alertes aux tuteurs.\n\nPointage à l'entrée\nMinutes de grâce pour retard\nUn badge scanné avant (début de séance + grâce) est enregistré « présent », après en « retard ».\nHeure de début de séance\nUtilisée par le scanner QR tant que les cours ne sont pas liés à l'emploi du temps.\nSeuils de signalement\nAbsences consécutives\nNombre de jours d'enseignement consécutifs d'absence qui déclenche un signalement.\nRetards répétés dans le mois\nNombre de retards dans le mois qui déclenche un signalement.\nAlertes aux tuteurs\n\nAlertes SMS automatiques aux tuteurs\n\nNotification au tuteur lors d'une absence non justifiée.\n\nStatuts de présence\n\nStatuts que le registre d'appel peut enregistrer. Décocher un statut le retire des choix proposés aux enseignants.\n\nPrésence\n\nAbsence justifiée\n\nAbsence non justifiée\n\nRetard\n\nSortie anticipée\n\nMatin\n\nAprès-midi\n\nEnregistrer",
+  "dir": "ltr",
+  "overflowX": 0,
+  "missingKeys": [],
+  "status": 200,
+  "url": "/fr/dashboard/settings/attendance",
+  "consoleErrors": [
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h"
+  ],
+  "api5xx": []
+}

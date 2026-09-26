@@ -1,4 +1,5 @@
 # `/dashboard/settings/onboarding`
+<!-- swept: 2026-09-26 claude-scf-3 | school_admin on :3537: year read-only from session_years + manage link, save no longer writes academic_year (test #2) -->
 
 **Status: NEEDS TRIAGE** · Module: `settings` · Source: [`src/app/[locale]/(dashboard)/dashboard/settings/onboarding/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/settings/onboarding/page.tsx>)
 

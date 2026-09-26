@@ -372,7 +372,7 @@ export async function postAttendance(
         period: REGISTER_PERIOD,
         date,
         status,
-        lateMinutes: status === 'late' ? Math.max(0, s.lateJoinSeconds) : null,
+        lateMinutes: status === 'late' ? Math.ceil(Math.max(0, s.lateJoinSeconds) / 60) : null,
         markedById: ctx.userId,
         note: `Classe virtuelle: ${session.title}${opts.note ? ` — ${opts.note}` : ''}`,
         isVoided: false,

@@ -1,9 +1,22 @@
 # `/dashboard/settings`
-<!-- swept: 2026-09-24 claude-finance | school_admin sweep :3466: loads, no failed API; only flag 'SMS.ma' is the SMS provider's domain name, a false positive of the raw-key detector -->
+<!-- swept: 2026-09-26 claude-scf-3 | school_admin on :3537: Translations and jobs cards gone, Providers card -› /dashboard/broadcast/connections, real completeness badges, no Settings.* raw keys except mod_attendance pending the locale window -->
 
 **Status: NEEDS FIX (P1)** · Module: `settings` · Source: [`src/app/[locale]/(dashboard)/dashboard/settings/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/settings/page.tsx>)
 
-**Progress (2026-09-25):** S-32 PARTIAL · S-26 PARTIAL
+**Progress (2026-09-26):** S-32 PARTIAL · S-26 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

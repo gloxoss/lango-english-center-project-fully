@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lango / SchoolOS — Linear B2B SaaS Light Aesthetic Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #fafafa; color: #0f172a; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="p-8">
+  
+  <div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- Top Header -->
+    <div class="flex items-center justify-between pb-6 border-b border-slate-200">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-700 border border-emerald-500/30">PREVIEW DESIGN LOGIC</span>
+          <span class="text-xs font-mono text-slate-500">STYLE: LINEAR HIGH-DENSITY B2B (LIGHT)</span>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900 mt-2">Lango SchoolOS — Executive Dashboard</h1>
+        <p class="text-sm text-slate-500">Multi-Tenant Educational Operations & Live Performance KPI Engine</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs px-3.5 py-2 rounded-lg transition font-medium shadow-sm">Export CSV</button>
+        <button class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-2 rounded-lg shadow transition">+ New Student Enrollment</button>
+      </div>
+    </div>
+
+    <!-- Bento Grid Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white border border-slate-200/90 rounded-xl p-5 shadow-sm hover:border-slate-300 transition">
+        <div class="text-xs font-medium text-slate-500">Total Active Students</div>
+        <div class="text-3xl font-bold font-mono text-slate-900 mt-2">1,482</div>
+        <div class="text-xs text-emerald-600 font-mono mt-2">↑ +12.4% vs last month</div>
+      </div>
+
+      <div class="bg-white border border-slate-200/90 rounded-xl p-5 shadow-sm hover:border-slate-300 transition">
+        <div class="text-xs font-medium text-slate-500">Monthly Tuition Revenue</div>
+        <div class="text-3xl font-bold font-mono text-slate-900 mt-2">485,200 <span class="text-sm text-slate-500">MAD</span></div>
+        <div class="text-xs text-emerald-600 font-mono mt-2">↑ 98.2% Collection Rate</div>
+      </div>
+
+      <div class="bg-white border border-slate-200/90 rounded-xl p-5 shadow-sm hover:border-slate-300 transition">
+        <div class="text-xs font-medium text-slate-500">Daily Attendance Rate</div>
+        <div class="text-3xl font-bold font-mono text-slate-900 mt-2">96.8%</div>
+        <div class="text-xs text-amber-600 font-mono mt-2">⚡ 14 Unexcused Absences</div>
+      </div>
+
+      <div class="bg-white border border-slate-200/90 rounded-xl p-5 shadow-sm hover:border-slate-300 transition">
+        <div class="text-xs font-medium text-slate-500">Active Learning Centers</div>
+        <div class="text-3xl font-bold font-mono text-slate-900 mt-2">6 Centers</div>
+        <div class="text-xs text-slate-500 font-mono mt-2">Casablanca / Rabat / Fes</div>
+      </div>
+    </div>
+
+    <!-- Data Table Preview -->
+    <div class="bg-white border border-slate-200/90 rounded-xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-slate-900">Recent Student Enrollments & Placement</h2>
+        <div class="text-xs font-mono text-slate-500">Showing 4 of 1,482 records</div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs font-mono border-collapse">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500 bg-slate-50">
+              <th class="py-2.5 px-3 font-medium">STUDENT NAME</th>
+              <th class="py-2.5 px-3 font-medium">CENTER</th>
+              <th class="py-2.5 px-3 font-medium">LEVEL</th>
+              <th class="py-2.5 px-3 font-medium">SCHEDULE</th>
+              <th class="py-2.5 px-3 font-medium">STATUS</th>
+              <th class="py-2.5 px-3 font-medium text-right">TUITION</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-slate-700">
+            <tr class="hover:bg-slate-50 transition">
+              <td class="py-3 px-3 font-semibold text-slate-900">Amine El Amrani</td>
+              <td class="px-3">Fes Ville Nouvelle</td>
+              <td class="px-3">B2 Upper-Intermediate</td>
+              <td class="px-3">Mon/Wed 18:00 - 19:30</td>
+              <td class="px-3"><span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Enrolled</span></td>
+              <td class="px-3 text-right font-bold text-slate-900">1,200 MAD</td>
+            </tr>
+            <tr class="hover:bg-slate-50 transition">
+              <td class="py-3 px-3 font-semibold text-slate-900">Salma Benjelloun</td>
+              <td class="px-3">Rabat Agdal</td>
+              <td class="px-3">C1 Advanced Academic</td>
+              <td class="px-3">Tue/Thu 17:00 - 18:30</td>
+              <td class="px-3"><span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Enrolled</span></td>
+              <td class="px-3 text-right font-bold text-slate-900">1,450 MAD</td>
+            </tr>
+            <tr class="hover:bg-slate-50 transition">
+              <td class="py-3 px-3 font-semibold text-slate-900">Youssef Tazi</td>
+              <td class="px-3">Casablanca Oasis</td>
+              <td class="px-3">A2 Foundation</td>
+              <td class="px-3">Sat/Sun 10:00 - 12:00</td>
+              <td class="px-3"><span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">Pending Payment</span></td>
+              <td class="px-3 text-right font-bold text-slate-900">1,100 MAD</td>
+            </tr>
+            <tr class="hover:bg-slate-50 transition">
+              <td class="py-3 px-3 font-semibold text-slate-900">Kenza Alami</td>
+              <td class="px-3">Fes Medina</td>
+              <td class="px-3">B1 Intermediate</td>
+              <td class="px-3">Mon/Wed 16:30 - 18:00</td>
+              <td class="px-3"><span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Enrolled</span></td>
+              <td class="px-3 text-right font-bold text-slate-900">1,200 MAD</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

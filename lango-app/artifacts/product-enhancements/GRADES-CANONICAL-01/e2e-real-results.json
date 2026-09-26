@@ -1,0 +1,40 @@
+[
+  {
+    "step": "1 admin creates épreuve",
+    "status": 201,
+    "id": "02e01ed4-a31c-4275-8629-aa4e8bcaabbf",
+    "classSubjectId": "c293a97f-2bb3-40d5-a362-e38267be0340"
+  },
+  {
+    "step": "2a teacher opens grade sheet",
+    "status": 200,
+    "studentInRoster": true
+  },
+  {
+    "step": "2b teacher saves 15/20",
+    "status": 200
+  },
+  {
+    "step": "3d parent sees child",
+    "status": 200,
+    "relationshipId": "6a7381ca-f9c0-414a-8d99-5d42f3aa4314"
+  },
+  {
+    "step": "4 before publish",
+    "studentSees": false,
+    "parentStatus": 200,
+    "parentSees": false
+  },
+  {
+    "step": "5 teacher publishes",
+    "status": 200,
+    "count": 1
+  },
+  {
+    "step": "6 after publish",
+    "studentSees": true,
+    "parentSees": true,
+    "classResultsStatus": 200,
+    "classResultsHasStudent": true
+  }
+]

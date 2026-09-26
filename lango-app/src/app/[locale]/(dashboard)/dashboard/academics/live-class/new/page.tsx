@@ -4,7 +4,7 @@ import { SessionCreateForm } from '@/features/live-classrooms/ui/session-create-
 import { requireServerPage } from '@/libs/api/page-guard';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { db } from '@/libs/DB';
-import { classes, classSections, classSubjects, liveClassProviderProfiles, sections, subjects, user } from '@/models/Schema';
+import { classes, classSections, classSubjects, liveClassProviderProfiles, sections, subjects, subjectTeachers, user } from '@/models/Schema';
 
 export default async function LiveClassCreatePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -20,7 +20,7 @@ export default async function LiveClassCreatePage({ params }: { params: Promise<
     sectionConditions.push(inArray(classSections.id, teacherSectionIds));
   }
 
-  const [profiles, sectionRows, classSubjectRows, teacherRows] = await Promise.all([
+  const [profiles, sectionRows, classSubjectRows, teacherRows, assignmentRows] = await Promise.all([
     db
       .select({
         id: liveClassProviderProfiles.id,
@@ -58,10 +58,18 @@ export default async function LiveClassCreatePage({ params }: { params: Promise<
       .from(user)
       .where(and(eq(user.tenantId, tenantId), eq(user.role, 'teacher')))
       .orderBy(user.name),
+    db
+      .select({
+        classSectionId: subjectTeachers.classSectionId,
+        classSubjectId: subjectTeachers.classSubjectId,
+        teacherId: subjectTeachers.teacherId,
+      })
+      .from(subjectTeachers)
+      .where(and(eq(subjectTeachers.tenantId, tenantId), eq(subjectTeachers.status, 'active'))),
   ]);
 
-  // A teacher always hosts for themselves (admins may override via the teacher field).
-  const defaultTeacherId = ctx.role === 'teacher' ? ctx.userId : (teacherRows[0]?.id ?? null);
+  // A teacher always hosts for themselves (admins select or auto-match).
+  const defaultTeacherId = ctx.role === 'teacher' ? ctx.userId : null;
 
   return (
     <SessionCreateForm
@@ -70,6 +78,7 @@ export default async function LiveClassCreatePage({ params }: { params: Promise<
       sections={sectionRows}
       subjects={classSubjectRows}
       teachers={teacherRows}
+      assignments={assignmentRows}
       defaultTeacherId={defaultTeacherId}
       isTeacher={ctx.role === 'teacher'}
     />

@@ -4,15 +4,16 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
-  ArrowLeft, Video, Play, Square, XCircle, RefreshCw, Download, Paperclip,
+  ArrowLeft, Video, VideoOff, Play, Square, XCircle, RefreshCw, Download, Paperclip,
   Users, ListChecks, AlertTriangle, Clock, ExternalLink, Trash2, Plus, CircleCheck,
+  Info, BookOpen,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { LiveClassroomStudio } from './live-classroom-studio';
 import {
-  getSessionDetail, getAttendance, getRecordings, getMaterials, joinSession, redeemJoin,
-  startSession, endSession, cancelSession, reconcileAttendance, postAttendance,
-  syncRecordings, deleteRecording, attachMaterial, detachMaterial, errorMessage,
+  getSessionDetail, getAttendance, getRecordings, getMaterials, getAvailableAssets,
+  joinSession, redeemJoin, startSession, endSession, cancelSession, reconcileAttendance,
+  postAttendance, syncRecordings, deleteRecording, attachMaterial, detachMaterial, errorMessage,
 } from '../data/api';
 
 export function SessionDetailClient({ sessionId, locale }: { sessionId: string; locale: string }) {
@@ -23,6 +24,9 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
   const [attendance, setAttendance] = useState<Awaited<ReturnType<typeof getAttendance>> | null>(null);
   const [recordings, setRecordings] = useState<Awaited<ReturnType<typeof getRecordings>> | null>(null);
   const [materials, setMaterials] = useState<Awaited<ReturnType<typeof getMaterials>> | null>(null);
+  const [availableAssets, setAvailableAssets] = useState<Array<{ id: string; title: string; status: string }>>([]);
+  const [assetsState, setAssetsState] = useState<'loading' | 'error' | 'loaded'>('loading');
+  const [addonDisabled, setAddonDisabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -62,14 +66,44 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
   const loadAll = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setAssetsState('loading');
     try {
       const [d, a, r, m] = await Promise.all([
-        getSessionDetail(sessionId), getAttendance(sessionId), getRecordings(sessionId), getMaterials(sessionId),
+        getSessionDetail(sessionId),
+        getAttendance(sessionId),
+        getRecordings(sessionId),
+        getMaterials(sessionId),
       ]);
       setDetail(d);
       setAttendance(a);
       setRecordings(r);
       setMaterials(m);
+
+      try {
+        const assets = await getAvailableAssets();
+        setAvailableAssets((assets || []).filter(item => item.status === 'published'));
+        setAssetsState('loaded');
+        setAddonDisabled(false);
+      } catch (assetErr: unknown) {
+        const errObj = assetErr as { message?: string; code?: string; status?: number };
+        const msg = String(errObj?.message || '');
+        const code = String(errObj?.code || '');
+        const status = Number(errObj?.status || 0);
+        if (
+          status === 403 ||
+          code === 'ADDON_NOT_ACTIVATED' ||
+          code === 'ADDON_REQUIRED' ||
+          code.startsWith('ADDON_') ||
+          msg.toLowerCase().includes('activ') ||
+          msg.includes('addon')
+        ) {
+          setAddonDisabled(true);
+          setAssetsState('loaded');
+        } else {
+          setAssetsState('error');
+        }
+        setAvailableAssets([]);
+      }
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -99,7 +133,6 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
     setError(null);
     setNotice(null);
     try {
-      // If session is scheduled/waiting, start it first so it becomes live
       if (s.status === 'scheduled' || s.status === 'waiting') {
         try {
           await startSession(sessionId);
@@ -111,16 +144,15 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
       const grant = await joinSession(sessionId);
       const redeemed = await redeemJoin(sessionId, grant.token);
       setJoinUrl(redeemed.url);
-      setIsLiveRoomOpen(true);
       setNotice(t('tokenIssuedNotice', {
         role: redeemed.role === 'moderator' ? t('roleModerator') : t('roleParticipant'),
         devNotice: redeemed.providerType === 'dev' ? `(${t('devProvider')})` : '',
       }));
+      if (redeemed.url) {
+        window.open(redeemed.url, '_blank', 'noopener,noreferrer');
+      }
     } catch (err) {
       setError(errorMessage(err));
-      if (detail?.providerType === 'dev') {
-        setIsLiveRoomOpen(true);
-      }
     } finally {
       setBusy(null);
     }
@@ -210,76 +242,85 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="text-start">
             <h2 className="text-xs font-extrabold text-[#16212B] flex items-center gap-1.5">
-              <ExternalLink className="w-4 h-4 text-[#2487B8]" /> {t('sessionConnectionHeading')}
+              <Video className="w-4 h-4 text-[#2487B8]" /> {t('sessionConnectionHeading')}
             </h2>
             <p className="text-[11px] text-slate-500 mt-0.5">
               {detail!.providerType === 'dev'
-                ? 'Salle Virtuelle Instantanée WebRTC (Caméra, micro, tableau blanc & partage d\'écran sans configuration)'
+                ? t('devProviderDesc')
                 : t('providerLabelPrefix', { provider: detail!.profileName ?? detail!.providerType ?? '' })}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
-              onClick={() => {
-                if (!joinUrl) {
-                  handleJoin();
+              onClick={async () => {
+                if (joinUrl) {
+                  window.open(joinUrl, '_blank', 'noopener,noreferrer');
                 } else {
-                  setIsLiveRoomOpen(prev => !prev);
+                  await handleJoin();
                 }
               }}
               disabled={busy === 'join' || !canHost}
-              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-slate-900 px-4 text-xs font-bold text-white hover:bg-black disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer shadow-xs"
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-[#2487B8] px-4 text-xs font-bold text-white hover:bg-[#1B6C93] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer shadow-xs transition-colors"
             >
-              <Video className="h-3.5 w-3.5 text-emerald-400" />
-              {busy === 'join' ? t('generatingToken') : isLiveRoomOpen ? 'Masquer la caméra' : '🎥 Démarrer la Visio Directe'}
+              <ExternalLink className="h-4 w-4" />
+              {busy === 'join' ? t('generatingToken') : t('joinSessionBtn')}
             </button>
+
             <button
-              onClick={handleJoin}
-              disabled={busy === 'join' || !canHost}
-              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-[#2487B8] px-4 text-xs font-bold text-white hover:bg-[#1B6C93] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer"
+              onClick={() => setIsLiveRoomOpen(!isLiveRoomOpen)}
+              className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border px-3.5 text-xs font-bold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 ${
+                isLiveRoomOpen
+                  ? 'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              }`}
             >
-              {t('joinSessionBtn')}
+              {isLiveRoomOpen ? (
+                <>
+                  <VideoOff className="h-4 w-4 text-rose-600" />
+                  {t('closeTestBtn')}
+                </>
+              ) : (
+                <>
+                  <Video className="h-4 w-4 text-slate-600" />
+                  {t('testCameraMicBtn')}
+                </>
+              )}
             </button>
           </div>
         </div>
+
         {joinUrl && (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-2.5 text-start">
-            <p className="text-[11px] font-bold text-slate-500">{t('devLinkWarning')}</p>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3 text-start">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                <ExternalLink className="w-3.5 h-3.5 text-[#2487B8]" /> {t('directLinkFallback')}
+              </span>
+              <span className="text-[10px] text-slate-400">{t('directLinkDesc')}</span>
+            </div>
             <div className="flex flex-col sm:flex-row gap-2">
-              <code className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-700 break-all">{joinUrl}</code>
+              <code className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-700 break-all select-all font-mono">{joinUrl}</code>
               <a
                 href={joinUrl.startsWith('http') ? joinUrl : `https://meet.jit.si/SchoolOS-Live-${sessionId}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-[#2487B8] px-3 text-xs font-bold text-white hover:bg-[#1B6C93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer"
+                className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl bg-[#2487B8] px-3.5 text-xs font-bold text-white hover:bg-[#1B6C93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer shadow-xs shrink-0"
               >
-                {t('actionOpen')}
+                {t('openInNewTab')}
               </a>
             </div>
-            <div className="rounded-lg bg-amber-50 border border-amber-200 p-2.5 text-[11px] text-amber-900 leading-relaxed">
-              <strong>💡 Comment être accepté dans la réunion :</strong>
-              <ul className="mt-1 list-disc list-inside space-y-0.5 text-amber-800">
-                <li><strong>Dans SchoolOS :</strong> La visio directe s&apos;ouvre automatiquement ci-dessous (caméra, micro, écran 100% direct, 0 compte requis).</li>
-                <li><strong>Dans l&apos;onglet Jitsi externe :</strong> Si vous voyez <em>&quot;The conference has not yet started...&quot;</em>, cliquez sur le bouton bleu <strong>&quot;I am the host&quot; / &quot;Je suis l&apos;hôte&quot;</strong> et connectez-vous avec votre compte Google. La salle s&apos;ouvrira instantanément pour tous les participants.</li>
-              </ul>
+            <div className="rounded-xl bg-blue-50/80 border border-blue-200 p-3 text-[11px] text-blue-900 leading-relaxed flex items-start gap-2">
+              <Info className="w-4 h-4 text-[#2487B8] shrink-0 mt-0.5" />
+              <p className="text-slate-700">{t('providerModeratorNote')}</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Embedded Live Classroom Studio */}
+      {/* Embedded Live Classroom Studio (Local Camera/Mic preview only) */}
       {isLiveRoomOpen && (
         <LiveClassroomStudio
           sessionTitle={s.title}
-          teacherName={detail!.teacherName ?? 'Enseignant'}
-          className={detail!.className ? `${detail!.className} ${detail!.sectionName ?? ''}`.trim() : undefined}
           onClose={() => setIsLiveRoomOpen(false)}
-          externalJoinUrl={joinUrl?.startsWith('http') ? joinUrl : `https://meet.jit.si/SchoolOS-Live-${sessionId}`}
-          roster={(detail!.invitations ?? []).map(inv => ({
-            userId: inv.userId,
-            name: inv.userName ?? inv.userId,
-            role: inv.participantRole,
-          }))}
         />
       )}
 
@@ -314,20 +355,25 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
 
       {/* Attendance + Reconcile */}
       <div className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <h2 className="text-xs font-extrabold text-[#16212B] flex items-center gap-1.5">
-            <Users className="w-4 h-4 text-[#2487B8]" /> {t('attendanceReconHeading')}
-          </h2>
-          <div className="flex items-center gap-2">
+        <div className="px-4 py-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="text-start">
+            <h2 className="text-xs font-extrabold text-[#16212B] flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-[#2487B8]" /> {t('attendanceReconHeading')}
+            </h2>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {t('attendanceReconDesc')}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
             <input value={reconcileNote} onChange={e => setReconcileNote(e.target.value)} placeholder={t('reconcileReasonPlaceholder')}
-              className="h-8 w-56 rounded-lg border border-slate-200 px-2 text-[11px] focus:border-[#2487B8] focus:outline-none focus:ring-2 focus:ring-[#2487B8]/20 text-start" />
+              className="h-9 w-52 rounded-lg border border-slate-200 px-2.5 text-[11px] focus:border-[#2487B8] focus:outline-none focus:ring-2 focus:ring-[#2487B8]/20 text-start" />
             <button onClick={() => run('reconcile', () => reconcileAttendance(sessionId, { note: reconcileNote }), t('reconciliationProposedNotice'))} disabled={busy !== null}
-              className="inline-flex min-h-[44px] items-center gap-1 rounded-lg bg-[#2487B8] px-2.5 text-[11px] font-bold text-white hover:bg-[#1B6C93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer">
-              <RefreshCw className="h-3 w-3" /> {t('reconcileBtn')}
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#2487B8] px-3 text-[11px] font-bold text-white hover:bg-[#1B6C93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer shadow-xs" title={t('reconcileBtnTitle')}>
+              <RefreshCw className="h-3.5 w-3.5" /> {t('reconcileBtn')}
             </button>
             <button onClick={() => run('post', () => postAttendance(sessionId, reconcileNote), t('attendancePostedNotice'))} disabled={busy !== null}
-              className="inline-flex min-h-[44px] items-center gap-1 rounded-lg bg-emerald-600 px-2.5 text-[11px] font-bold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer">
-              <Download className="h-3 w-3" /> {t('postToRegisterBtn')}
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-[11px] font-bold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer shadow-xs" title={t('postToRegisterBtnTitle')}>
+              <Download className="h-3.5 w-3.5" /> {t('postToRegisterBtn')}
             </button>
           </div>
         </div>
@@ -336,35 +382,35 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/60 text-[10px] font-extrabold text-slate-400 uppercase">
                 <th className="py-2.5 px-4 text-start">{t('colStudent')}</th>
-                <th className="py-2.5 px-3 text-center">{t('colStatus')}</th>
-                <th className="py-2.5 px-3 text-end">{t('colPresence')}</th>
-                <th className="py-2.5 px-3 text-end">{t('colReconnects')}</th>
-                <th className="py-2.5 px-3 text-center">{t('colReconciliation')}</th>
+                <th className="py-2.5 px-3 text-start">{t('colPresence')}</th>
+                <th className="py-2.5 px-3 text-center">{t('colReconnects')}</th>
+                <th className="py-2.5 px-3 text-start">{t('colReconciliation')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {(attendance ?? []).length === 0 ? (
-                <tr><td colSpan={5} className="py-6 px-4 text-center text-xs font-semibold text-slate-400">{t('noAttendanceDerived')}</td></tr>
+                <tr><td colSpan={4} className="py-6 px-4 text-center text-xs font-semibold text-slate-400">{t('noAttendanceDerived')}</td></tr>
               ) : (
-                attendance!.map((a) => (
-                  <tr key={a.id} className="hover:bg-slate-50/80">
-                    <td className="py-2.5 px-4 font-bold text-[#16212B] text-[11px] text-start">{a.userName ?? a.userId}</td>
-                    <td className="py-2.5 px-3 text-center">
-                      <Badge variant="info">
-                        {ATTENDANCE_CONFIG[a.status] ? t(ATTENDANCE_CONFIG[a.status] as any) : a.status}
-                      </Badge>
-                    </td>
-                    <td className="py-2.5 px-3 text-end text-slate-600 font-mono">
-                      {Math.round(a.totalPresenceSeconds / 60)} min
-                    </td>
-                    <td className="py-2.5 px-3 text-end text-slate-600">{a.reconnectCount}</td>
-                    <td className="py-2.5 px-3 text-center">
-                      <Badge variant={a.reconciliationState === 'posted' ? 'success' : a.reconciliationState === 'proposed' ? 'warning' : 'neutral'}>
-                        {RECON_CONFIG[a.reconciliationState] ? t(RECON_CONFIG[a.reconciliationState] as any) : a.reconciliationState}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))
+                attendance!.map((a) => {
+                  const presKey = ATTENDANCE_CONFIG[a.status] ?? 'attendanceUnknown';
+                  const reconKey = RECON_CONFIG[a.reconciliationState] ?? 'reconPending';
+                  return (
+                    <tr key={a.id} className="hover:bg-slate-50/80">
+                      <td className="py-2.5 px-4 font-bold text-[#16212B] text-[11px] text-start">{a.userName ?? a.userId}</td>
+                      <td className="py-2.5 px-3 text-start">
+                        <Badge variant={a.status === 'present' ? 'success' : a.status === 'late' ? 'warning' : 'danger'}>
+                          {t(presKey as any)}
+                        </Badge>
+                      </td>
+                      <td className="py-2.5 px-3 text-center font-mono text-[11px] text-slate-600">{a.reconnectCount}</td>
+                      <td className="py-2.5 px-3 text-slate-600 text-start">
+                        <Badge variant={a.reconciliationState === 'posted' ? 'success' : a.reconciliationState === 'approved' ? 'info' : 'neutral'}>
+                          {t(reconKey as any)}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -373,42 +419,43 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
 
       {/* Recordings */}
       <div className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="text-xs font-extrabold text-[#16212B] flex items-center gap-1.5">
-            <Download className="w-4 h-4 text-[#2487B8]" /> {t('recordingsHeading')}
-          </h2>
-          <button onClick={() => run('syncRec', () => syncRecordings(sessionId), t('syncSuccessNotice'))} disabled={busy !== null}
-            className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-slate-200 px-2.5 text-[11px] font-bold text-[#16212B] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer">
-            <RefreshCw className="h-3 w-3" /> {t('syncRecordingsBtn')}
+        <div className="px-4 py-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="text-start">
+            <h2 className="text-xs font-extrabold text-[#16212B] flex items-center gap-1.5">
+              <Video className="w-4 h-4 text-[#2487B8]" /> {t('recordingsHeading')}
+            </h2>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {policy.recordingEnabled ? t('noRecordingsPolicyNote', { state: t('policyEnabled') }) : t('noRecordingsPolicyNote', { state: t('policyDisabled') })}
+            </p>
+          </div>
+          <button onClick={() => run('syncRecordings', () => syncRecordings(sessionId), t('syncSuccessNotice'))} disabled={busy !== null}
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-bold text-[#16212B] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer shadow-xs">
+            <RefreshCw className="h-3.5 w-3.5" /> {t('syncRecordingsBtn')}
           </button>
         </div>
         <div className="p-4">
           {(recordings ?? []).length === 0 ? (
-            <p className="text-xs font-semibold text-slate-400 text-center py-4">
-              {t('noRecordingsPolicyNote', { state: policy.recordingEnabled ? t('policyEnabled') : t('policyDisabled') })}
-            </p>
+            <p className="text-xs font-semibold text-slate-400 text-center py-4">{t('noRecordingsPolicyNote', { state: policy.recordingEnabled ? t('policyEnabled') : t('policyDisabled') })}</p>
           ) : (
             <div className="space-y-2">
               {recordings!.map((r) => (
-                <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                <div key={r.id} className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <div className="text-start">
-                    <p className="text-[11px] font-bold text-[#16212B]">{r.providerRecordingId ?? t('recordingsHeading')}</p>
+                    <p className="text-xs font-bold text-[#16212B]">{r.providerRecordingId ?? r.id}</p>
                     <p className="text-[10px] text-slate-500">
-                      {r.durationSeconds ? `${Math.round(r.durationSeconds / 60)} min · ` : ''}
-                      {r.expiresAt ? t('expiresOnDate', { date: new Date(r.expiresAt).toLocaleDateString() }) : t('unlimitedRetention')}
+                      {r.durationSeconds ? `${Math.round(r.durationSeconds / 60)} min` : ''} · {r.expiresAt ? t('expiresOnDate', { date: new Date(r.expiresAt).toLocaleDateString() }) : t('unlimitedRetention')}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={r.state === 'ready' ? 'success' : r.state === 'processing' ? 'warning' : 'danger'}>{r.state}</Badge>
                     {r.playbackUrl && (
                       <a href={r.playbackUrl} target="_blank" rel="noreferrer"
-                        className="inline-flex min-h-[44px] items-center gap-1 rounded-lg bg-[#2487B8] px-2 text-[10px] font-bold text-white hover:bg-[#1B6C93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer">
-                        <ExternalLink className="w-3 h-3" /> {t('actionPlayback')}
+                        className="inline-flex min-h-[44px] items-center gap-1 rounded-lg bg-[#2487B8] px-3 text-xs font-bold text-white hover:bg-[#1B6C93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer">
+                        <ExternalLink className="w-3.5 h-3.5" /> {t('actionPlayback')}
                       </a>
                     )}
-                    <button onClick={() => run(`del${r.id}`, () => deleteRecording(sessionId, r.id), t('recordingDeletedNotice'))} disabled={busy !== null}
-                      className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-rose-200 px-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer">
-                      <Trash2 className="w-3 h-3" /> {t('actionDelete')}
+                    <button onClick={() => run(`delete${r.id}`, () => deleteRecording(sessionId, r.id), t('recordingDeletedNotice'))} disabled={busy !== null}
+                      className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-rose-200 px-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer">
+                      <Trash2 className="w-3.5 h-3.5" /> {t('actionDelete')}
                     </button>
                   </div>
                 </div>
@@ -420,20 +467,77 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
 
       {/* Materials */}
       <div className="rounded-2xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <h2 className="text-xs font-extrabold text-[#16212B] flex items-center gap-1.5">
-            <Paperclip className="w-4 h-4 text-[#2487B8]" /> {t('sharedMaterialsHeading')}
-          </h2>
-          <div className="flex items-center gap-2">
-            <input value={newAssetId} onChange={e => setNewAssetId(e.target.value)} placeholder={t('assetIdPlaceholder')}
-              className="h-8 w-64 rounded-lg border border-slate-200 px-2 text-[11px] focus:border-[#2487B8] focus:outline-none focus:ring-2 focus:ring-[#2487B8]/20 text-start" />
-            <button onClick={() => run('attach', () => attachMaterial(sessionId, newAssetId), t('materialLinkedNotice'))} disabled={busy !== null || !newAssetId.trim()}
-              className="inline-flex min-h-[44px] items-center gap-1 rounded-lg bg-[#2487B8] px-2.5 text-[11px] font-bold text-white hover:bg-[#1B6C93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer">
-              <Plus className="h-3 w-3" /> {t('actionLink')}
+        <div className="px-4 py-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="text-start">
+            <h2 className="text-xs font-extrabold text-[#16212B] flex items-center gap-1.5">
+              <Paperclip className="w-4 h-4 text-[#2487B8]" /> {t('sharedMaterialsHeading')}
+            </h2>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {t('sharedMaterialsDesc')}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {!addonDisabled && assetsState === 'loaded' && availableAssets.length > 0 ? (
+              <select
+                value={newAssetId}
+                onChange={e => setNewAssetId(e.target.value)}
+                className="h-9 min-w-[260px] rounded-lg border border-slate-300 bg-white px-2.5 text-xs text-slate-800 focus:border-[#2487B8] focus:outline-none focus:ring-2 focus:ring-[#2487B8]/20"
+              >
+                <option value="">{t('chooseDocumentOption')}</option>
+                {availableAssets
+                  .filter(a => !(materials ?? []).some(m => m.assetId === a.id))
+                  .map(a => (
+                    <option key={a.id} value={a.id}>
+                      {a.title} ({a.status})
+                    </option>
+                  ))}
+              </select>
+            ) : (
+              <input
+                value={newAssetId}
+                onChange={e => setNewAssetId(e.target.value)}
+                placeholder={t('assetIdPlaceholder')}
+                className="h-9 w-64 rounded-lg border border-slate-300 px-2.5 text-xs focus:border-[#2487B8] focus:outline-none focus:ring-2 focus:ring-[#2487B8]/20 text-start"
+              />
+            )}
+            <button
+              onClick={() => {
+                if (!newAssetId.trim()) return;
+                run('attach', async () => {
+                  await attachMaterial(sessionId, newAssetId.trim());
+                  setNewAssetId('');
+                }, t('materialLinkedNotice'));
+              }}
+              disabled={busy !== null || !newAssetId.trim()}
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#2487B8] px-3.5 text-xs font-bold text-white hover:bg-[#1B6C93] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer shadow-xs"
+            >
+              <Plus className="h-3.5 w-3.5" /> {t('actionLink')}
             </button>
           </div>
         </div>
-        <div className="p-4">
+        <div className="p-4 space-y-3">
+          {assetsState === 'error' && !addonDisabled && (
+            <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{t('assetsLoadError')}</span>
+            </div>
+          )}
+
+          {!addonDisabled && assetsState === 'loaded' && availableAssets.length === 0 && (
+            <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 text-xs text-slate-600 flex items-start gap-2.5">
+              <BookOpen className="w-4 h-4 text-[#2487B8] shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-slate-800">{t('libraryEmptyOrUnpublished')}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  {t('libraryEmptyExplanation')}{' '}
+                  <Link href={`/${locale}/dashboard/content/library`} className="text-[#2487B8] underline hover:text-[#1B6C93] font-semibold">
+                    {t('contentLibraryLink')}
+                  </Link>
+                </p>
+              </div>
+            </div>
+          )}
+
           {(materials ?? []).length === 0 ? (
             <p className="text-xs font-semibold text-slate-400 text-center py-4">{t('noSharedMaterials')}</p>
           ) : (
@@ -441,11 +545,14 @@ export function SessionDetailClient({ sessionId, locale }: { sessionId: string; 
               {materials!.map((m) => (
                 <div key={m.id} className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
                   <div className="text-start">
-                    <p className="text-[11px] font-bold text-[#16212B]">{m.title}</p>
-                    <p className="text-[10px] text-slate-500">{m.status}</p>
+                    <p className="text-[11px] font-bold text-[#16212B] flex items-center gap-1.5">
+                      <Paperclip className="w-3.5 h-3.5 text-[#2487B8]" />
+                      {m.title}
+                    </p>
+                    <p className="text-[10px] text-slate-500">{t('materialStatusLabel', { status: m.status })}</p>
                   </div>
                   <button onClick={() => run(`detach${m.assetId}`, () => detachMaterial(sessionId, m.assetId), t('materialDetachedNotice'))} disabled={busy !== null}
-                    className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-rose-200 px-2 text-[10px] font-bold text-rose-600 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer">
+                    className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-rose-200 px-2.5 text-[10px] font-bold text-rose-600 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2487B8] focus-visible:ring-offset-2 cursor-pointer">
                     <Trash2 className="w-3 h-3" /> {t('actionDetach')}
                   </button>
                 </div>

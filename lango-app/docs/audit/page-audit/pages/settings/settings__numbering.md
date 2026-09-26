@@ -1,8 +1,22 @@
 # `/dashboard/settings/numbering`
+<!-- swept: 2026-09-26 claude-scf-3 | school_admin on :3537: lists real counters (Matricules élèves ATL-2526 -› ATL-25260201, Factures INV-2026- -› INV-2026-0201), raise-only control, FR/390/AR, 0 5xx -->
 
 **Status: NEEDS FIX (P1)** · Module: `settings` · Source: [`src/app/[locale]/(dashboard)/dashboard/settings/numbering/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/settings/numbering/page.tsx>)
 
-**Progress (2026-09-25):** S-32 PARTIAL
+**Progress (2026-09-26):** S-32 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

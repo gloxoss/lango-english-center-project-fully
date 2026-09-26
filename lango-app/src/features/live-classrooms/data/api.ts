@@ -42,7 +42,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init);
   const json = await res.json().catch(() => ({ success: false, error: { code: 'INVALID_RESPONSE', message: 'Réponse serveur invalide.' } }));
   if (!res.ok || json.success === false) {
-    throw new Error(json.error?.message ?? `Erreur ${res.status}`);
+    const err = new Error(json.error?.message ?? `Erreur ${res.status}`) as Error & { code?: string; status?: number };
+    err.code = json.error?.code;
+    err.status = res.status;
+    throw err;
   }
   return json.data as T;
 }
@@ -161,6 +164,12 @@ export function deleteRecording(sessionId: string, recordingId: string) {
 export function getMaterials(id: string) {
   return request<Array<{ id: string; assetId: string; title: string; status: string; createdAt: string }>>(
     `/api/addons/live-classrooms/sessions/${id}/materials`,
+  );
+}
+
+export function getAvailableAssets() {
+  return request<Array<{ id: string; title: string; status: string; attachmentTypeId: string }>>(
+    '/api/content/assets',
   );
 }
 

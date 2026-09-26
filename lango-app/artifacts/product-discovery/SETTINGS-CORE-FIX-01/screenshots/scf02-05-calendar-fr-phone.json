@@ -1,0 +1,15 @@
+{
+  "text": "Années Scolaires & Calendrier Académique\n\nConfiguration des années scolaires, dates de début/fin et année par défaut\n\nAjouter une année scolaire\n\nAnnées configurées\n\n2\n\nListe des années scolaires\nAnnée Scolaire\tDate Début\tDate Fin\tStatut\tActions\n\n2025-2026\n\t2025-09-01\t2026-06-30\tSecondaire\t\n\n\n2026-2027\nAnnée Active\n\t2026-09-01\t2027-06-30\tPar défaut\t\n\n2 année(s) au total\n\n1",
+  "dir": "ltr",
+  "overflowX": 0,
+  "missingKeys": [],
+  "status": 200,
+  "url": "/fr/dashboard/academics/calendar",
+  "consoleErrors": [
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h"
+  ],
+  "api5xx": []
+}

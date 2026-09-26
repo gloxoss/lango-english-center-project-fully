@@ -2,7 +2,20 @@
 
 **Status: NEEDS FIX (P3)** · Module: `public-site` · Source: [`src/app/[locale]/(school-site)/[tenantSlug]/faq/page.tsx`](<../../../../../src/app/[locale]/(school-site)/[tenantSlug]/faq/page.tsx>)
 
-**Progress (2026-09-25):** S-55 PARTIAL
+**Progress (2026-09-26):** S-55 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

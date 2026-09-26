@@ -1,0 +1,601 @@
+{
+  "unverified": [
+    {
+      "item": "task:AUD-PLATFORM-01",
+      "doneBy": "codex-2",
+      "files": [
+        "lango-app/src/libs/api/entitlements.ts",
+        "lango-app/src/features/subscriptions/services/license-expiry-worker.ts",
+        "lango-app/src/features/subscriptions/__tests__/entitlement-expiry.test.ts",
+        "lango-app/artifacts/page-audit/done/AUD-PLATFORM-01__platform-entitlements"
+      ],
+      "verifyCmd": "cd lango-app && npx vitest run src/features/subscriptions src/libs/api -> 137/137 PASS (15 files: 7 new entitlement-expiry + 130 pre-existing incl. license-expiry-worker, entitlements, subscription-enforcement, platform-billing, permissions, page-guard, nav-page-guard-parity). Honest iteration note: my first cut treated every expiry as a whole day and broke the 2 license-expiry-worker tests that expire a licence 1 second ago; the final rule is hybrid and keeps them green. npm run check:types -> PASS; npm run check:isolation -> PASS (828 files); npm run check:i18n:keys -> 0 missing; npm run check:ui -> ratchet holding; npx eslint on 3 touched files -> 0 problems. visual-sweep -> 12/12 routes captured + mobile 390 + Arabic RTL, 14 screenshots. LIMITATION: no TOTP secret on disk so superadmin@schoolos.ma cannot sign in; all captures are the access-denied boundary, not the platform screens. Branch audit/agent-c/AUD-PLATFORM-01-platform-entitlements, base f42c2bc, impl SHA a0eedbc."
+    },
+    {
+      "item": "task:ui-reality-baseline",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/scripts/ui-reality-baseline.json",
+        "lango-app/src/features/academics/ui/exam-planning-view.tsx",
+        "lango-app/src/features/academics/ui/exam-planning-page.tsx",
+        "lango-app/src/scripts/seed-full.ts"
+      ],
+      "verifyCmd": "npm run check:ui -> all 4 ratchets hold; src-only tsc -> 0 errors outside seed; seed tsc -> 177 = origin 177"
+    },
+    {
+      "item": "task:inventory-invoice-number",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/inventory/services/sales-service.ts"
+      ],
+      "verifyCmd": "vitest src/features/inventory -> 4 files 30/30; tsc -> 0 errors outside the stale .next/dev/types file"
+    },
+    {
+      "item": "task:transport-random-codes",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/libs/next-code.ts",
+        "lango-app/src/app/[locale]/(dashboard)/dashboard/transport/routes/page.client.tsx",
+        "lango-app/src/app/[locale]/(dashboard)/dashboard/transport/stops/page.client.tsx",
+        "lango-app/src/app/[locale]/(dashboard)/dashboard/transport/vehicles/page.client.tsx"
+      ],
+      "verifyCmd": "npx tsx nextCode('RT',['RT-101','RT-205',null,'X-9','RT-abc']) -> RT-206, nextCode('BUS',[]) -> BUS-101; tsc -> 0 src errors; 0 Math.random left in the 3 pages"
+    },
+    {
+      "item": "task:hardcoded-fr-links",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/settings/ui/security-sessions-client.tsx"
+      ],
+      "verifyCmd": "grep hardcoded \"/fr/dashboard\" in src/**/*.tsx -> 0; tsc -> 0 src errors"
+    },
+    {
+      "item": "task:leadership-dead-buttons",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/crm/ui/leadership-portal-view.tsx",
+        "lango-app/scripts/ui-reality-baseline.json"
+      ],
+      "verifyCmd": "npm run check:ui -> dead controls 29 (was 38), all ratchets hold; tsc -> 0 src errors"
+    },
+    {
+      "item": "task:syllabus-fake-template",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/academics/ui/syllabus-client.tsx"
+      ],
+      "verifyCmd": "grep fake resources in template -> 0; tsc -> 0 src errors"
+    },
+    {
+      "item": "task:syllabus-resource-link",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/academics/ui/syllabus-client.tsx",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/ar.json"
+      ],
+      "verifyCmd": "tsc -> 0 src errors; check:i18n -> 0; check:i18n:keys -> 0 missing"
+    },
+    {
+      "item": "task:archive-fake-components",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/components/parent/ParentInvoiceBreakdown.tsx",
+        "lango-app/src/components/accountant/CashierPaymentModal.tsx",
+        "lango-app/future-implementation/_archived-ui",
+        "lango-app/scripts/ui-reality-baseline.json"
+      ],
+      "verifyCmd": "npm run check:ui -> dead 27, mock 0, unlinked 29, orphaned 5, ratchet holding; tsc -> 0 src errors"
+    },
+    {
+      "item": "task:dead-buttons-2",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/academics/ui/rooms-client.tsx",
+        "lango-app/src/features/settings/ui/branches-manage-view.tsx",
+        "lango-app/src/features/settings/ui/users-roles-client.tsx",
+        "lango-app/scripts/ui-reality-baseline.json"
+      ],
+      "verifyCmd": "npm run check:ui -> dead 24, ratchet holding; tsc -> 0 src errors"
+    },
+    {
+      "item": "task:button-in-link",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/components/auth/subscription-gate.tsx",
+        "lango-app/src/features/academics/ui/academic-readiness-view.tsx",
+        "lango-app/src/features/broadcast/ui/broadcast-overview-view.tsx",
+        "lango-app/src/features/broadcast/ui/campaign-detail-view.tsx",
+        "lango-app/src/features/broadcast/ui/campaigns-view.tsx",
+        "lango-app/src/features/broadcast/ui/reports-view.tsx",
+        "lango-app/src/features/communication/ui/sms-reminders-view.tsx",
+        "lango-app/src/features/events/ui/events-calendar-client.tsx",
+        "lango-app/src/features/homework/ui/homework-client.tsx",
+        "lango-app/src/features/hostel/ui/hostel-detail-view.tsx",
+        "lango-app/src/features/students/ui/alumni-admin-view.tsx",
+        "lango-app/src/features/subscriptions/ui/subscription-overview-view.tsx",
+        "lango-app/src/features/super-admin/ui/super-admin-schools-create-view.tsx",
+        "lango-app/src/features/super-admin/ui/super-admin-schools-view.tsx",
+        "lango-app/src/features/students/ui/student-transfers-client.tsx",
+        "lango-app/src/features/academics/ui/class-detail-view.tsx",
+        "lango-app/src/features/website/ui/theme-settings-view.tsx",
+        "lango-app/scripts/ui-reality-baseline.json"
+      ],
+      "verifyCmd": "npm run check:ui -> dead 4 (was 24), ratchet holding; tsc -> 0 src errors; full vitest 229 files / 3281 tests pass"
+    },
+    {
+      "item": "task:renewal-zero-amount",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/app/api/super-admin/subscriptions/[schoolId]/payments/[paymentId]/decision/route.ts",
+        "lango-app/src/features/super-admin/ui/super-admin-school-detail-view.tsx"
+      ],
+      "verifyCmd": "tsc -> 0 src errors; vitest subscription/renewal/license tests -> 12/12 pass; check:i18n 0, keys 0"
+    },
+    {
+      "item": "task:access-reset-fake-sms",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/app/api/settings/access-reset/route.ts",
+        "lango-app/src/features/settings/ui/access-reset-view.tsx"
+      ],
+      "verifyCmd": "tsc -> 0 src errors; vitest src/app/api/security.test.ts -> 9/9; check:i18n 0, keys 0; SQL on schoolos + schoolos_audit -> 0 plaintext codes"
+    },
+    {
+      "item": "task:hostel-test-hook-prod",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/app/api/addons/hostel/allocations/[id]/check-out/route.ts"
+      ],
+      "verifyCmd": "tsc -> 0 src errors; vitest src/features/hostel -> 21/21 (hostel-audit uses the hook, still passes under NODE_ENV=test)"
+    },
+    {
+      "item": "task:payments-sandbox-prod",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/app/api/finance/payments/sandbox/route.ts"
+      ],
+      "verifyCmd": "tsc -> 0 src errors; vitest api payment tests pass; SQL: 0 SANDBOX- payments in both local DBs"
+    },
+    {
+      "item": "task:AUD-CRM-01",
+      "doneBy": "codex-2",
+      "files": [
+        "lango-app/src/features/crm",
+        "lango-app/src/app/api/crm",
+        "lango-app/artifacts/page-audit/done/AUD-CRM-01__crm-inquiries"
+      ],
+      "verifyCmd": "cd lango-app && npx vitest run src/features/crm src/app/api/crm -> 17/17 PASS (3 files: 5 new conversion-integrity + 12 pre-existing guard and duplicate/merge/convert). npm run check:types -> PASS; npm run check:isolation -> PASS (828 files); npm run check:i18n -> PASS; npm run check:i18n:keys -> 0 missing; npm run check:ui -> ratchet holding; npx eslint touched -> 0 problems. visual-sweep -> 6 screenshots: desktop FR for all 3 pages, teacher role capture showing honest access-denied (CRM is staff-only), plus mobile 390 and Arabic RTL on the kanban. Honest note: my first fix cut lost the backslash in split(/s+/) and split names on the letter s (Yassine -> Ya); two existing tests caught it before shipping. Branch audit/agent-c/AUD-CRM-01-crm-inquiries, base f42c2bc, impl SHA b8c7742."
+    },
+    {
+      "item": "task:fake-scheduled-jobs",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/app/api/settings/jobs/[id]/trigger/route.ts",
+        "lango-app/src/features/settings/data/jobs-audit-config.ts",
+        "lango-app/src/features/settings/ui/jobs-audit-client.tsx",
+        "lango-app/src/features/settings/ui/jobs-audit-page.tsx"
+      ],
+      "verifyCmd": "tsc -> 0 src errors; vitest api job tests 15/15; check:ui holding (dead 4); check:i18n 0; keys 0"
+    },
+    {
+      "item": "task:FIX-DASH-FIN-KPI-01",
+      "doneBy": "codex-2",
+      "files": [
+        "lango-app/src/app/api/dashboard/summary/route.ts",
+        "lango-app/src/features/dashboard/__tests__/finance-kpi-truth.test.ts",
+        "lango-app/artifacts/page-audit/done/FIX-DASH-FIN-KPI-01__dashboard-finance-kpi"
+      ],
+      "verifyCmd": "cd lango-app && npx vitest run src/features/dashboard -> 8/8 PASS (new finance-kpi-truth.test.ts covering refunds, partials, overdue, zero invoiced -> null, bound across legacy overpayment, tenant/branch scoping, teacher confidentiality). npm run check:types -> PASS; check:isolation -> PASS; check:i18n + check:i18n:keys -> PASS (0 missing); check:ui -> ratchet holding; eslint touched -> 3 errors ALL PRE-EXISTING (verified identical on git show f42c2bc:<path>, zero introduced). Deterministic probe on schoolos_audit: invoiced 2 162 000 / outstanding 599 500 / cash 2 553 500 -> OLD 118.1% IMPOSSIBLE, NEW 72.3%. Screenshots: before shows 118% pulse + 118.1% recovery + 'Restant du 0 MAD' contradiction; after, mobile 390 and AR RTL also captured. Branch audit/agent-c/FIX-DASH-FIN-KPI-01-dashboard-finance-kpi, base f42c2bc, impl SHA 8dedade."
+    },
+    {
+      "item": "task:AUD-CREDENTIALS-01",
+      "doneBy": "antigravity-1",
+      "files": [
+        "artifacts/page-audit/done/AUD-CREDENTIALS-01__student-credentials/"
+      ],
+      "verifyCmd": "node scripts/verify-all-31-package.mjs -> 31/31 PASS; npm run check:types -> 0 errors; npm run check:ui -> Ratchet holding"
+    },
+    {
+      "item": "task:port-3114",
+      "doneBy": "antigravity-d",
+      "files": [
+        "scripts/audit-live-screenshots.mjs"
+      ],
+      "verifyCmd": "dev server killed -> port released"
+    },
+    {
+      "item": "task:REL-INTEGRATION-01",
+      "doneBy": "antigravity-3",
+      "files": [
+        "lango-app/artifacts/release-integration/REL-INTEGRATION-01"
+      ],
+      "verifyCmd": "git log -1 audit/agent-b/REL-INTEGRATION-01 -> b016bde; all 9 artifact markdown documents + evidence generated and pushed to origin"
+    },
+    {
+      "item": "task:syllabus-url-regex",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/academics/ui/syllabus-client.tsx"
+      ],
+      "verifyCmd": "npx tsc --noEmit -p lango-app | grep -v .next -> 0 errors"
+    },
+    {
+      "item": "task:delete-confirmations",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/finance/ui/fee-assignments-view.tsx",
+        "lango-app/src/features/broadcast/ui/automations-view.tsx",
+        "lango-app/src/features/broadcast/ui/segments-view.tsx",
+        "lango-app/src/features/communication/ui/sms-templates-view.tsx",
+        "lango-app/src/features/accounting/ui/student-accounting-view.tsx",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/ar.json"
+      ],
+      "verifyCmd": "tsc non-.next 0; check:i18n pass; check:i18n:keys 0; eslint: 0 new errors (5 pre-existing style errors on untouched lines)"
+    },
+    {
+      "item": "task:alumni-consent-save",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/app/[locale]/(alumni-portal)/alumni/profile/page.tsx"
+      ],
+      "verifyCmd": "tsc non-.next 0; eslint 0 new errors (2 pre-existing)"
+    },
+    {
+      "item": "task:pdf-documents",
+      "doneBy": "codex-pdf-1",
+      "files": [
+        "lango-app/src/libs/print-document.ts",
+        "lango-app/src/libs/print-document.test.ts",
+        "lango-app/src/features/finance/ui/finance-document-print.ts",
+        "lango-app/src/features/finance/ui/receipts-view.tsx",
+        "lango-app/src/features/finance/ui/statements-view.tsx",
+        "lango-app/src/features/finance/ui/invoices-view.tsx",
+        "lango-app/src/features/finance/ui/invoice-detail-view.tsx",
+        "lango-app/src/features/academics/ui/exam-planning-client.tsx",
+        "lango-app/src/features/academics/ui/schedule-client.tsx",
+        "lango-app/src/features/students/ui/student-detail-view.tsx",
+        "lango-app/src/features/crm/ui/leadership-portal-view.tsx",
+        "lango-app/src/app/[locale]/(dashboard)/dashboard/finance/collection-desk/page.client.tsx"
+      ],
+      "verifyCmd": "npm run check:types PASS; npm run check:isolation PASS; npm run check:ui PASS; ALLOW_DB_SKIP=1 npx vitest run src/libs/print-document.test.ts PASS 1/1; npx eslint on new helper and test PASS; git diff --check PASS; live role sweep unavailable because schoolos Postgres is down and port 5432 belongs to another project"
+    },
+    {
+      "item": "task:silent-failures-2",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/hr/ui/employee-portal-view.tsx",
+        "lango-app/src/features/academics/ui/optional-subjects-view.tsx",
+        "lango-app/src/features/academics/ui/question-bank-view.tsx",
+        "lango-app/src/features/academics/ui/classes-client.tsx"
+      ],
+      "verifyCmd": "tsc non-.next 0; eslint 0 new errors (pre-existing: loadQuestions use-before-define, tailwind entryPoint config)"
+    },
+    {
+      "item": "task:port-5433",
+      "doneBy": "antigravity-1",
+      "files": [
+        "lango-app/docker-compose.yml",
+        "lango-app/.env"
+      ],
+      "verifyCmd": "node test-db.js -> connects cleanly"
+    },
+    {
+      "item": "task:silent-failures-3",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/students/ui/alumni-events-view.tsx",
+        "lango-app/src/features/academics/ui/question-bank-view.tsx"
+      ],
+      "verifyCmd": "tsc non-.next 0; eslint 0 new errors"
+    },
+    {
+      "item": "task:settings-fake-saved",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/settings/ui/accounting-defaults-client.tsx",
+        "lango-app/src/features/settings/ui/translations-custom-fields-client.tsx"
+      ],
+      "verifyCmd": "tsc non-.next 0; eslint 0 new errors"
+    },
+    {
+      "item": "task:lint-tailwind-entry",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/eslint.config.mjs"
+      ],
+      "verifyCmd": "eslint question-bank-view.tsx: 0 'No tailwind css entry point' messages (was 4)"
+    },
+    {
+      "item": "task:dashboard-stale-branch",
+      "doneBy": "antigravity-1",
+      "files": [
+        "lango-app/src/features/dashboard/ui/dashboard-view.tsx",
+        "lango-app/src/components/shared/header-campus-switcher.tsx"
+      ],
+      "verifyCmd": "npm run check:isolation -> passed"
+    },
+    {
+      "item": "task:privacy-scope-tests",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/app/api/students/teacher-scope-privacy.test.ts"
+      ],
+      "verifyCmd": "ALLOW_DB_SKIP=1 vitest --project unit teacher-scope-privacy -> 6/6 passed; eslint 0"
+    },
+    {
+      "item": "task:DISC-ATTENDANCE-01",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/artifacts/product-discovery/DISC-ATTENDANCE-01/",
+        ".ultraplan/sections/section-04-timetable-guard.md"
+      ],
+      "verifyCmd": "read-only SQL on schoolos -> evidence/db-truth.txt; vitest attendance/qr/badge/scanner/punch/excuse/flag on schoolos_audit -> 15 files, 113-114/114 (1 intermittent test flaw documented)"
+    }
+  ],
+  "antigravityVerified": [
+    {
+      "item": "S-19",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/migrations/0156_fine_assessment_unique.sql",
+        "lango-app/src/app/api/finance/fine-runs/route.ts",
+        "lango-app/src/app/api/finance/fine-assessments/route.ts",
+        "lango-app/src/features/finance/models/student-accounting-schema.ts"
+      ],
+      "verifyCmd": "npx vitest run fine-run-idempotency -> 3/3 pass; finance suite earlier 29 files/159 pass; tsc --noEmit -> exit 0; 0156 applied on schoolos and schoolos_audit"
+    },
+    {
+      "item": "task:attendance-final-closeout",
+      "doneBy": "opencode-1",
+      "files": [
+        "lango-app/src/app/api/attendance",
+        "lango-app/src/features/attendance",
+        "lango-app/src/libs/api/attendance-aggregate.ts",
+        "lango-app/src/libs/api/attendance-summary.ts",
+        "lango-app/src/libs/api/attendance-registers.ts",
+        "lango-app/src/libs/api/attendance-flags.ts",
+        "lango-app/src/app/api/dashboard/summary/route.ts",
+        "lango-app/src/app/api/students/route.ts",
+        "lango-app/src/app/api/communication/reminder-audience/route.ts",
+        "lango-app/src/app/api/academics/classes/roster/route.ts",
+        "lango-app/src/addons/advanced-reporting/adapters/attendance-adapter.ts",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/ar.json",
+        "lango-app/locales/en.json"
+      ],
+      "verifyCmd": "attendance set 199/199 (23 files: incl G15 10/10, G14 convergence 6/6, runtime reconciliation 8/8); tsc 0; check:i18n PASS; check:isolation PASS; check:ui ratchet holding (mock screens 0, dead controls 38<39 baseline); full suite 3192/3193 (sole failure pre-existing finance refund-linkage, reproduced on target b6e7230); visual sweep school_admin/teacher/parent/phone-390/ar all ok (31 artifacts)"
+    },
+    {
+      "item": "task:sweep-docs",
+      "doneBy": "codex-2",
+      "files": [
+        "lango-app/scripts/visual-sweep.mjs"
+      ],
+      "verifyCmd": "Note added to the header next to the ACCOUNTS map. Failure and fix both observed first-hand: node scripts/visual-sweep.mjs teacher <routes> with the default account -> LOGIN FAILED for teacher; aborting sweep, and the same command with ACCOUNT_EMAIL=prof.01@atlas.ma -> sweep runs. Tool behaviour unchanged."
+    },
+    {
+      "item": "task:alumni-lifecycle-remediation",
+      "doneBy": "gemini-2",
+      "files": [
+        "lango-app/src/libs/services/alumni-transition.ts",
+        "lango-app/src/app/api/__tests__/alumni-lifecycle-domain.test.ts",
+        "lango-app/src/scripts/dump-alumni-reconciliation.ts",
+        "lango-app/scripts/capture-all-alumni-evidence.mjs",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/ar.json",
+        "lango-app/locales/en.json"
+      ],
+      "verifyCmd": "check:types PASS, check:isolation PASS, check:ui PASS (38/39), check:i18n PASS, 16/16 vitest PASS, 9/9 reconciliation PASS"
+    },
+    {
+      "item": "S-47",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/teacher/ui/TeacherPortalView.tsx",
+        "lango-app/src/components/parent/ChildContextSwitcher.tsx"
+      ],
+      "verifyCmd": "tsc --noEmit -> exit 0; screen check pending in batch re-sweep (teacher /dashboard/teacher, parent /dashboard/parent)"
+    },
+    {
+      "item": "task:merge-recovery",
+      "doneBy": "codex-2",
+      "files": [
+        "lango-app/migrations/meta/_journal.json",
+        "lango-app/src/app/api/academics/class-sections/route.ts",
+        "lango-app/src/app/api/academics/promotions/capacity-check/route.ts",
+        "lango-app/src/app/api/students/promotions/route.ts",
+        "lango-app/src/app/api/students/transfers/route.ts"
+      ],
+      "verifyCmd": "git diff --name-only --diff-filter=U -> 0 unmerged; grep -RIn conflict markers excluding node_modules, .git and .next -> 0; npx vitest run promotion-service-domain + promotion-year-activation + section-capacity + student-transfers-domain + nav-page-guard-parity -> 49 passed across 5 files (Promotion 21, capacity 8, Transfers 12, year activation 5, parity 3); live probe on localhost:3557 -> /api/academics/class-sections and /semesters return 200 as accountant and 403 as parent so the S-35 gate survives the merge; journal integrity 158 entries with strictly increasing idx and unique tags, last 0156_fine_assessment_unique; GET /fr/login -> 200 on a clean server with a fresh NEXT_DIST_DIR so the PostCSS selector defect does not reproduce once the merge is clean."
+    },
+    {
+      "item": "S-46",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/scripts/seed-full.ts"
+      ],
+      "verifyCmd": "tsc --noEmit -> exit 0; codemod dry run == apply (108 strings, 8 fields), bank numbers intact. NOT run: a full reseed on a throwaway DB (user stopped that step) - the existing schoolos/schoolos_audit data is unchanged until someone reseeds"
+    },
+    {
+      "item": "S-57",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/locales/fr.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/ar.json",
+        "lango-app/src/features/workforce/ui/payroll-workspace.tsx",
+        "lango-app/src/features/workforce/ui/workforce-operations-client.tsx",
+        "lango-app/src/features/finance/ui/expenses-view.tsx",
+        "lango-app/src/features/teachers/ui/teacher-admin-detail-view.tsx",
+        "lango-app/src/features/students/ui/student-detail-view.tsx",
+        "lango-app/src/features/events/ui/event-admin-detail-view.tsx"
+      ],
+      "verifyCmd": "tsc -> exit 0; check-missing-i18n-keys -> 0; workforce/payroll tests (see run); screen check pending in batch re-sweep"
+    },
+    {
+      "item": "task:hub-page-lock-granularity",
+      "doneBy": "claude-finance",
+      "files": [
+        ".agent-hub/hub.mjs",
+        ".agent-hub/PROTOCOL.md"
+      ],
+      "verifyCmd": "node --check ok; claim S-33 (page inside S-32) -> claimed with note; file-overlap rule unchanged"
+    },
+    {
+      "item": "S-33",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/students/ui/alumni-requests-view.tsx",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/ar.json"
+      ],
+      "verifyCmd": "check-missing-i18n-keys -> 0; tsc -> exit 0; screen check pending in batch re-sweep (school_admin /dashboard/students/alumni/requests)"
+    },
+    {
+      "item": "S-45",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/components/shared/sidebar.tsx",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/ar.json"
+      ],
+      "verifyCmd": "tsc -> exit 0; check-missing-i18n-keys -> 0; nav-page-guard-parity -> 3 passed; eslint: no findings on changed lines (file already had pre-existing lint errors); screen check pending in batch re-sweep (parent)"
+    },
+    {
+      "item": "S-36",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/finance/ui/invoices-view.tsx"
+      ],
+      "verifyCmd": "tsc -> exit 0; screen check pending in batch re-sweep with VIEWPORT=phone (school_admin /dashboard/finance/invoices)"
+    },
+    {
+      "item": "S-34",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/app/api/students/photos/route.ts",
+        "lango-app/src/features/students/ui/student-photos-view.tsx",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/ar.json"
+      ],
+      "verifyCmd": "vitest student-photos-domain -> 27 passed (G7 counter invariants hold); tsc -> exit 0; check-missing-i18n-keys -> 0; check:isolation passed"
+    },
+    {
+      "item": "S-26",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/settings/ui/settings-hub-page.tsx",
+        "lango-app/src/features/settings/ui/settings-hub-client.tsx",
+        "lango-app/src/features/settings/ui/entitlements-catalog-view.tsx",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/ar.json"
+      ],
+      "verifyCmd": "tsc -> exit 0; check-missing-i18n-keys -> 0; screen check pending in batch re-sweep (school_admin /dashboard/settings, /settings/entitlements)"
+    },
+    {
+      "item": "S-32",
+      "doneBy": "codex-2",
+      "files": [
+        "lango-app/artifacts/s32-sweeps"
+      ],
+      "verifyCmd": "Accountant: AUDIT_BASE=http://localhost:3557 node scripts/visual-sweep.mjs accountant artifacts/s32-sweeps/routes.txt artifacts/s32-sweeps/accountant -> 88 routes checked, 0 bounce flags and 0 redirect failures (sweep JSON analysed per route). Teacher: same 88 routes earlier -> 88 checked, 0 bounces, 0 redirects, evidence in artifacts/s32-sweeps/teacher. Acceptance: 88 routes checked, 0 unintended /fr bounces, 0 nav/page-guard mismatches, 0 unauthorized exposures, expected denials still denied (4 x 403 on workforce/payroll config, payments and punches for the accountant, which is the known separate payroll role gap codex-1 logged against S-53 and is not this finding), and accountant-allowed pages stayed reachable (84 of 88 fully clean). 6 remaining flags are dev-server console noise (manifest MIME and globals.css parse notices), not navigation faults. GET /fr/login -> 200 on a clean server and fresh NEXT_DIST_DIR before sweeping."
+    },
+    {
+      "item": "S-55",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/website/ui/public/site-header.tsx",
+        "lango-app/src/app/[locale]/(school-site)/[tenantSlug]/page.tsx"
+      ],
+      "verifyCmd": "tsc -> exit 0; schoolos_audit has 1 published news item (rentree-2026-2027) that the home page will now list; screen check pending in batch re-sweep (anonymous /atlas)"
+    },
+    {
+      "item": "S-24",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/libs/services/matricule.ts",
+        "lango-app/src/app/api/__tests__/matricules-domain.test.ts"
+      ],
+      "verifyCmd": "npx vitest run matricules-domain + admissions-intake-semantics + admissions-workflow -> 51/51 pass; npx tsc --noEmit -> exit 0"
+    },
+    {
+      "item": "S-13",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/app/[locale]/(dashboard)/dashboard/academics/exams/page.tsx",
+        "lango-app/src/app/[locale]/(dashboard)/dashboard/academics/assessment/exam-master/page.client.tsx",
+        "lango-app/src/features/academics/ui/exam-planning-client.tsx",
+        "lango-app/src/components/shared/sidebar.tsx",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/ar.json"
+      ],
+      "verifyCmd": "tsc --noEmit -> exit 0; vitest nav-page-guard-parity + page-guard-path + guard-nav-role-visibility + exam-term-stage-route + online-exam-access -> 46/46; check:i18n -> 0 errors; check:i18n:keys -> 0 missing. Screen sweep pending (batch)"
+    },
+    {
+      "item": "S-17",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/academics/ui/classes-client.tsx",
+        "lango-app/src/scripts/seed-full.ts",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/ar.json"
+      ],
+      "verifyCmd": "tsc --noEmit -> exit 0; check:i18n -> 0 errors; check:i18n:keys -> 0 missing; schoolos_audit: UPDATE 3 (2nde, 1ère, Terminale -> Sciences). Seed not run. Screen sweep pending (batch)"
+    },
+    {
+      "item": "S-30",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/dashboard/ui/recent-payments-card.tsx",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/ar.json"
+      ],
+      "verifyCmd": "tsc --noEmit -> exit 0; check:i18n -> 0 errors; check:i18n:keys -> 0 missing. Screen sweep pending (batch)"
+    },
+    {
+      "item": "S-23",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/settings/ui/audit-logs-view.tsx",
+        "lango-app/src/app/api/finance/accounting/student-accounting/reconcile/route.ts",
+        "lango-app/src/features/students/services/admission-service.ts",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/ar.json"
+      ],
+      "verifyCmd": "tsc --noEmit -> exit 0; vitest admissions-intake-semantics + admissions-workflow + academic-reconciliation-p0 + attendance-runtime-reconciliation + hostel-audit -> 63/63; check:i18n -> 0; check:i18n:keys -> 0 missing. Screen sweep pending (batch)"
+    },
+    {
+      "item": "S-37",
+      "doneBy": "claude-finance",
+      "files": [
+        "lango-app/src/features/dashboard/ui/daily-pulse-kpi.tsx",
+        "lango-app/src/features/dashboard/ui/dashboard-view.tsx",
+        "lango-app/src/features/dashboard/ui/action-center.tsx",
+        "lango-app/src/features/dashboard/ui/recent-payments-card.tsx",
+        "lango-app/src/features/dashboard/ui/finance-overview-card.tsx",
+        "lango-app/src/features/dashboard/ui/attendance-trend-card.tsx",
+        "lango-app/src/features/dashboard/ui/upcoming-events-card.tsx",
+        "lango-app/src/features/dashboard/ui/student-watchlist-card.tsx",
+        "lango-app/src/features/dashboard/ui/student-distribution-card.tsx",
+        "lango-app/src/app/api/dashboard/summary/route.ts",
+        "lango-app/src/components/shared/sidebar.tsx",
+        "lango-app/locales/fr.json",
+        "lango-app/locales/en.json",
+        "lango-app/locales/ar.json"
+      ],
+      "verifyCmd": "tsc --noEmit -> exit 0; vitest dashboard-summary + finance definitions -> 19/19; check:i18n -> 0 errors; check:i18n:keys -> 0 missing. Arabic screen sweep pending (batch)"
+    }
+  ]
+}

@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AtlasFleet — Showcase Intégral : Pages, E2E Screenshots & Présentations HTML</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --surface: #131b2e;
+      --surface-hover: #1a253e;
+      --border: #23314f;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #06b6d4;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --card-bg: #111827;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      padding-bottom: 80px;
+    }
+    .header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 40px 24px;
+      position: relative;
+    }
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .badge-top {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #60a5fa;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      background: linear-gradient(to right, #ffffff, #93c5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 16px;
+      max-width: 800px;
+      margin-bottom: 24px;
+    }
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .stat-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-num {
+      font-size: 22px;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .stat-lbl {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Presentation cards */
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 36px 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .presentations-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .pres-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .pres-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+    .pres-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+    .pres-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .pres-desc {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+    .pres-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    .pres-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    /* Filter Bar */
+    .controls-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .search-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .search-input {
+      flex: 1;
+      min-width: 260px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: white;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--primary);
+    }
+    .filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pill {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .pill:hover {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+    .pill.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Gallery Grid */
+    .gallery-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .img-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .img-card:hover {
+      transform: translateY(-4px);
+      border-color: #3b82f6;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .img-thumb-wrap {
+      width: 100%;
+      height: 200px;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+    }
+    .img-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+      transition: transform 0.3s;
+    }
+    .img-card:hover .img-thumb {
+      transform: scale(1.03);
+    }
+    .img-meta {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-grow: 1;
+    }
+    .img-title {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #f1f5f9;
+    }
+    .img-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+    .badge-cat { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+    .badge-dark { background: rgba(147, 51, 234, 0.2); color: #d8b4fe; }
+    .badge-light { background: rgba(234, 179, 8, 0.2); color: #fde047; }
+    .badge-size { background: rgba(255, 255, 255, 0.1); color: #cbd5e1; }
+
+    /* Lightbox Modal */
+    .lightbox {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox-img-wrap {
+      max-width: 95vw;
+      max-height: 82vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .lightbox-img {
+      max-width: 100%;
+      max-height: 82vh;
+      border-radius: 8px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      object-fit: contain;
+    }
+    .lightbox-header {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      color: white;
+    }
+    .lightbox-title { font-size: 16px; font-weight: 700; }
+    .lightbox-actions { display: flex; gap: 10px; }
+    .lightbox-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      text-decoration: none;
+    }
+    .lightbox-btn:hover { background: rgba(255, 255, 255, 0.25); }
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      font-size: 24px;
+      padding: 12px 18px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+    .lightbox-nav:hover { background: rgba(59, 130, 246, 0.8); }
+    .nav-prev { left: 24px; }
+    .nav-next { right: 24px; }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 16px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="badge-top">AtlasFleet Maroc · E2E & Design Showcase</div>
+      <h1>Catalogue Complet : Pages, Screenshots E2E & Présentations</h1>
+      <p class="subtitle">
+        Inventaire centralisé regroupant l'intégralité des captures d'écran des tests E2E Playwright de chaque page de l'application, ainsi que les présentations HTML interactives et les revues de design UI.
+      </p>
+
+      <div class="stats-row">
+        <div class="stat-pill">
+          <span class="stat-num">250</span>
+          <span class="stat-lbl">Screenshots Full Page</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-num">4</span>
+          <span class="stat-lbl">Présentations HTML</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-num">100%</span>
+          <span class="stat-lbl">Couverture des Routes</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-num">Light & Dark</span>
+          <span class="stat-lbl">Double Thème</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="gallery-container">
+
+    <h2 class="section-title">
+      <span>🖥️</span> Présentations HTML Interactives
+    </h2>
+    <div class="presentations-grid">
+      <div class="pres-card">
+        <div class="pres-icon">📑</div>
+        <div class="pres-title">Design Review Intégrale (Toutes les Pages)</div>
+        <div class="pres-desc">
+          Présentation HTML complète (293 KB) intégrant tous les écrans opérationnels, le dashboard Bento, la facturation marocaine DGI, les devis et les modules SaaS.
+        </div>
+        <a class="pres-btn" href="01_html_presentations/AtlasFleet_Design_Review_All_Pages.html" target="_blank">
+          Ouvrir la Revue de Design →
+        </a>
+      </div>
+
+      <div class="pres-card">
+        <div class="pres-icon">💼</div>
+        <div class="pres-title">Dossier Partenaire Exécutif</div>
+        <div class="pres-desc">
+          Document HTML exécutif complet (94 KB) détaillant la proposition de valeur AtlasFleet, les metrics financières, l'architecture SaaS et la feuille de route B2B.
+        </div>
+        <a class="pres-btn" href="01_html_presentations/AtlasFleet_Executive_Partner_Brief.html" target="_blank">
+          Consulter le Dossier Partenaire →
+        </a>
+      </div>
+
+      <div class="pres-card">
+        <div class="pres-icon">🎨</div>
+        <div class="pres-title">Spécification des Tokens de Design</div>
+        <div class="pres-desc">
+          Charte et tokens CSS du Design System AtlasFleet : palettes, typographies, élévations, composants et variables graphiques standardisées.
+        </div>
+        <a class="pres-btn" href="01_html_presentations/AtlasFleet_Design_Tokens.html" target="_blank">
+          Consulter les Design Tokens →
+        </a>
+      </div>
+
+      <div class="pres-card">
+        <div class="pres-icon">🧪</div>
+        <div class="pres-title">Rapport Interactif Playwright E2E</div>
+        <div class="pres-desc">
+          Rapport complet de la suite de tests automatisés Playwright attestant de la robustesse opérationnelle et de l'isolation multi-tenant.
+        </div>
+        <a class="pres-btn" href="01_html_presentations/Playwright_E2E_Test_Report/index.html" target="_blank">
+          Ouvrir le Rapport Playwright →
+        </a>
+      </div>
+    </div>
+
+    <h2 class="section-title">
+      <span>📸</span> Galerie des Screenshots E2E par Page
+    </h2>
+
+    <div class="controls-panel">
+      <div class="search-row">
+        <input type="text" id="searchInput" class="search-input" placeholder="Rechercher une page, un formulaire ou une fonctionnalité (ex: dashboard, devis, booking, fuel, saas)...">
+      </div>
+      <div class="filter-pills" id="categoryPills">
+        <button class="pill active" data-cat="all">Tous (250)</button>
+        <button class="pill" data-cat="dashboards">Dashboards & Core (19)</button>
+        <button class="pill" data-cat="operations">Opérations & Réservations (68)</button>
+        <button class="pill" data-cat="fleet">Flotte & Véhicules (13)</button>
+        <button class="pill" data-cat="forms">Formulaires & Modales (18)</button>
+        <button class="pill" data-cat="maintenance">Maintenance & Carburant (13)</button>
+        <button class="pill" data-cat="reports">Rapports & Analytics (20)</button>
+        <button class="pill" data-cat="settings">Paramètres & Admin (22)</button>
+        <button class="pill" data-cat="saas">SaaS & Abonnements (44)</button>
+        <button class="pill" data-cat="security">Sécurité & Isolation (16)</button>
+        <button class="pill" data-cat="comparisons">Comparatifs Avant / Après (17)</button>
+      </div>
+    </div>
+
+    <div class="gallery-grid" id="galleryGrid"></div>
+    <div class="empty-state" id="emptyState">Aucun screenshot ne correspond à vos critères de recherche.</div>
+
+  </main>
+
+  <!-- Lightbox Modal -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-nav nav-prev" id="lightboxPrev">&larr;</button>
+    <button class="lightbox-nav nav-next" id="lightboxNext">&rarr;</button>
+    <div class="lightbox-header">
+      <div class="lightbox-title" id="lightboxTitle">Image Title</div>
+      <div class="lightbox-actions">
+        <a class="lightbox-btn" id="lightboxOpenNew" href="#" target="_blank">Plein écran</a>
+        <button class="lightbox-btn" id="lightboxClose">Fermer &times;</button>
+      </div>
+    </div>
+    <div class="lightbox-img-wrap">
+      <img class="lightbox-img" id="lightboxImg" src="" alt="Screenshot Full View">
+    </div>
+  </div>
+
+  <script>
+    const items = [{"name":"003_dashboard_bento_dark.png","title":"dashboard bento dark","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/003_dashboard_bento_dark.png","sizeKb":434,"mode":"dark"},{"name":"003_dashboard_bento_light.png","title":"dashboard bento light","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/003_dashboard_bento_light.png","sizeKb":431,"mode":"light"},{"name":"00_login_page.png","title":"login page","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/00_login_page.png","sizeKb":35,"mode":"standard"},{"name":"015_auth_login_dark.png","title":"auth login dark","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/015_auth_login_dark.png","sizeKb":120,"mode":"dark"},{"name":"015_auth_login_light.png","title":"auth login light","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/015_auth_login_light.png","sizeKb":124,"mode":"light"},{"name":"016_auth_passwords_email_dark.png","title":"auth passwords email dark","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/016_auth_passwords_email_dark.png","sizeKb":116,"mode":"dark"},{"name":"016_auth_passwords_email_light.png","title":"auth passwords email light","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/016_auth_passwords_email_light.png","sizeKb":120,"mode":"light"},{"name":"017_auth_passwords_reset_dark.png","title":"auth passwords reset dark","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/017_auth_passwords_reset_dark.png","sizeKb":125,"mode":"dark"},{"name":"017_auth_passwords_reset_light.png","title":"auth passwords reset light","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/017_auth_passwords_reset_light.png","sizeKb":130,"mode":"light"},{"name":"018_auth_register_dark.png","title":"auth register dark","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/018_auth_register_dark.png","sizeKb":133,"mode":"dark"},{"name":"018_auth_register_light.png","title":"auth register light","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/018_auth_register_light.png","sizeKb":138,"mode":"light"},{"name":"01_dashboard.png","title":"dashboard","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/01_dashboard.png","sizeKb":398,"mode":"standard"},{"name":"01_dashboard_refined.png","title":"dashboard refined","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/01_dashboard_refined.png","sizeKb":145,"mode":"standard"},{"name":"dashboard_chart_debug.png","title":"dashboard chart debug","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/dashboard_chart_debug.png","sizeKb":162,"mode":"standard"},{"name":"dashboard_chart_debug_full.png","title":"dashboard chart debug full","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/dashboard_chart_debug_full.png","sizeKb":381,"mode":"standard"},{"name":"dashboard_v2_dark.png","title":"dashboard v2 dark","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/dashboard_v2_dark.png","sizeKb":442,"mode":"dark"},{"name":"dashboard_v2_light.png","title":"dashboard v2 light","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/dashboard_v2_light.png","sizeKb":437,"mode":"light"},{"name":"remote_dashboard_dark.png","title":"remote dashboard dark","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/remote_dashboard_dark.png","sizeKb":200,"mode":"dark"},{"name":"remote_dashboard_live.png","title":"remote dashboard live","category":"dashboards","categoryLabel":"Core & Dashboards","relPath":"02_full_app_page_screenshots/01_core_and_dashboards/remote_dashboard_live.png","sizeKb":199,"mode":"standard"},{"name":"009_Facture_B2B_Marocaine_DGI_TVA_20_Mentions_Legales_dark.png","title":"Facture B2B Marocaine DGI TVA 20 Mentions Legales dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/009_Facture_B2B_Marocaine_DGI_TVA_20_Mentions_Legales_dark.png","sizeKb":232,"mode":"dark"},{"name":"009_Facture_B2B_Marocaine_DGI_TVA_20_Mentions_Legales_light.png","title":"Facture B2B Marocaine DGI TVA 20 Mentions Legales light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/009_Facture_B2B_Marocaine_DGI_TVA_20_Mentions_Legales_light.png","sizeKb":236,"mode":"light"},{"name":"020_Nouveau_Devis_Facture_Proforma_B2B_dark.png","title":"Nouveau Devis Facture Proforma B2B dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/020_Nouveau_Devis_Facture_Proforma_B2B_dark.png","sizeKb":292,"mode":"dark"},{"name":"020_Nouveau_Devis_Facture_Proforma_B2B_light.png","title":"Nouveau Devis Facture Proforma B2B light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/020_Nouveau_Devis_Facture_Proforma_B2B_light.png","sizeKb":294,"mode":"light"},{"name":"022_Devis_Proformas_de_Location_dark.png","title":"Devis Proformas de Location dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/022_Devis_Proformas_de_Location_dark.png","sizeKb":283,"mode":"dark"},{"name":"022_Devis_Proformas_de_Location_light.png","title":"Devis Proformas de Location light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/022_Devis_Proformas_de_Location_light.png","sizeKb":286,"mode":"light"},{"name":"026_bookings_Assigndrivers_dark.png","title":"bookings Assigndrivers dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/026_bookings_Assigndrivers_dark.png","sizeKb":135,"mode":"dark"},{"name":"026_bookings_Assigndrivers_light.png","title":"bookings Assigndrivers light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/026_bookings_Assigndrivers_light.png","sizeKb":137,"mode":"light"},{"name":"027_Planning_Departs_Retours_Rotations_dark.png","title":"Planning Departs Retours Rotations dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/027_Planning_Departs_Retours_Rotations_dark.png","sizeKb":138,"mode":"dark"},{"name":"027_Planning_Departs_Retours_Rotations_light.png","title":"Planning Departs Retours Rotations light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/027_Planning_Departs_Retours_Rotations_light.png","sizeKb":138,"mode":"light"},{"name":"028_Emission_d_un_Nouveau_Contrat_de_Location_dark.png","title":"Emission d un Nouveau Contrat de Location dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/028_Emission_d_un_Nouveau_Contrat_de_Location_dark.png","sizeKb":212,"mode":"dark"},{"name":"028_Emission_d_un_Nouveau_Contrat_de_Location_light.png","title":"Emission d un Nouveau Contrat de Location light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/028_Emission_d_un_Nouveau_Contrat_de_Location_light.png","sizeKb":209,"mode":"light"},{"name":"029_bookings_edit_dark.png","title":"bookings edit dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/029_bookings_edit_dark.png","sizeKb":169,"mode":"dark"},{"name":"029_bookings_edit_light.png","title":"bookings edit light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/029_bookings_edit_light.png","sizeKb":167,"mode":"light"},{"name":"030_bookings_event_dark.png","title":"bookings event dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/030_bookings_event_dark.png","sizeKb":156,"mode":"dark"},{"name":"030_bookings_event_light.png","title":"bookings event light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/030_bookings_event_light.png","sizeKb":156,"mode":"light"},{"name":"031_Contrats_de_Location_Reservations_Actives_dark.png","title":"Contrats de Location Reservations Actives dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/031_Contrats_de_Location_Reservations_Actives_dark.png","sizeKb":231,"mode":"dark"},{"name":"031_Contrats_de_Location_Reservations_Actives_light.png","title":"Contrats de Location Reservations Actives light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/031_Contrats_de_Location_Reservations_Actives_light.png","sizeKb":234,"mode":"light"},{"name":"032_bookings_list_actions_dark.png","title":"bookings list actions dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/032_bookings_list_actions_dark.png","sizeKb":211,"mode":"dark"},{"name":"032_bookings_list_actions_light.png","title":"bookings list actions light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/032_bookings_list_actions_light.png","sizeKb":212,"mode":"light"},{"name":"033_bookings_pdf_dark.png","title":"bookings pdf dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/033_bookings_pdf_dark.png","sizeKb":124,"mode":"dark"},{"name":"033_bookings_pdf_light.png","title":"bookings pdf light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/033_bookings_pdf_light.png","sizeKb":124,"mode":"light"},{"name":"034_bookings_print_bookings_dark.png","title":"bookings print bookings dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/034_bookings_print_bookings_dark.png","sizeKb":134,"mode":"dark"},{"name":"034_bookings_print_bookings_light.png","title":"bookings print bookings light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/034_bookings_print_bookings_light.png","sizeKb":134,"mode":"light"},{"name":"035_bookings_print_dark.png","title":"bookings print dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/035_bookings_print_dark.png","sizeKb":105,"mode":"dark"},{"name":"035_bookings_print_light.png","title":"bookings print light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/035_bookings_print_light.png","sizeKb":105,"mode":"light"},{"name":"036_bookings_receipt_dark.png","title":"bookings receipt dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/036_bookings_receipt_dark.png","sizeKb":198,"mode":"dark"},{"name":"036_bookings_receipt_light.png","title":"bookings receipt light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/036_bookings_receipt_light.png","sizeKb":199,"mode":"light"},{"name":"037_bookings_service_event_dark.png","title":"bookings service event dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/037_bookings_service_event_dark.png","sizeKb":134,"mode":"dark"},{"name":"037_bookings_service_event_light.png","title":"bookings service event light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/037_bookings_service_event_light.png","sizeKb":134,"mode":"light"},{"name":"038_bookings_transactions_dark.png","title":"bookings transactions dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/038_bookings_transactions_dark.png","sizeKb":132,"mode":"dark"},{"name":"038_bookings_transactions_light.png","title":"bookings transactions light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/038_bookings_transactions_light.png","sizeKb":129,"mode":"light"},{"name":"039_cancel_reasons_create_dark.png","title":"cancel reasons create dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/039_cancel_reasons_create_dark.png","sizeKb":145,"mode":"dark"},{"name":"039_cancel_reasons_create_light.png","title":"cancel reasons create light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/039_cancel_reasons_create_light.png","sizeKb":146,"mode":"light"},{"name":"040_cancel_reasons_edit_dark.png","title":"cancel reasons edit dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/040_cancel_reasons_edit_dark.png","sizeKb":136,"mode":"dark"},{"name":"040_cancel_reasons_edit_light.png","title":"cancel reasons edit light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/040_cancel_reasons_edit_light.png","sizeKb":138,"mode":"light"},{"name":"046_Catalogue_des_Prestations_Complementaires_dark.png","title":"Catalogue des Prestations Complementaires dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/046_Catalogue_des_Prestations_Complementaires_dark.png","sizeKb":209,"mode":"dark"},{"name":"046_Catalogue_des_Prestations_Complementaires_light.png","title":"Catalogue des Prestations Complementaires light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/046_Catalogue_des_Prestations_Complementaires_light.png","sizeKb":208,"mode":"light"},{"name":"047_contactus_dark.png","title":"contactus dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/047_contactus_dark.png","sizeKb":154,"mode":"dark"},{"name":"047_contactus_light.png","title":"contactus light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/047_contactus_light.png","sizeKb":155,"mode":"light"},{"name":"048_customer_dashboard_booking_details_ongoing_dark.png","title":"customer dashboard booking details ongoing dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/048_customer_dashboard_booking_details_ongoing_dark.png","sizeKb":602,"mode":"dark"},{"name":"048_customer_dashboard_booking_details_ongoing_light.png","title":"customer dashboard booking details ongoing light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/048_customer_dashboard_booking_details_ongoing_light.png","sizeKb":610,"mode":"light"},{"name":"049_customer_dashboard_booking_details_dark.png","title":"customer dashboard booking details dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/049_customer_dashboard_booking_details_dark.png","sizeKb":206,"mode":"dark"},{"name":"049_customer_dashboard_booking_details_light.png","title":"customer dashboard booking details light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/049_customer_dashboard_booking_details_light.png","sizeKb":211,"mode":"light"},{"name":"04_bookings_list.png","title":"bookings list","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/04_bookings_list.png","sizeKb":407,"mode":"standard"},{"name":"050_customer_dashboard_booking_info_dark.png","title":"customer dashboard booking info dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/050_customer_dashboard_booking_info_dark.png","sizeKb":213,"mode":"dark"},{"name":"050_customer_dashboard_booking_info_light.png","title":"customer dashboard booking info light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/050_customer_dashboard_booking_info_light.png","sizeKb":219,"mode":"light"},{"name":"05_bookings_create.png","title":"bookings create","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/05_bookings_create.png","sizeKb":200,"mode":"standard"},{"name":"06_calendar.png","title":"calendar","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/06_calendar.png","sizeKb":183,"mode":"standard"},{"name":"09_customers.png","title":"customers","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/09_customers.png","sizeKb":284,"mode":"standard"},{"name":"10_drivers.png","title":"drivers","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/10_drivers.png","sizeKb":231,"mode":"standard"},{"name":"11_service_reminders.png","title":"service reminders","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/11_service_reminders.png","sizeKb":186,"mode":"standard"},{"name":"12_work_orders.png","title":"work orders","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/12_work_orders.png","sizeKb":319,"mode":"standard"},{"name":"13_parts.png","title":"parts","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/13_parts.png","sizeKb":289,"mode":"standard"},{"name":"16_fuel.png","title":"fuel","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/16_fuel.png","sizeKb":231,"mode":"standard"},{"name":"batch07_061_customer_dashboard_local.png","title":"batch07 061 customer dashboard local","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/batch07_061_customer_dashboard_local.png","sizeKb":104,"mode":"standard"},{"name":"batch07_062_signup_local.png","title":"batch07 062 signup local","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/batch07_062_signup_local.png","sizeKb":96,"mode":"standard"},{"name":"batch07_063_single_booking_info_local.png","title":"batch07 063 single booking info local","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/batch07_063_single_booking_info_local.png","sizeKb":144,"mode":"standard"},{"name":"batch07_064_customers_address_local.png","title":"batch07 064 customers address local","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/batch07_064_customers_address_local.png","sizeKb":242,"mode":"standard"},{"name":"batch07_065_customer_create_local.png","title":"batch07 065 customer create local","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/batch07_065_customer_create_local.png","sizeKb":207,"mode":"standard"},{"name":"calendar_modal_verified_dark.png","title":"calendar modal verified dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/calendar_modal_verified_dark.png","sizeKb":159,"mode":"dark"},{"name":"calendar_modal_verified_light.png","title":"calendar modal verified light","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/calendar_modal_verified_light.png","sizeKb":174,"mode":"light"},{"name":"page_03_calendar_dark.png","title":"page 03 calendar dark","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/page_03_calendar_dark.png","sizeKb":125,"mode":"dark"},{"name":"page_03_calendar_live.png","title":"page 03 calendar live","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/page_03_calendar_live.png","sizeKb":125,"mode":"standard"},{"name":"page_with_active_sidebar_subitem.png","title":"page with active sidebar subitem","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/page_with_active_sidebar_subitem.png","sizeKb":120,"mode":"standard"},{"name":"sidebar_only.png","title":"sidebar only","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/sidebar_only.png","sizeKb":55,"mode":"standard"},{"name":"sidebar_subitems_expanded.png","title":"sidebar subitems expanded","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/sidebar_subitems_expanded.png","sizeKb":38,"mode":"standard"},{"name":"sidebar_subitems_verified.png","title":"sidebar subitems verified","category":"operations","categoryLabel":"Operations & Bookings","relPath":"02_full_app_page_screenshots/02_operations_and_bookings/sidebar_subitems_verified.png","sizeKb":38,"mode":"standard"},{"name":"02_vehicles_list.png","title":"vehicles list","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/02_vehicles_list.png","sizeKb":326,"mode":"standard"},{"name":"02_vehicles_refined.png","title":"vehicles refined","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/02_vehicles_refined.png","sizeKb":141,"mode":"standard"},{"name":"03_vehicles_create.png","title":"vehicles create","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/03_vehicles_create.png","sizeKb":230,"mode":"standard"},{"name":"08_telematics_live.png","title":"telematics live","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/08_telematics_live.png","sizeKb":610,"mode":"standard"},{"name":"page_02_vehicles_dark.png","title":"page 02 vehicles dark","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/page_02_vehicles_dark.png","sizeKb":158,"mode":"dark"},{"name":"page_02_vehicles_live.png","title":"page 02 vehicles live","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/page_02_vehicles_live.png","sizeKb":159,"mode":"standard"},{"name":"remote_acquisition_create_modal.png","title":"remote acquisition create modal","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/remote_acquisition_create_modal.png","sizeKb":201,"mode":"standard"},{"name":"remote_acquisition_dark.png","title":"remote acquisition dark","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/remote_acquisition_dark.png","sizeKb":223,"mode":"dark"},{"name":"remote_acquisition_details_modal.png","title":"remote acquisition details modal","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/remote_acquisition_details_modal.png","sizeKb":191,"mode":"standard"},{"name":"remote_acquisition_live.png","title":"remote acquisition live","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/remote_acquisition_live.png","sizeKb":223,"mode":"standard"},{"name":"remote_acquisition_modal_live.png","title":"remote acquisition modal live","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/remote_acquisition_modal_live.png","sizeKb":153,"mode":"standard"},{"name":"remote_acquisition_populated_dark.png","title":"remote acquisition populated dark","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/remote_acquisition_populated_dark.png","sizeKb":143,"mode":"dark"},{"name":"remote_acquisition_populated_live.png","title":"remote acquisition populated live","category":"fleet","categoryLabel":"Fleet & Vehicles","relPath":"02_full_app_page_screenshots/03_fleet_and_vehicles/remote_acquisition_populated_live.png","sizeKb":144,"mode":"standard"},{"name":"F01_customers_create.png","title":"F01 customers create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F01_customers_create.png","sizeKb":110,"mode":"standard"},{"name":"F02_drivers_create.png","title":"F02 drivers create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F02_drivers_create.png","sizeKb":110,"mode":"standard"},{"name":"F03_vehicles_create.png","title":"F03 vehicles create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F03_vehicles_create.png","sizeKb":123,"mode":"standard"},{"name":"F04_bookings_create.png","title":"F04 bookings create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F04_bookings_create.png","sizeKb":108,"mode":"standard"},{"name":"F05_quotation_create.png","title":"F05 quotation create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F05_quotation_create.png","sizeKb":119,"mode":"standard"},{"name":"F06_income_create.png","title":"F06 income create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F06_income_create.png","sizeKb":125,"mode":"standard"},{"name":"F07_expense_create.png","title":"F07 expense create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F07_expense_create.png","sizeKb":117,"mode":"standard"},{"name":"F08_fuel_create.png","title":"F08 fuel create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F08_fuel_create.png","sizeKb":125,"mode":"standard"},{"name":"F09_work_order_create.png","title":"F09 work order create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F09_work_order_create.png","sizeKb":148,"mode":"standard"},{"name":"F10_service_reminder_create.png","title":"F10 service reminder create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F10_service_reminder_create.png","sizeKb":107,"mode":"standard"},{"name":"F11_parts_create.png","title":"F11 parts create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F11_parts_create.png","sizeKb":134,"mode":"standard"},{"name":"F12_acquisition_create.png","title":"F12 acquisition create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F12_acquisition_create.png","sizeKb":141,"mode":"standard"},{"name":"F13_notes_create.png","title":"F13 notes create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F13_notes_create.png","sizeKb":109,"mode":"standard"},{"name":"F14_vehicle_types_create.png","title":"F14 vehicle types create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F14_vehicle_types_create.png","sizeKb":110,"mode":"standard"},{"name":"F15_vehicle_group_create.png","title":"F15 vehicle group create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F15_vehicle_group_create.png","sizeKb":101,"mode":"standard"},{"name":"F16_vendors_create.png","title":"F16 vendors create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F16_vendors_create.png","sizeKb":144,"mode":"standard"},{"name":"F17_parts_category_create.png","title":"F17 parts category create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F17_parts_category_create.png","sizeKb":114,"mode":"standard"},{"name":"F18_expensecategories_create.png","title":"F18 expensecategories create","category":"forms","categoryLabel":"Forms & Modals","relPath":"02_full_app_page_screenshots/04_forms_and_modals/F18_expensecategories_create.png","sizeKb":94,"mode":"standard"},{"name":"fuel.png","title":"fuel","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/fuel.png","sizeKb":149,"mode":"standard"},{"name":"mechanic.png","title":"mechanic","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/mechanic.png","sizeKb":110,"mode":"standard"},{"name":"mechanic_create.png","title":"mechanic create","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/mechanic_create.png","sizeKb":109,"mode":"standard"},{"name":"parts.png","title":"parts","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/parts.png","sizeKb":149,"mode":"standard"},{"name":"service_item.png","title":"service item","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/service_item.png","sizeKb":92,"mode":"standard"},{"name":"service_reminder.png","title":"service reminder","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/service_reminder.png","sizeKb":149,"mode":"standard"},{"name":"vehicle_breakdown.png","title":"vehicle breakdown","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/vehicle_breakdown.png","sizeKb":112,"mode":"standard"},{"name":"vehicle_inspection.png","title":"vehicle inspection","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/vehicle_inspection.png","sizeKb":98,"mode":"standard"},{"name":"vehicle_inspection_create.png","title":"vehicle inspection create","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/vehicle_inspection_create.png","sizeKb":112,"mode":"standard"},{"name":"vehicle_reviews.png","title":"vehicle reviews","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/vehicle_reviews.png","sizeKb":106,"mode":"standard"},{"name":"vehicle_reviews_create.png","title":"vehicle reviews create","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/vehicle_reviews_create.png","sizeKb":113,"mode":"standard"},{"name":"work_order.png","title":"work order","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/work_order.png","sizeKb":164,"mode":"standard"},{"name":"work_order_logs.png","title":"work order logs","category":"maintenance","categoryLabel":"Maintenance & Fuel","relPath":"02_full_app_page_screenshots/05_maintenance_and_fuel/work_order_logs.png","sizeKb":112,"mode":"standard"},{"name":"14_income.png","title":"income","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/14_income.png","sizeKb":256,"mode":"standard"},{"name":"15_expense.png","title":"expense","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/15_expense.png","sizeKb":183,"mode":"standard"},{"name":"17_reports_monthly.png","title":"reports monthly","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/17_reports_monthly.png","sizeKb":176,"mode":"standard"},{"name":"booking.png","title":"booking","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/booking.png","sizeKb":142,"mode":"standard"},{"name":"customers.png","title":"customers","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/customers.png","sizeKb":127,"mode":"standard"},{"name":"delinquent.png","title":"delinquent","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/delinquent.png","sizeKb":85,"mode":"standard"},{"name":"drivers.png","title":"drivers","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/drivers.png","sizeKb":126,"mode":"standard"},{"name":"expense.png","title":"expense","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/expense.png","sizeKb":120,"mode":"standard"},{"name":"expensecategories.png","title":"expensecategories","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/expensecategories.png","sizeKb":118,"mode":"standard"},{"name":"fuel.png","title":"fuel","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/fuel.png","sizeKb":83,"mode":"standard"},{"name":"income.png","title":"income","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/income.png","sizeKb":119,"mode":"standard"},{"name":"incomecategories.png","title":"incomecategories","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/incomecategories.png","sizeKb":127,"mode":"standard"},{"name":"monthly.png","title":"monthly","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/monthly.png","sizeKb":118,"mode":"standard"},{"name":"parts.png","title":"parts","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/parts.png","sizeKb":83,"mode":"standard"},{"name":"payments.png","title":"payments","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/payments.png","sizeKb":108,"mode":"standard"},{"name":"users.png","title":"users","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/users.png","sizeKb":85,"mode":"standard"},{"name":"vehicle.png","title":"vehicle","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/vehicle.png","sizeKb":127,"mode":"standard"},{"name":"vendors.png","title":"vendors","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/vendors.png","sizeKb":120,"mode":"standard"},{"name":"work-order.png","title":"work-order","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/work-order.png","sizeKb":85,"mode":"standard"},{"name":"yearly.png","title":"yearly","category":"reports","categoryLabel":"Reports & Analytics","relPath":"02_full_app_page_screenshots/06_reports_and_analytics/yearly.png","sizeKb":127,"mode":"standard"},{"name":"04-settings-sync.png","title":"04-settings-sync","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/04-settings-sync.png","sizeKb":349,"mode":"standard"},{"name":"18_settings.png","title":"settings","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/18_settings.png","sizeKb":383,"mode":"standard"},{"name":"api_settings.png","title":"api settings","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/api_settings.png","sizeKb":96,"mode":"standard"},{"name":"cancel_reason.png","title":"cancel reason","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/cancel_reason.png","sizeKb":108,"mode":"standard"},{"name":"chat_settings.png","title":"chat settings","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/chat_settings.png","sizeKb":77,"mode":"standard"},{"name":"company_services.png","title":"company services","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/company_services.png","sizeKb":127,"mode":"standard"},{"name":"fare_settings.png","title":"fare settings","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/fare_settings.png","sizeKb":138,"mode":"standard"},{"name":"frontend_settings.png","title":"frontend settings","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/frontend_settings.png","sizeKb":112,"mode":"standard"},{"name":"parts_category.png","title":"parts category","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/parts_category.png","sizeKb":132,"mode":"standard"},{"name":"payment_settings.png","title":"payment settings","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/payment_settings.png","sizeKb":136,"mode":"standard"},{"name":"service_item.png","title":"service item","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/service_item.png","sizeKb":92,"mode":"standard"},{"name":"settings.png","title":"settings","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/settings.png","sizeKb":179,"mode":"standard"},{"name":"settings_api_settings.png","title":"settings api settings","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/settings_api_settings.png","sizeKb":96,"mode":"standard"},{"name":"settings_chat_settings.png","title":"settings chat settings","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/settings_chat_settings.png","sizeKb":77,"mode":"standard"},{"name":"settings_traccar_settings.png","title":"settings traccar settings","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/settings_traccar_settings.png","sizeKb":152,"mode":"standard"},{"name":"set_email.png","title":"set email","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/set_email.png","sizeKb":81,"mode":"standard"},{"name":"team.png","title":"team","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/team.png","sizeKb":120,"mode":"standard"},{"name":"testimonials.png","title":"testimonials","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/testimonials.png","sizeKb":116,"mode":"standard"},{"name":"traccar_settings.png","title":"traccar settings","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/traccar_settings.png","sizeKb":152,"mode":"standard"},{"name":"twilio_settings.png","title":"twilio settings","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/twilio_settings.png","sizeKb":134,"mode":"standard"},{"name":"vehicle_group.png","title":"vehicle group","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/vehicle_group.png","sizeKb":111,"mode":"standard"},{"name":"vehicle_types.png","title":"vehicle types","category":"settings","categoryLabel":"Settings & Admin","relPath":"02_full_app_page_screenshots/07_settings_and_admin/vehicle_types.png","sizeKb":102,"mode":"standard"},{"name":"004_saas_access_logs_dark.png","title":"saas access logs dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/004_saas_access_logs_dark.png","sizeKb":120,"mode":"dark"},{"name":"004_saas_access_logs_light.png","title":"saas access logs light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/004_saas_access_logs_light.png","sizeKb":120,"mode":"light"},{"name":"005_saas_bank_details_dark.png","title":"saas bank details dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/005_saas_bank_details_dark.png","sizeKb":203,"mode":"dark"},{"name":"005_saas_bank_details_light.png","title":"saas bank details light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/005_saas_bank_details_light.png","sizeKb":206,"mode":"light"},{"name":"006_admin_saas_review_detail_dark.png","title":"admin saas review detail dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/006_admin_saas_review_detail_dark.png","sizeKb":266,"mode":"dark"},{"name":"006_admin_saas_review_detail_light.png","title":"admin saas review detail light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/006_admin_saas_review_detail_light.png","sizeKb":267,"mode":"light"},{"name":"007_admin_saas_review_dark.png","title":"admin saas review dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/007_admin_saas_review_dark.png","sizeKb":280,"mode":"dark"},{"name":"007_admin_saas_review_light.png","title":"admin saas review light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/007_admin_saas_review_light.png","sizeKb":284,"mode":"light"},{"name":"008_Plans_d_Abonnement_SaaS_Add_ons_Facturation_dark.png","title":"Plans d Abonnement SaaS Add ons Facturation dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/008_Plans_d_Abonnement_SaaS_Add_ons_Facturation_dark.png","sizeKb":249,"mode":"dark"},{"name":"008_Plans_d_Abonnement_SaaS_Add_ons_Facturation_light.png","title":"Plans d Abonnement SaaS Add ons Facturation light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/008_Plans_d_Abonnement_SaaS_Add_ons_Facturation_light.png","sizeKb":252,"mode":"light"},{"name":"01-agency-subscription-dashboard.png","title":"01-agency-subscription-dashboard","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/01-agency-subscription-dashboard.png","sizeKb":250,"mode":"standard"},{"name":"01-quota-form.png","title":"01-quota-form","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/01-quota-form.png","sizeKb":205,"mode":"standard"},{"name":"01-tenant-directory.png","title":"01-tenant-directory","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/01-tenant-directory.png","sizeKb":299,"mode":"standard"},{"name":"010_admin_subscription_suspended_dark.png","title":"admin subscription suspended dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/010_admin_subscription_suspended_dark.png","sizeKb":221,"mode":"dark"},{"name":"010_admin_subscription_suspended_light.png","title":"admin subscription suspended light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/010_admin_subscription_suspended_light.png","sizeKb":223,"mode":"light"},{"name":"012_admin_tenants_create_dark.png","title":"admin tenants create dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/012_admin_tenants_create_dark.png","sizeKb":291,"mode":"dark"},{"name":"012_admin_tenants_create_light.png","title":"admin tenants create light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/012_admin_tenants_create_light.png","sizeKb":292,"mode":"light"},{"name":"013_SuperAdmin_Quotas_Modules_Facturation_Agence_dark.png","title":"SuperAdmin Quotas Modules Facturation Agence dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/013_SuperAdmin_Quotas_Modules_Facturation_Agence_dark.png","sizeKb":302,"mode":"dark"},{"name":"013_SuperAdmin_Quotas_Modules_Facturation_Agence_light.png","title":"SuperAdmin Quotas Modules Facturation Agence light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/013_SuperAdmin_Quotas_Modules_Facturation_Agence_light.png","sizeKb":302,"mode":"light"},{"name":"014_SuperAdmin_Repertoire_des_Agences_Supervision_SaaS_dark.png","title":"SuperAdmin Repertoire des Agences Supervision SaaS dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/014_SuperAdmin_Repertoire_des_Agences_Supervision_SaaS_dark.png","sizeKb":295,"mode":"dark"},{"name":"014_SuperAdmin_Repertoire_des_Agences_Supervision_SaaS_light.png","title":"SuperAdmin Repertoire des Agences Supervision SaaS light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/014_SuperAdmin_Repertoire_des_Agences_Supervision_SaaS_light.png","sizeKb":296,"mode":"light"},{"name":"019_booking_quotation_approve_dark.png","title":"booking quotation approve dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/019_booking_quotation_approve_dark.png","sizeKb":277,"mode":"dark"},{"name":"019_booking_quotation_approve_light.png","title":"booking quotation approve light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/019_booking_quotation_approve_light.png","sizeKb":278,"mode":"light"},{"name":"02-statutory-moroccan-invoice.png","title":"02-statutory-moroccan-invoice","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/02-statutory-moroccan-invoice.png","sizeKb":124,"mode":"standard"},{"name":"02-suspension-screen.png","title":"02-suspension-screen","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/02-suspension-screen.png","sizeKb":96,"mode":"standard"},{"name":"02-tenant-provisioned.png","title":"02-tenant-provisioned","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/02-tenant-provisioned.png","sizeKb":375,"mode":"standard"},{"name":"021_booking_quotation_edit_dark.png","title":"booking quotation edit dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/021_booking_quotation_edit_dark.png","sizeKb":293,"mode":"dark"},{"name":"021_booking_quotation_edit_light.png","title":"booking quotation edit light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/021_booking_quotation_edit_light.png","sizeKb":295,"mode":"light"},{"name":"023_booking_quotation_list_actions_dark.png","title":"booking quotation list actions dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/023_booking_quotation_list_actions_dark.png","sizeKb":250,"mode":"dark"},{"name":"023_booking_quotation_list_actions_light.png","title":"booking quotation list actions light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/023_booking_quotation_list_actions_light.png","sizeKb":255,"mode":"light"},{"name":"024_booking_quotation_print_dark.png","title":"booking quotation print dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/024_booking_quotation_print_dark.png","sizeKb":177,"mode":"dark"},{"name":"024_booking_quotation_print_light.png","title":"booking quotation print light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/024_booking_quotation_print_light.png","sizeKb":177,"mode":"light"},{"name":"025_booking_quotation_receipt_dark.png","title":"booking quotation receipt dark","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/025_booking_quotation_receipt_dark.png","sizeKb":294,"mode":"dark"},{"name":"025_booking_quotation_receipt_light.png","title":"booking quotation receipt light","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/025_booking_quotation_receipt_light.png","sizeKb":298,"mode":"light"},{"name":"03-cmi-activation-telematics-live.png","title":"03-cmi-activation-telematics-live","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/03-cmi-activation-telematics-live.png","sizeKb":116,"mode":"standard"},{"name":"03-cross-tenant-isolation-verified.png","title":"03-cross-tenant-isolation-verified","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/03-cross-tenant-isolation-verified.png","sizeKb":301,"mode":"standard"},{"name":"03-whitelabel-storefront.png","title":"03-whitelabel-storefront","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/03-whitelabel-storefront.png","sizeKb":977,"mode":"standard"},{"name":"03-workspace-switch.png","title":"03-workspace-switch","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/03-workspace-switch.png","sizeKb":300,"mode":"standard"},{"name":"04-superadmin-transfer-approved.png","title":"04-superadmin-transfer-approved","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/04-superadmin-transfer-approved.png","sizeKb":384,"mode":"standard"},{"name":"07_quotation.png","title":"quotation","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/07_quotation.png","sizeKb":149,"mode":"standard"},{"name":"test_saas_batch_modal.png","title":"test saas batch modal","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/test_saas_batch_modal.png","sizeKb":221,"mode":"standard"},{"name":"test_saas_selected_2.png","title":"test saas selected 2","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/test_saas_selected_2.png","sizeKb":197,"mode":"standard"},{"name":"test_saas_select_all.png","title":"test saas select all","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/test_saas_select_all.png","sizeKb":197,"mode":"standard"},{"name":"test_suspended_live.png","title":"test suspended live","category":"saas","categoryLabel":"SaaS & Subscriptions","relPath":"02_full_app_page_screenshots/08_saas_and_subscriptions/test_suspended_live.png","sizeKb":220,"mode":"standard"},{"name":"01-agency2-bare-domain-login.png","title":"01-agency2-bare-domain-login","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/01-agency2-bare-domain-login.png","sizeKb":208,"mode":"standard"},{"name":"011_Radar_GPS_Telematique_Temps_Reel_CNDP_09_08_dark.png","title":"Radar GPS Telematique Temps Reel CNDP 09 08 dark","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/011_Radar_GPS_Telematique_Temps_Reel_CNDP_09_08_dark.png","sizeKb":682,"mode":"dark"},{"name":"011_Radar_GPS_Telematique_Temps_Reel_CNDP_09_08_light.png","title":"Radar GPS Telematique Temps Reel CNDP 09 08 light","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/011_Radar_GPS_Telematique_Temps_Reel_CNDP_09_08_light.png","sizeKb":684,"mode":"light"},{"name":"02-agency2-empty-isolated-views.png","title":"02-agency2-empty-isolated-views","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/02-agency2-empty-isolated-views.png","sizeKb":103,"mode":"standard"},{"name":"chat.png","title":"chat","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/chat.png","sizeKb":129,"mode":"standard"},{"name":"customers.png","title":"customers","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/customers.png","sizeKb":147,"mode":"standard"},{"name":"customers_create.png","title":"customers create","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/customers_create.png","sizeKb":110,"mode":"standard"},{"name":"drivers.png","title":"drivers","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/drivers.png","sizeKb":147,"mode":"standard"},{"name":"drivers_create.png","title":"drivers create","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/drivers_create.png","sizeKb":110,"mode":"standard"},{"name":"roles.png","title":"roles","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/roles.png","sizeKb":105,"mode":"standard"},{"name":"roles_create.png","title":"roles create","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/roles_create.png","sizeKb":101,"mode":"standard"},{"name":"telematics_live.png","title":"telematics live","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/telematics_live.png","sizeKb":127,"mode":"standard"},{"name":"users.png","title":"users","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/users.png","sizeKb":103,"mode":"standard"},{"name":"users_create.png","title":"users create","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/users_create.png","sizeKb":103,"mode":"standard"},{"name":"vendors.png","title":"vendors","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/vendors.png","sizeKb":140,"mode":"standard"},{"name":"vendors_create.png","title":"vendors create","category":"security","categoryLabel":"Security & Isolation","relPath":"02_full_app_page_screenshots/09_security_and_tenant_isolation/vendors_create.png","sizeKb":145,"mode":"standard"},{"name":"01_vehicles_legacy.png","title":"vehicles legacy","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/01_vehicles_legacy.png","sizeKb":381,"mode":"legacy"},{"name":"01_vehicles_modern.png","title":"vehicles modern","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/01_vehicles_modern.png","sizeKb":655,"mode":"modern"},{"name":"02_vehicle_create_legacy.png","title":"vehicle create legacy","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/02_vehicle_create_legacy.png","sizeKb":244,"mode":"legacy"},{"name":"02_vehicle_create_modern.png","title":"vehicle create modern","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/02_vehicle_create_modern.png","sizeKb":473,"mode":"modern"},{"name":"03_bookings_legacy.png","title":"bookings legacy","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/03_bookings_legacy.png","sizeKb":523,"mode":"legacy"},{"name":"03_bookings_modern.png","title":"bookings modern","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/03_bookings_modern.png","sizeKb":759,"mode":"modern"},{"name":"04_booking_create_legacy.png","title":"booking create legacy","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/04_booking_create_legacy.png","sizeKb":180,"mode":"legacy"},{"name":"04_booking_create_modern.png","title":"booking create modern","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/04_booking_create_modern.png","sizeKb":336,"mode":"modern"},{"name":"05_customers_legacy.png","title":"customers legacy","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/05_customers_legacy.png","sizeKb":290,"mode":"legacy"},{"name":"05_customers_modern.png","title":"customers modern","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/05_customers_modern.png","sizeKb":605,"mode":"modern"},{"name":"06_drivers_legacy.png","title":"drivers legacy","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/06_drivers_legacy.png","sizeKb":153,"mode":"legacy"},{"name":"06_drivers_modern.png","title":"drivers modern","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/06_drivers_modern.png","sizeKb":417,"mode":"modern"},{"name":"07_maintenance_legacy.png","title":"maintenance legacy","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/07_maintenance_legacy.png","sizeKb":248,"mode":"legacy"},{"name":"07_maintenance_modern.png","title":"maintenance modern","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/07_maintenance_modern.png","sizeKb":343,"mode":"modern"},{"name":"08_expenses_finance_legacy.png","title":"expenses finance legacy","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/08_expenses_finance_legacy.png","sizeKb":221,"mode":"legacy"},{"name":"08_expenses_finance_modern.png","title":"expenses finance modern","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/08_expenses_finance_modern.png","sizeKb":350,"mode":"modern"},{"name":"modern_dashboard_full.png","title":"modern dashboard full","category":"comparisons","categoryLabel":"Legacy vs Modern","relPath":"03_legacy_vs_modern_comparisons/modern_dashboard_full.png","sizeKb":762,"mode":"modern"}];
+    let currentFiltered = [...items];
+    let activeIndex = 0;
+    let selectedCat = 'all';
+
+    const galleryGrid = document.getElementById('galleryGrid');
+    const searchInput = document.getElementById('searchInput');
+    const categoryPills = document.getElementById('categoryPills');
+    const emptyState = document.getElementById('emptyState');
+
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxTitle = document.getElementById('lightboxTitle');
+    const lightboxOpenNew = document.getElementById('lightboxOpenNew');
+    const lightboxClose = document.getElementById('lightboxClose');
+    const lightboxPrev = document.getElementById('lightboxPrev');
+    const lightboxNext = document.getElementById('lightboxNext');
+
+    function renderGallery() {
+      galleryGrid.innerHTML = '';
+      if (currentFiltered.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+      }
+      emptyState.style.display = 'none';
+
+      currentFiltered.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'img-card';
+        card.onclick = () => openLightbox(index);
+
+        let badgeModeClass = 'badge-cat';
+        if (item.mode === 'dark') badgeModeClass = 'badge-dark';
+        if (item.mode === 'light') badgeModeClass = 'badge-light';
+
+        card.innerHTML = `
+          <div class="img-thumb-wrap">
+            <img class="img-thumb" src="${item.relPath}" alt="${item.title}" loading="lazy">
+          </div>
+          <div class="img-meta">
+            <div class="img-title" title="${item.title}">${item.title}</div>
+            <div class="img-badges">
+              <span class="badge badge-cat">${item.categoryLabel}</span>
+              ${item.mode !== 'standard' ? `<span class="badge ${badgeModeClass}">${item.mode}</span>` : ''}
+              <span class="badge badge-size">${item.sizeKb} KB</span>
+            </div>
+          </div>
+        `;
+        galleryGrid.appendChild(card);
+      });
+    }
+
+    function filterItems() {
+      const q = searchInput.value.trim().toLowerCase();
+      currentFiltered = items.filter(item => {
+        const matchCat = (selectedCat === 'all') || (item.category === selectedCat);
+        const matchSearch = !q || item.title.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || item.categoryLabel.toLowerCase().includes(q);
+        return matchCat && matchSearch;
+      });
+      renderGallery();
+    }
+
+    categoryPills.addEventListener('click', (e) => {
+      const pill = e.target.closest('.pill');
+      if (!pill) return;
+      categoryPills.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      selectedCat = pill.dataset.cat;
+      filterItems();
+    });
+
+    searchInput.addEventListener('input', filterItems);
+
+    function openLightbox(index) {
+      activeIndex = index;
+      const item = currentFiltered[activeIndex];
+      lightboxImg.src = item.relPath;
+      lightboxTitle.textContent = `${item.title} (${item.categoryLabel} — ${item.sizeKb} KB)`;
+      lightboxOpenNew.href = item.relPath;
+      lightbox.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    lightboxClose.onclick = closeLightbox;
+    lightbox.onclick = (e) => {
+      if (e.target === lightbox || e.target.classList.contains('lightbox-img-wrap')) {
+        closeLightbox();
+      }
+    };
+
+    lightboxPrev.onclick = (e) => {
+      e.stopPropagation();
+      if (currentFiltered.length === 0) return;
+      activeIndex = (activeIndex - 1 + currentFiltered.length) % currentFiltered.length;
+      openLightbox(activeIndex);
+    };
+
+    lightboxNext.onclick = (e) => {
+      e.stopPropagation();
+      if (currentFiltered.length === 0) return;
+      activeIndex = (activeIndex + 1) % currentFiltered.length;
+      openLightbox(activeIndex);
+    };
+
+    document.addEventListener('keydown', (e) => {
+      if (!lightbox.classList.contains('open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') lightboxPrev.click();
+      if (e.key === 'ArrowRight') lightboxNext.click();
+    });
+
+    renderGallery();
+  </script>
+</body>
+</html>

@@ -2,7 +2,20 @@
 
 **Status: NEEDS FIX (P1)** · Module: `settings` · Source: [`src/app/[locale]/(dashboard)/dashboard/settings/providers/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/settings/providers/page.tsx>)
 
-**Progress (2026-09-25):** S-32 PARTIAL
+**Progress (2026-09-26):** S-32 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

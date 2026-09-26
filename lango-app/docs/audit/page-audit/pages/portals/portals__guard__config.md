@@ -2,7 +2,20 @@
 
 **Status: NEEDS FIX (P1)** · Module: `portals` · Source: [`src/app/[locale]/(dashboard)/dashboard/portals/guard/config/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/portals/guard/config/page.tsx>)
 
-**Progress (2026-09-25):** S-32 PARTIAL
+**Progress (2026-09-26):** S-32 PARTIAL
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

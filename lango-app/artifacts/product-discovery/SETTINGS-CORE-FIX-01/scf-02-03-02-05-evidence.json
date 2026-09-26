@@ -1,0 +1,112 @@
+{
+  "yearsBefore": [
+    {
+      "name": "2025-2026",
+      "isDefault": false,
+      "startDate": "2025-09-01",
+      "endDate": "2026-06-30"
+    },
+    {
+      "name": "2026-2027",
+      "isDefault": true,
+      "startDate": "2026-09-01",
+      "endDate": "2027-06-30"
+    }
+  ],
+  "revertedToPrevious": {
+    "status": 200,
+    "success": true,
+    "data": {
+      "id": "d985c5d1-3cef-4ef0-8333-4ab00c7f7b30",
+      "name": "2025-2026",
+      "previousDefaultYearId": "a9b28d89-47ff-4734-99c2-23cd9a75c0fe"
+    }
+  },
+  "yearsAfterRevert": [
+    {
+      "name": "2026-2027",
+      "isDefault": false
+    },
+    {
+      "name": "2025-2026",
+      "isDefault": true
+    }
+  ],
+  "bannerBefore": "L'année scolaire 2025-2026 est terminée depuis le 2026-06-30. Ouvrir une nouvelle année scolaire →",
+  "shot_before_fr": "artifacts\\product-discovery\\SETTINGS-CORE-FIX-01\\screenshots\\scf02-before-fr-dashboard.png",
+  "shot_before_fr-phone": "artifacts\\product-discovery\\SETTINGS-CORE-FIX-01\\screenshots\\scf02-before-fr-phone-dashboard.png",
+  "shot_before_ar": "artifacts\\product-discovery\\SETTINGS-CORE-FIX-01\\screenshots\\scf02-before-ar-dashboard.png",
+  "checklist": {
+    "target": {
+      "id": "a9b28d89-47ff-4734-99c2-23cd9a75c0fe",
+      "name": "2026-2027",
+      "startDate": "2026-09-01",
+      "endDate": "2027-06-30",
+      "isDefault": false
+    },
+    "current": {
+      "id": "d985c5d1-3cef-4ef0-8333-4ab00c7f7b30",
+      "name": "2025-2026",
+      "startDate": "2025-09-01",
+      "endDate": "2026-06-30"
+    },
+    "checks": {
+      "startsAfterCurrent": true,
+      "studentsPlacedInTarget": 0,
+      "publishedTimetable": {
+        "exists": false,
+        "versionNumber": null,
+        "publishedAt": null
+      },
+      "activeFeeStructures": 2,
+      "activeFeeStructuresScope": "tenant"
+    }
+  },
+  "dialog_fr": {
+    "clicked": true,
+    "text": "Ouvrir l'année scolaire 2026-2027 Vérifiez l'état de préparation avant de basculer l'application sur cette année. Ordre des années · commence après 2025-2026 Élèves placés dans cette année · 0 Emploi du temps publié · Non Structures de frais actives · 2 Compte les structures actives de l'établissement : elles ne sont pas rattachées à une année scolaire. Aucun emploi du temps publié pour cette année. Aucun élève n'est encore placé dans cette année. Annuler Ouvrir cette année"
+  },
+  "shot_dialog_fr": "artifacts\\product-discovery\\SETTINGS-CORE-FIX-01\\screenshots\\scf02-03-open-year-dialog-fr.png",
+  "dialog_fr-phone": {
+    "clicked": true,
+    "text": "Ouvrir l'année scolaire 2026-2027 Vérifiez l'état de préparation avant de basculer l'application sur cette année. Ordre des années · commence après 2025-2026 Élèves placés dans cette année · 0 Emploi du temps publié · Non Structures de frais actives · 2 Compte les structures actives de l'établissement : elles ne sont pas rattachées à une année scolaire. Aucun emploi du temps publié pour cette année. Aucun élève n'est encore placé dans cette année. Annuler Ouvrir cette année"
+  },
+  "shot_dialog_fr-phone": "artifacts\\product-discovery\\SETTINGS-CORE-FIX-01\\screenshots\\scf02-03-open-year-dialog-fr-phone.png",
+  "dialog_ar": {
+    "clicked": true,
+    "text": "افتح السنة الدراسية 2026-2027 تحقق من الجاهزية قبل تحويل التطبيق إلى هذه السنة. ترتيب السنوات · تبدأ بعد 2025-2026 التلاميذ المسجلون في هذه السنة · 0 جدول الحصص المنشور · لا هياكل الرسوم النشطة · 2 يحسب الهياكل النشطة للمؤسسة: فهي غير مرتبطة بسنة دراسية. لا يوجد جدول حصص منشور لهذه السنة. لم يتم تسجيل أي تلميذ في هذه السنة بعد. إلغاء افتح هذه السنة"
+  },
+  "shot_dialog_ar": "artifacts\\product-discovery\\SETTINGS-CORE-FIX-01\\screenshots\\scf02-03-open-year-dialog-ar.png",
+  "openResult": {
+    "status": 200,
+    "success": true,
+    "data": {
+      "id": "a9b28d89-47ff-4734-99c2-23cd9a75c0fe",
+      "name": "2026-2027",
+      "previousDefaultYearId": "d985c5d1-3cef-4ef0-8333-4ab00c7f7b30"
+    }
+  },
+  "yearsAfter": [
+    {
+      "name": "2025-2026",
+      "isDefault": false
+    },
+    {
+      "name": "2026-2027",
+      "isDefault": true
+    }
+  ],
+  "checklistAfter": {
+    "startsAfterCurrent": false,
+    "studentsPlacedInTarget": 0,
+    "publishedTimetable": {
+      "exists": false,
+      "versionNumber": null,
+      "publishedAt": null
+    },
+    "activeFeeStructures": 2,
+    "activeFeeStructuresScope": "tenant"
+  },
+  "bannerAfter": null,
+  "shot_after_fr": "artifacts\\product-discovery\\SETTINGS-CORE-FIX-01\\screenshots\\scf02-05-after-fr-dashboard.png"
+}

@@ -1,0 +1,780 @@
+[
+  {
+    "varName": "verification",
+    "dbTable": "verification"
+  },
+  {
+    "varName": "tenants",
+    "dbTable": "tenants"
+  },
+  {
+    "varName": "branches",
+    "dbTable": "branches"
+  },
+  {
+    "varName": "schoolAccessRequests",
+    "dbTable": "school_access_requests"
+  },
+  {
+    "varName": "platformSupportTickets",
+    "dbTable": "platform_support_tickets"
+  },
+  {
+    "varName": "platformSupportTicketMessages",
+    "dbTable": "platform_support_ticket_messages"
+  },
+  {
+    "varName": "sessionYears",
+    "dbTable": "session_years"
+  },
+  {
+    "varName": "semesters",
+    "dbTable": "semesters"
+  },
+  {
+    "varName": "mediums",
+    "dbTable": "mediums"
+  },
+  {
+    "varName": "sections",
+    "dbTable": "sections"
+  },
+  {
+    "varName": "streams",
+    "dbTable": "streams"
+  },
+  {
+    "varName": "streamSubjectCoefficients",
+    "dbTable": "stream_subject_coefficients"
+  },
+  {
+    "varName": "shifts",
+    "dbTable": "shifts"
+  },
+  {
+    "varName": "classes",
+    "dbTable": "classes"
+  },
+  {
+    "varName": "teacherAvailability",
+    "dbTable": "teacher_availability"
+  },
+  {
+    "varName": "classSections",
+    "dbTable": "class_sections"
+  },
+  {
+    "varName": "subjects",
+    "dbTable": "subjects"
+  },
+  {
+    "varName": "classSubjects",
+    "dbTable": "class_subjects"
+  },
+  {
+    "varName": "classTeachers",
+    "dbTable": "class_teachers"
+  },
+  {
+    "varName": "subjectTeachers",
+    "dbTable": "subject_teachers"
+  },
+  {
+    "varName": "academicTerms",
+    "dbTable": "academic_terms"
+  },
+  {
+    "varName": "academicYears",
+    "dbTable": "academic_years"
+  },
+  {
+    "varName": "user",
+    "dbTable": "user"
+  },
+  {
+    "varName": "alumniDocuments",
+    "dbTable": "alumni_documents"
+  },
+  {
+    "varName": "alumniEvents",
+    "dbTable": "alumni_events"
+  },
+  {
+    "varName": "alumniEventRsvps",
+    "dbTable": "alumni_event_rsvps"
+  },
+  {
+    "varName": "alumniDirectoryConsent",
+    "dbTable": "alumni_directory_consent"
+  },
+  {
+    "varName": "alumniMentorListings",
+    "dbTable": "alumni_mentor_listings"
+  },
+  {
+    "varName": "alumniRequests",
+    "dbTable": "alumni_requests"
+  },
+  {
+    "varName": "auditLogs",
+    "dbTable": "audit_logs"
+  },
+  {
+    "varName": "account",
+    "dbTable": "account"
+  },
+  {
+    "varName": "admissionCampaigns",
+    "dbTable": "admission_campaigns"
+  },
+  {
+    "varName": "applicants",
+    "dbTable": "applicants"
+  },
+  {
+    "varName": "admissionInterviews",
+    "dbTable": "admission_interviews"
+  },
+  {
+    "varName": "admissionComments",
+    "dbTable": "admission_comments"
+  },
+  {
+    "varName": "programs",
+    "dbTable": "programs"
+  },
+  {
+    "varName": "assessmentCriteria",
+    "dbTable": "assessment_criteria"
+  },
+  {
+    "varName": "assessmentPlans",
+    "dbTable": "assessment_plans"
+  },
+  {
+    "varName": "assessmentPlanCriteria",
+    "dbTable": "assessment_plan_criteria"
+  },
+  {
+    "varName": "courses",
+    "dbTable": "courses"
+  },
+  {
+    "varName": "gradingScales",
+    "dbTable": "grading_scales"
+  },
+  {
+    "varName": "assessmentResults",
+    "dbTable": "assessment_results"
+  },
+  {
+    "varName": "assessmentResultDetails",
+    "dbTable": "assessment_result_details"
+  },
+  {
+    "varName": "assessments",
+    "dbTable": "assessments"
+  },
+  {
+    "varName": "attendanceRegisters",
+    "dbTable": "attendance_registers"
+  },
+  {
+    "varName": "attendance",
+    "dbTable": "attendance"
+  },
+  {
+    "varName": "attendanceSummary",
+    "dbTable": "attendance_summary"
+  },
+  {
+    "varName": "attendanceExcuses",
+    "dbTable": "attendance_excuses"
+  },
+  {
+    "varName": "attendanceFlags",
+    "dbTable": "attendance_flags"
+  },
+  {
+    "varName": "attendanceFlagNotes",
+    "dbTable": "attendance_flag_notes"
+  },
+  {
+    "varName": "studentGroups",
+    "dbTable": "student_groups"
+  },
+  {
+    "varName": "buildings",
+    "dbTable": "buildings"
+  },
+  {
+    "varName": "certificates",
+    "dbTable": "certificates"
+  },
+  {
+    "varName": "chapters",
+    "dbTable": "chapters"
+  },
+  {
+    "varName": "courseAttachments",
+    "dbTable": "course_attachments"
+  },
+  {
+    "varName": "courseEnrollments",
+    "dbTable": "course_enrollments"
+  },
+  {
+    "varName": "programEnrollments",
+    "dbTable": "program_enrollments"
+  },
+  {
+    "varName": "enrollments",
+    "dbTable": "enrollments"
+  },
+  {
+    "varName": "expenses",
+    "dbTable": "expenses"
+  },
+  {
+    "varName": "feeCategories",
+    "dbTable": "fee_categories"
+  },
+  {
+    "varName": "feeComponents",
+    "dbTable": "fee_components"
+  },
+  {
+    "varName": "feeStructures",
+    "dbTable": "fee_structures"
+  },
+  {
+    "varName": "feeStructureAssignments",
+    "dbTable": "fee_structure_assignments"
+  },
+  {
+    "varName": "feeSchedules",
+    "dbTable": "fee_schedules"
+  },
+  {
+    "varName": "gradingScaleIntervals",
+    "dbTable": "grading_scale_intervals"
+  },
+  {
+    "varName": "guardianStudents",
+    "dbTable": "guardian_students"
+  },
+  {
+    "varName": "guardians",
+    "dbTable": "guardians"
+  },
+  {
+    "varName": "parentGuardianLinkTokens",
+    "dbTable": "parent_guardian_link_tokens"
+  },
+  {
+    "varName": "invoiceItems",
+    "dbTable": "invoice_items"
+  },
+  {
+    "varName": "invoices",
+    "dbTable": "invoices"
+  },
+  {
+    "varName": "namingSeries",
+    "dbTable": "naming_series"
+  },
+  {
+    "varName": "payments",
+    "dbTable": "payments"
+  },
+  {
+    "varName": "rooms",
+    "dbTable": "rooms"
+  },
+  {
+    "varName": "session",
+    "dbTable": "session"
+  },
+  {
+    "varName": "studentDiscipline",
+    "dbTable": "student_discipline"
+  },
+  {
+    "varName": "studentLeaves",
+    "dbTable": "student_leaves"
+  },
+  {
+    "varName": "timetableSlots",
+    "dbTable": "timetable_slots"
+  },
+  {
+    "varName": "userProgress",
+    "dbTable": "user_progress"
+  },
+  {
+    "varName": "quizAttempts",
+    "dbTable": "quiz_attempts"
+  },
+  {
+    "varName": "quizzes",
+    "dbTable": "quizzes"
+  },
+  {
+    "varName": "quizQuestions",
+    "dbTable": "quiz_questions"
+  },
+  {
+    "varName": "schoolSettings",
+    "dbTable": "school_settings"
+  },
+  {
+    "varName": "accountSetupTokens",
+    "dbTable": "account_setup_tokens"
+  },
+  {
+    "varName": "electiveGroups",
+    "dbTable": "elective_groups"
+  },
+  {
+    "varName": "electiveGroupSubjects",
+    "dbTable": "elective_group_subjects"
+  },
+  {
+    "varName": "studentElectiveChoices",
+    "dbTable": "student_elective_choices"
+  },
+  {
+    "varName": "smsMessages",
+    "dbTable": "sms_messages"
+  },
+  {
+    "varName": "studentDocuments",
+    "dbTable": "student_documents"
+  },
+  {
+    "varName": "studentPhotos",
+    "dbTable": "student_photos"
+  },
+  {
+    "varName": "applicantDocuments",
+    "dbTable": "applicant_documents"
+  },
+  {
+    "varName": "accessResetRequests",
+    "dbTable": "access_reset_requests"
+  },
+  {
+    "varName": "timetableVersions",
+    "dbTable": "timetable_versions"
+  },
+  {
+    "varName": "classScheduleSlots",
+    "dbTable": "class_schedule_slots"
+  },
+  {
+    "varName": "cndpFilings",
+    "dbTable": "cndp_filings"
+  },
+  {
+    "varName": "inquiries",
+    "dbTable": "inquiries"
+  },
+  {
+    "varName": "inquiryFollowUps",
+    "dbTable": "inquiry_follow_ups"
+  },
+  {
+    "varName": "announcements",
+    "dbTable": "announcements"
+  },
+  {
+    "varName": "announcementReads",
+    "dbTable": "announcement_reads"
+  },
+  {
+    "varName": "assignments",
+    "dbTable": "assignments"
+  },
+  {
+    "varName": "assignmentSubmissions",
+    "dbTable": "assignment_submissions"
+  },
+  {
+    "varName": "meetingSlots",
+    "dbTable": "meeting_slots"
+  },
+  {
+    "varName": "onlineExams",
+    "dbTable": "online_exams"
+  },
+  {
+    "varName": "onlineExamQuestions",
+    "dbTable": "online_exam_questions"
+  },
+  {
+    "varName": "onlineExamQuestionOptions",
+    "dbTable": "online_exam_question_options"
+  },
+  {
+    "varName": "questionBankItems",
+    "dbTable": "question_bank_items"
+  },
+  {
+    "varName": "questionBankItemOptions",
+    "dbTable": "question_bank_item_options"
+  },
+  {
+    "varName": "onlineExamAttempts",
+    "dbTable": "online_exam_attempts"
+  },
+  {
+    "varName": "onlineExamAnswers",
+    "dbTable": "online_exam_answers"
+  },
+  {
+    "varName": "addonDefinitions",
+    "dbTable": "addon_definitions"
+  },
+  {
+    "varName": "planLimits",
+    "dbTable": "plan_limits"
+  },
+  {
+    "varName": "addonEntitlements",
+    "dbTable": "addon_entitlements"
+  },
+  {
+    "varName": "schoolLicenses",
+    "dbTable": "school_licenses"
+  },
+  {
+    "varName": "licensePayments",
+    "dbTable": "license_payments"
+  },
+  {
+    "varName": "twoFactor",
+    "dbTable": "two_factor"
+  },
+  {
+    "varName": "twoFactorOtps",
+    "dbTable": "two_factor_otps"
+  },
+  {
+    "varName": "settingValues",
+    "dbTable": "setting_values"
+  },
+  {
+    "varName": "settingValueVersions",
+    "dbTable": "setting_value_versions"
+  },
+  {
+    "varName": "rolePermissions",
+    "dbTable": "role_permissions"
+  },
+  {
+    "varName": "userPermissionOverrides",
+    "dbTable": "user_permission_overrides"
+  },
+  {
+    "varName": "files",
+    "dbTable": "files"
+  },
+  {
+    "varName": "notifications",
+    "dbTable": "notifications"
+  },
+  {
+    "varName": "exportJobs",
+    "dbTable": "export_jobs"
+  },
+  {
+    "varName": "studentPlacements",
+    "dbTable": "student_placements"
+  },
+  {
+    "varName": "promotionBatches",
+    "dbTable": "promotion_batches"
+  },
+  {
+    "varName": "promotionDecisions",
+    "dbTable": "promotion_decisions"
+  },
+  {
+    "varName": "paymentAllocations",
+    "dbTable": "payment_allocations"
+  },
+  {
+    "varName": "creditNotes",
+    "dbTable": "credit_notes"
+  },
+  {
+    "varName": "refunds",
+    "dbTable": "refunds"
+  },
+  {
+    "varName": "feeDiscounts",
+    "dbTable": "fee_discounts"
+  },
+  {
+    "varName": "chartOfAccounts",
+    "dbTable": "chart_of_accounts"
+  },
+  {
+    "varName": "fiscalPeriods",
+    "dbTable": "fiscal_periods"
+  },
+  {
+    "varName": "journalEntries",
+    "dbTable": "journal_entries"
+  },
+  {
+    "varName": "journalEntryLines",
+    "dbTable": "journal_entry_lines"
+  },
+  {
+    "varName": "bankAccounts",
+    "dbTable": "bank_accounts"
+  },
+  {
+    "varName": "bankReconciliations",
+    "dbTable": "bank_reconciliations"
+  },
+  {
+    "varName": "employeeProfiles",
+    "dbTable": "employee_profiles"
+  },
+  {
+    "varName": "salaryComponents",
+    "dbTable": "salary_components"
+  },
+  {
+    "varName": "salaryTemplates",
+    "dbTable": "salary_templates"
+  },
+  {
+    "varName": "salaryTemplateComponents",
+    "dbTable": "salary_template_components"
+  },
+  {
+    "varName": "employeeSalaryAssignments",
+    "dbTable": "employee_salary_assignments"
+  },
+  {
+    "varName": "payrollPeriods",
+    "dbTable": "payroll_periods"
+  },
+  {
+    "varName": "payrollRunLines",
+    "dbTable": "payroll_run_lines"
+  },
+  {
+    "varName": "payslips",
+    "dbTable": "payslips"
+  },
+  {
+    "varName": "leaveCategories",
+    "dbTable": "leave_categories"
+  },
+  {
+    "varName": "employeeLeaveBalances",
+    "dbTable": "employee_leave_balances"
+  },
+  {
+    "varName": "leaveRequests",
+    "dbTable": "leave_requests"
+  },
+  {
+    "varName": "academicClassOfferings",
+    "dbTable": "academic_class_offerings"
+  },
+  {
+    "varName": "academicRooms",
+    "dbTable": "academic_rooms"
+  },
+  {
+    "varName": "academicReadinessSnapshots",
+    "dbTable": "academic_readiness_snapshots"
+  },
+  {
+    "varName": "cashierSessions",
+    "dbTable": "cashier_sessions"
+  },
+  {
+    "varName": "tenantInvitations",
+    "dbTable": "tenant_invitations"
+  },
+  {
+    "varName": "processedStripeEvents",
+    "dbTable": "processed_stripe_events"
+  },
+  {
+    "varName": "payrollRegulationPacks",
+    "dbTable": "payroll_regulation_packs",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "payrollRegulationVersions",
+    "dbTable": "payroll_regulation_versions",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "payrollSettingsVersions",
+    "dbTable": "payroll_settings_versions",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "salaryComponentVersions",
+    "dbTable": "salary_component_versions",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "salaryStructureVersions",
+    "dbTable": "salary_structure_versions",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "salaryStructureComponents",
+    "dbTable": "salary_structure_components",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "employeePayrollProfiles",
+    "dbTable": "employee_payroll_profiles",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "payrollAdjustments",
+    "dbTable": "payroll_adjustments",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "payrollResultLines",
+    "dbTable": "payroll_result_lines",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "payrollCalculationTraces",
+    "dbTable": "payroll_calculation_traces",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "payrollPostings",
+    "dbTable": "payroll_postings",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "payrollPostingLines",
+    "dbTable": "payroll_posting_lines",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "salaryPaymentBatches",
+    "dbTable": "salary_payment_batches",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "salaryPayments",
+    "dbTable": "salary_payments",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "employeeLeavePolicies",
+    "dbTable": "employee_leave_policies",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "employeeLeavePolicyAssignments",
+    "dbTable": "employee_leave_policy_assignments",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "employeeLeaveBalanceTransactions",
+    "dbTable": "employee_leave_balance_transactions",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "salaryAdvancePolicies",
+    "dbTable": "salary_advance_policies",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "salaryAdvanceRepaymentSchedules",
+    "dbTable": "salary_advance_repayment_schedules",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "awardDefinitions",
+    "dbTable": "award_definitions",
+    "file": "src/features/workforce/models/workforce-schema.ts"
+  },
+  {
+    "varName": "finePolicies",
+    "dbTable": "fine_policies",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "fineAssessments",
+    "dbTable": "fine_assessments",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "invoiceEvents",
+    "dbTable": "invoice_events",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "paymentReversals",
+    "dbTable": "payment_reversals",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "studentCredits",
+    "dbTable": "student_credits",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "cashierClosings",
+    "dbTable": "cashier_closings",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "financeReminderRules",
+    "dbTable": "finance_reminder_rules",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "financeReminderRuns",
+    "dbTable": "finance_reminder_runs",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "paymentMethodConfigurations",
+    "dbTable": "payment_method_configurations",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "paymentGatewaySessions",
+    "dbTable": "payment_gateway_sessions",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "feeStructureVersions",
+    "dbTable": "fee_structure_versions",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "feeAllocationRuns",
+    "dbTable": "fee_allocation_runs",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "feeAllocationTargets",
+    "dbTable": "fee_allocation_targets",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  },
+  {
+    "varName": "receipts",
+    "dbTable": "receipts",
+    "file": "src/features/finance/models/student-accounting-schema.ts"
+  }
+]

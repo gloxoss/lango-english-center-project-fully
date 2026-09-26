@@ -2,7 +2,20 @@
 
 **Status: FIXED, pending re-sweep** · Module: `receptionist` · Source: [`src/app/[locale]/(dashboard)/dashboard/receptionist/pickups/page.tsx`](<../../../../../src/app/[locale]/(dashboard)/dashboard/receptionist/pickups/page.tsx>)
 
-**Progress (2026-09-25):** S-8 DONE
+**Progress (2026-09-26):** S-8 DONE
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

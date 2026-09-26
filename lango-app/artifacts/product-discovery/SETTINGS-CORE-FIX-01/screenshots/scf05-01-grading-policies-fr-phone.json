@@ -1,0 +1,15 @@
+{
+  "text": "Politiques d'Évaluation & Barèmes de Notation\n\nConfiguration des coefficients de pondération, échelles de mention et règles de calcul des moyennes.\n\nEnregistrer la politique\nSeuils & Barème\nCoefficients par Filière\n\nLes moyennes utilisent les coefficients des matières.\n\nSEUILS DE RÉUSSITE & ADMISSIBILITÉ\nBarème de notation\nSur 20 (norme marocaine)\nSur 100 (pourcentage)\nNote minimale de passage (/20)\n/20\nNote éliminatoire (/20)\n/20\nÉchelle des Mentions & Seuil d'Admissibilité\nT\nTrès Bien\n16 - 20 /20\nB\nBien\n14 - 16 /20\nA\nAssez Bien\n12 - 14 /20\nP\nPassable\n10 - 12 /20\nI\nInsuffisant\n0 - 10 /20\nSIMULATEUR DE MENTION OFFICIELLE\nNorme Marocaine /20\nMoyenne Générale Simulée :\n/ 20\nMention attribuée\nBien\nDécision du conseil :\nAdmis (Seuil admis : 10/20)",
+  "dir": "ltr",
+  "overflowX": 0,
+  "missingKeys": [],
+  "status": 200,
+  "url": "/fr/dashboard/academics/grading/policies",
+  "consoleErrors": [
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+    "IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h"
+  ],
+  "api5xx": []
+}
