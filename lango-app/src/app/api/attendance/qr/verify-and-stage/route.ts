@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -82,7 +82,8 @@ function computeStagedStatus(tenantNow: Date, periodStart: string, graceMinutes:
 }
 
 const verifyQrSchema = z.object({
-  rawToken: z.string().trim().min(1),
+  rawToken: z.string().trim().min(1).optional(),
+  matricule: z.string().trim().min(1).optional(),
   classSectionId: z.string().uuid().optional(),
   sessionId: z.string().uuid().optional(),
   // NO DEFAULT. A default of 1 meant every scan that did not state a lesson —
@@ -95,7 +96,9 @@ const verifyQrSchema = z.object({
   // scanning in the browser still works, but when present the device must prove
   // itself and its branch becomes authoritative.
   deviceSecret: z.string().trim().min(1).optional(),
-}).strict();
+}).strict().refine(data => Boolean(data.rawToken || data.matricule), {
+  message: 'rawToken ou matricule requis',
+});
 
 /**
  * A BADGE SCAN STAGES. IT DOES NOT WRITE A MARK (fix-plan-02).
@@ -136,21 +139,6 @@ export async function POST(request: Request) {
       : null;
     const effectiveBranchId = device?.branchId ?? context.branchId;
 
-    // Compute HMAC hash of incoming raw token
-    const tokenHash = computeHmacHash(body.rawToken);
-
-    // Resolve credential strictly by (tenantId, tokenHash) — never by name/id
-    const [badge] = await db
-      .select()
-      .from(identityBadgeCredentials)
-      .where(
-        and(
-          eq(identityBadgeCredentials.tenantId, tenantId),
-          eq(identityBadgeCredentials.tokenHash, tokenHash),
-        ),
-      )
-      .limit(1);
-
     const recordRejected = (
       rejectionReason: string,
       overrides: Partial<typeof attendanceScanEvents.$inferInsert> = {},
@@ -164,47 +152,107 @@ export async function POST(request: Request) {
       ...overrides,
     });
 
-    if (!badge) {
-      await recordRejected('INVALID_CREDENTIAL');
-      throw new ApiError(404, 'BADGE_INVALID', 'Badge QR non reconnu ou expiré.');
-    }
+    let badge: typeof identityBadgeCredentials.$inferSelect | null = null;
+    let scannedUser: { id: string; name: string; email: string | null; image: string | null; classSectionId: string | null };
 
-    if (badge.status !== 'active') {
-      await recordRejected(`BADGE_${badge.status.toUpperCase()}`, {
-        credentialId: badge.id,
-        studentId: badge.userId,
-      });
+    if (body.matricule) {
+      const [foundUser] = await db
+        .select({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          classSectionId: user.classSectionId,
+          branchId: user.branchId,
+        })
+        .from(user)
+        .where(
+          and(
+            eq(user.tenantId, tenantId),
+            eq(user.role, 'student'),
+            eq(sql`lower(trim(${user.matricule}))`, body.matricule.toLowerCase().trim()),
+            effectiveBranchId ? eq(user.branchId, effectiveBranchId) : sql`true`,
+          ),
+        )
+        .limit(1);
 
-      throw new ApiError(422, `BADGE_${badge.status.toUpperCase()}`, `Ce badge est ${badge.status}.`);
-    }
+      if (!foundUser) {
+        await recordRejected('STUDENT_NOT_FOUND', { rejectionReason: 'MATRICULE_NOT_FOUND' });
+        throw new ApiError(404, 'STUDENT_NOT_FOUND', `Aucun élève trouvé avec le matricule ${body.matricule}.`);
+      }
+      scannedUser = foundUser;
 
-    // An active credential can still be past its expiry date. The status column
-    // alone cannot express that, so it is checked here before the badge is
-    // allowed to stage anything.
-    if (isCredentialExpired(badge)) {
-      await recordRejected('BADGE_EXPIRED', {
-        credentialId: badge.id,
-        studentId: badge.userId,
-      });
+      const [activeBadge] = await db
+        .select()
+        .from(identityBadgeCredentials)
+        .where(
+          and(
+            eq(identityBadgeCredentials.tenantId, tenantId),
+            eq(identityBadgeCredentials.userId, scannedUser.id),
+            eq(identityBadgeCredentials.status, 'active'),
+          ),
+        )
+        .limit(1);
+      badge = activeBadge ?? null;
+    } else {
+      // Compute HMAC hash of incoming raw token
+      const tokenHash = computeHmacHash(body.rawToken!);
 
-      throw new ApiError(422, 'BADGE_EXPIRED', 'Ce badge a expiré.');
-    }
+      // Resolve credential strictly by (tenantId, tokenHash) — never by name/id
+      const [foundBadge] = await db
+        .select()
+        .from(identityBadgeCredentials)
+        .where(
+          and(
+            eq(identityBadgeCredentials.tenantId, tenantId),
+            eq(identityBadgeCredentials.tokenHash, tokenHash),
+          ),
+        )
+        .limit(1);
 
-    // Resolve user details (tenant-scoped)
-    const [scannedUser] = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        image: user.image,
-        classSectionId: user.classSectionId,
-      })
-      .from(user)
-      .where(and(eq(user.id, badge.userId), eq(user.tenantId, tenantId)))
-      .limit(1);
+      if (!foundBadge) {
+        await recordRejected('INVALID_CREDENTIAL');
+        throw new ApiError(404, 'BADGE_INVALID', 'Badge QR non reconnu ou expiré.');
+      }
 
-    if (!scannedUser) {
-      throw new ApiError(404, 'USER_NOT_FOUND', 'Élève / Utilisateur introuvable.');
+      if (foundBadge.status !== 'active') {
+        await recordRejected(`BADGE_${foundBadge.status.toUpperCase()}`, {
+          credentialId: foundBadge.id,
+          studentId: foundBadge.userId,
+        });
+
+        throw new ApiError(422, `BADGE_${foundBadge.status.toUpperCase()}`, `Ce badge est ${foundBadge.status}.`);
+      }
+
+      if (isCredentialExpired(foundBadge)) {
+        await recordRejected('BADGE_EXPIRED', {
+          credentialId: foundBadge.id,
+          studentId: foundBadge.userId,
+        });
+
+        throw new ApiError(422, 'BADGE_EXPIRED', 'Ce badge a expiré.');
+      }
+
+      badge = foundBadge;
+
+      // Resolve user details (tenant-scoped)
+      const [foundUser] = await db
+        .select({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          classSectionId: user.classSectionId,
+        })
+        .from(user)
+        .where(and(eq(user.id, badge.userId), eq(user.tenantId, tenantId)))
+        .limit(1);
+
+      if (!foundUser) {
+        throw new ApiError(404, 'USER_NOT_FOUND', 'Élève / Utilisateur introuvable.');
+      }
+
+      scannedUser = foundUser;
     }
 
     // WHICH HOME THIS SCAN IS IN (fix-plan-02). The session, and only the
@@ -263,7 +311,7 @@ export async function POST(request: Request) {
       // BRANCH SCOPE: a branch-limited caller cannot stage for another campus.
       if (effectiveBranchId && row.branchId !== effectiveBranchId) {
         await recordRejected('WRONG_BRANCH', {
-          credentialId: badge.id,
+          credentialId: badge?.id ?? null,
           studentId: scannedUser.id,
           classSectionId: resolvedClassSectionId,
         });
@@ -286,7 +334,7 @@ export async function POST(request: Request) {
       const ownSection = await sectionLabel(tenantId, scannedUser.classSectionId);
       const who = ownSection ? `${scannedUser.name} — ${ownSection}` : scannedUser.name;
       await recordRejected('WRONG_CLASS', {
-        credentialId: badge.id,
+        credentialId: badge?.id ?? null,
         studentId: scannedUser.id,
         classSectionId: resolvedClassSectionId,
       });
@@ -380,7 +428,7 @@ export async function POST(request: Request) {
         // The slot resolves to nothing at all — the timetable moved under the
         // session. Refuse rather than guess at a lesson.
         await recordRejected('NO_LESSON_NOW', {
-          credentialId: badge.id,
+          credentialId: badge?.id ?? null,
           studentId: scannedUser.id,
           classSectionId: resolvedClassSectionId,
         });
@@ -392,7 +440,7 @@ export async function POST(request: Request) {
         // so it answers with the same code: one condition, one code, whether the
         // operator is trying to open the session or scanning into it.
         await recordRejected('LESSON_CANCELLED', {
-          credentialId: badge.id,
+          credentialId: badge?.id ?? null,
           studentId: scannedUser.id,
           classSectionId: resolvedClassSectionId,
         });
@@ -415,7 +463,7 @@ export async function POST(request: Request) {
 
       if (body.period !== undefined && !overridden) {
         await recordRejected('LESSON_NOT_SCHEDULED', {
-          credentialId: badge.id,
+          credentialId: badge?.id ?? null,
           studentId: scannedUser.id,
           classSectionId: resolvedClassSectionId,
         });
@@ -464,7 +512,7 @@ export async function POST(request: Request) {
       if (!schoolDay.instructional || !schoolDay.sessionYearId) {
         const reason = schoolDay.reason === 'SESSION_OUT_OF_RANGE' ? 'DATE_OUTSIDE_SESSION' : 'NON_INSTRUCTIONAL_DAY';
         await recordRejected(reason, {
-          credentialId: badge.id,
+          credentialId: badge?.id ?? null,
           studentId: scannedUser.id,
           classSectionId: resolvedClassSectionId,
         });
@@ -507,7 +555,7 @@ export async function POST(request: Request) {
 
     if (register && register.status === 'LOCKED') {
       await recordRejected('REGISTER_LOCKED', {
-        credentialId: badge.id,
+        credentialId: badge ? badge.id : null,
         studentId: scannedUser.id,
         classSectionId: resolvedClassSectionId,
         registerId: register.id,
@@ -516,22 +564,27 @@ export async function POST(request: Request) {
     }
 
     // Idempotency: inside a scanner session, one accepted scan per credential
-    // per session. That is the whole rule now — a scan writes no mark, so
+    // per session (or per student for manual bypass). That is the whole rule now — a scan writes no mark, so
     // outside a session there is nothing for a re-scan to duplicate, and the
     // scan events themselves are the record of what happened at the door.
     let isDuplicate = false;
     let duplicateStagedStatus: string | null = null;
 
     if (body.sessionId) {
+      const duplicateConditions = [
+        eq(attendanceScanEvents.tenantId, tenantId),
+        eq(attendanceScanEvents.resultStatus, 'accepted'),
+        eq(attendanceScanEvents.sessionId, body.sessionId),
+      ];
+      if (badge) {
+        duplicateConditions.push(eq(attendanceScanEvents.credentialId, badge.id));
+      } else {
+        duplicateConditions.push(eq(attendanceScanEvents.studentId, scannedUser.id));
+      }
       const [duplicateEvent] = await db
         .select()
         .from(attendanceScanEvents)
-        .where(and(
-          eq(attendanceScanEvents.tenantId, tenantId),
-          eq(attendanceScanEvents.credentialId, badge.id),
-          eq(attendanceScanEvents.resultStatus, 'accepted'),
-          eq(attendanceScanEvents.sessionId, body.sessionId),
-        ))
+        .where(and(...duplicateConditions))
         .limit(1);
       if (duplicateEvent) {
         isDuplicate = true;
@@ -549,7 +602,7 @@ export async function POST(request: Request) {
         .values({
           tenantId,
           sessionId: body.sessionId || null,
-          credentialId: badge.id,
+          credentialId: badge ? badge.id : null,
           studentId: scannedUser.id,
           classSectionId: resolvedClassSectionId ?? scannedUser.classSectionId,
           registerId: register?.id ?? null,
@@ -596,7 +649,7 @@ export async function POST(request: Request) {
       .values({
         tenantId,
         sessionId: body.sessionId || null,
-        credentialId: badge.id,
+        credentialId: badge ? badge.id : null,
         studentId: scannedUser.id,
         // The lesson's section in a classroom, the student's own at the gate:
         // either way the scan belongs to a class, so the class-scoped scan feed
@@ -611,12 +664,24 @@ export async function POST(request: Request) {
       })
       .returning();
 
-    recordAudit(context, 'create', 'attendance_scan', scanEvent!.id, {
-      stagedStatus,
-      classSectionId: resolvedClassSectionId,
-      mode,
-      period: target?.period ?? null,
-    });
+    if (body.matricule) {
+      recordAudit(context, 'create', 'attendance_scan_bypass', scanEvent!.id, {
+        source: 'manual_bypass',
+        matricule: body.matricule,
+        studentId: scannedUser.id,
+        stagedStatus,
+        classSectionId: resolvedClassSectionId,
+        mode,
+        period: target?.period ?? null,
+      });
+    } else {
+      recordAudit(context, 'create', 'attendance_scan', scanEvent!.id, {
+        stagedStatus,
+        classSectionId: resolvedClassSectionId,
+        mode,
+        period: target?.period ?? null,
+      });
+    }
 
     return NextResponse.json({
       success: true,

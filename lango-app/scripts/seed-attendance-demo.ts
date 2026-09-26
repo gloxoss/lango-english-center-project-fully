@@ -134,7 +134,7 @@ async function main() {
   }
 
   const students = await db
-    .select({ id: user.id, name: user.name, email: user.email })
+    .select({ id: user.id, name: user.name, email: user.email, matricule: user.matricule })
     .from(user)
     .where(and(eq(user.tenantId, tenantId), eq(user.classSectionId, section.sectionId), eq(user.role, 'student')))
     .limit(8);
@@ -220,23 +220,15 @@ async function main() {
 
   let issued = 0;
   for (const student of students) {
-    // A token we know, so a scan can be scripted. The demo badge is identified by
-    // ITS OWN hash, not by "does this student already have a badge" — every
-    // seeded student already holds a real one whose token cannot be recovered,
-    // so the looser test skipped everyone and left nothing to scan with.
-    const tokenHash = computeHmacHash(`demo-${student.id}`);
-    const [already] = await db
-      .select({ id: identityBadgeCredentials.id })
-      .from(identityBadgeCredentials)
-      .where(and(
-        eq(identityBadgeCredentials.tenantId, tenantId),
-        eq(identityBadgeCredentials.userId, student.id),
-        eq(identityBadgeCredentials.tokenHash, tokenHash),
-      ))
-      .limit(1);
-    if (already) {
-      continue;
-    }
+    const rawToken = `demo-${student.id}`;
+    const tokenHash = computeHmacHash(rawToken);
+
+    // Refresh demo badge credential on every run so raw token is always active
+    await db.delete(identityBadgeCredentials).where(and(
+      eq(identityBadgeCredentials.tenantId, tenantId),
+      eq(identityBadgeCredentials.userId, student.id),
+      eq(identityBadgeCredentials.tokenHash, tokenHash),
+    ));
 
     await db.insert(identityBadgeCredentials).values({
       tenantId,
@@ -249,9 +241,10 @@ async function main() {
 
   console.log(`Demo lesson: ${weekday} ${hm(start)}-${hm(end)} (${DEMO_ROOM}) for section ${section.sectionId}`);
   console.log(`Teacher who may activate it: ${teacher.email} (${teacher.id})`);
-  console.log(`Badges issued to ${issued} of ${students.length} students.`);
+  console.log(`Badges issued to ${issued} of ${students.length} students:`);
   for (const student of students) {
-    console.log(`  ${student.id}  ${student.name}`);
+    const rawToken = `demo-${student.id}`;
+    console.log(`  ${student.matricule ?? student.id} → ${rawToken} (${student.name})`);
   }
   console.log('');
   console.log('Today (Casablanca):', today);

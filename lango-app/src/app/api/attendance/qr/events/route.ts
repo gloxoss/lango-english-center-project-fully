@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
-import { requireCapability } from '@/libs/api/permissions';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
+import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { queryScanEvents } from '@/libs/attendance/qr-events';
 
 export async function GET(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin', 'teacher']);
+    const context = await requireRequestContext(request, ['school_admin', 'super_admin', 'teacher', 'receptionist', 'guard']);
     const tenantId = requireTenant(context);
-    await requireCapability(context, 'attendance.read');
+    const allowed = context.role === 'super_admin'
+      || (await hasCapability(context.userId, tenantId, context.role, 'attendance.read'))
+      || (await hasCapability(context.userId, tenantId, context.role, 'attendance.scan'));
+    if (!allowed) {
+      throw new ApiError(403, 'PERMISSION_DENIED', 'Droit attendance.read ou attendance.scan requis.');
+    }
 
     const { searchParams } = new URL(request.url);
 

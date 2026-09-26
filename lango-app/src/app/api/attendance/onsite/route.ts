@@ -2,7 +2,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
-import { requireCapability } from '@/libs/api/permissions';
+import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
 import { casablancaTodayIso } from '@/libs/finance/today';
 import { classes, classSections } from '@/models/Schema';
@@ -22,9 +22,22 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 export async function GET(request: Request) {
   try {
-    const context = await requireRequestContext(request, ['school_admin', 'teacher']);
+    const context = await requireRequestContext(request, ['school_admin', 'super_admin', 'teacher', 'receptionist', 'guard']);
     const tenantId = requireTenant(context);
-    await requireCapability(context, 'attendance.manage');
+    const classSectionId = new URL(request.url).searchParams.get('classSectionId');
+
+    if (classSectionId) {
+      await requireCapability(context, 'attendance.manage');
+    } else {
+      const allowed = context.role === 'super_admin'
+        || (await hasCapability(context.userId, tenantId, context.role, 'attendance.manage'))
+        || (await hasCapability(context.userId, tenantId, context.role, 'attendance.scan'))
+        || (await hasCapability(context.userId, tenantId, context.role, 'attendance.read'));
+      if (!allowed) {
+        throw new ApiError(403, 'PERMISSION_DENIED', 'Droit attendance.scan ou attendance.manage requis.');
+      }
+    }
+
     const today = casablancaTodayIso();
     const branchFilter = context.branchId ? sql`AND u.branch_id = ${context.branchId}::uuid` : sql``;
 
@@ -33,7 +46,6 @@ export async function GET(request: Request) {
     // in the building. Absent the parameter the response is byte-for-byte what
     // it always was, because the campus-wide count and the section list are
     // different questions and only one of them is asked here.
-    const classSectionId = new URL(request.url).searchParams.get('classSectionId');
     const sectionArrivals = classSectionId
       ? await loadSectionArrivals(tenantId, context.branchId, classSectionId, today, branchFilter)
       : null;

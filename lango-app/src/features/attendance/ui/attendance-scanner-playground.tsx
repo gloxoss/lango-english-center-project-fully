@@ -897,96 +897,42 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
     setManualMessage(null);
 
     try {
-      const studentRes = await fetch(`/api/students?search=${encodeURIComponent(term)}`);
-      const studentJson = await studentRes.json();
-      const student = Array.isArray(studentJson?.data) ? studentJson.data[0] : null;
-      if (!student) {
-        setManualMessage({ tone: 'error', text: tRef.current('scanManualNotFound') });
-        return;
-      }
-      if (!student.classSectionId) {
-        setManualMessage({ tone: 'error', text: tRef.current('scanManualNoClass') });
-        return;
-      }
-
-      // The period this student's class is actually in right now, or the lesson
-      // an admin has explicitly chosen for this terminal.
-      const override = targetRef.current?.source === 'override' ? targetRef.current : null;
-      let period = override && override.classSectionId === student.classSectionId
-        ? occurrences.find(o => o.slotId === override.slotId)?.period ?? null
-        : null;
-
-      if (!period) {
-        const dayRes = await fetch('/api/attendance/day');
-        const dayJson = await dayRes.json();
-        const nowMinutes = schoolMinutesNow();
-        const running = (dayJson?.data?.sessions ?? []).find((s: Occurrence) => {
-          if (s.classSectionId !== student.classSectionId) {
-            return false;
-          }
-          const start = minutesOf(s.startTime);
-          const end = minutesOf(s.endTime);
-          if (start === null || end === null) {
-            return false;
-          }
-          return nowMinutes >= start - 5 && nowMinutes <= end + 15;
-        });
-        period = running?.period ?? null;
-      }
-
-      if (!period) {
-        setManualMessage({ tone: 'error', text: tRef.current('scanManualNoLesson') });
-        return;
-      }
-
-      const sectionsRes = await fetch('/api/academics/class-sections');
-      const sectionsJson = await sectionsRes.json();
-      const row = (sectionsJson?.data ?? []).find((s: { id: string; classId?: string }) => s.id === student.classSectionId);
-      if (!row?.classId) {
-        setManualMessage({ tone: 'error', text: tRef.current('scanManualNoClass') });
-        return;
-      }
-
-      const writeRes = await fetch('/api/attendance', {
+      const res = await fetch('/api/attendance/qr/verify-and-stage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          date: casablancaTodayIso(),
-          studentGroupId: row.classId,
-          period,
-          records: [{ studentId: student.id, status: 'present' }],
-          // Deliberately NOT a translation. This note is written into the
-          // attendance row and read back by the register and the audit trail,
-          // possibly by an administrator using another locale. An audit entry
-          // that changes wording with the reader's UI language is a worse record
-          // than one that stays in the school's operational language.
-          correctionNote: MANUAL_BYPASS_NOTE,
+          matricule: term,
+          sessionId: sessionId || undefined,
         }),
       });
-      const writeJson = await writeRes.json();
-      if (!writeRes.ok || !writeJson?.success) {
-        setManualMessage({ tone: 'error', text: writeJson?.error?.message ?? tRef.current('scanManualFailed') });
+      const json = await res.json();
+      if (!res.ok || !json?.success) {
+        setManualMessage({ tone: 'error', text: json?.error?.message ?? tRef.current('scanManualFailed') });
         if (soundRef.current) {
           playBeep('rejected');
         }
         return;
       }
 
+      const data = json.data;
+      const student = data.student;
       setLastScan({
-        id: `manual-${Date.now()}`,
-        at: new Date().toISOString(),
+        id: data.scanEvent?.id ?? `manual-${Date.now()}`,
+        at: data.scanEvent?.scannedAt ?? new Date().toISOString(),
         outcome: 'manual',
-        studentName: student.fullName ?? student.name ?? term,
-        studentImage: null,
-        className: student.className ?? null,
-        lesson: null,
+        studentName: student.name ?? term,
+        studentImage: student.image ?? null,
+        className: null,
+        lesson: data.lesson ? `${data.lesson.subject} (${data.lesson.startTime})` : null,
         reason: null,
       });
-      setManualMessage({ tone: 'ok', text: tRef.current('scanManualDone', { name: student.fullName ?? student.name ?? term }) });
+
+      setManualMessage({ tone: 'ok', text: tRef.current('scanManualDone', { name: student.name ?? term }) });
       setKeypadInput('');
       if (soundRef.current) {
         playBeep('accepted');
       }
+      void loadRecentArrivals();
     } catch {
       setManualMessage({ tone: 'error', text: tRef.current('scanManualFailed') });
       if (soundRef.current) {
@@ -996,7 +942,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
       setManualState('idle');
       setIsProcessing(false);
     }
-  }, [occurrences]);
+  }, [sessionId, loadRecentArrivals]);
 
   /* ------------------------------------------------------------------ *
    * THE WEDGE IS ALWAYS LISTENING. A USB scanner types into whatever has

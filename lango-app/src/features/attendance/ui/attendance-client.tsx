@@ -15,6 +15,7 @@ import {
   Check,
   CheckCheck,
   CheckCircle2,
+  CheckSquare,
   Download,
   Loader2,
   Lock,
@@ -149,7 +150,8 @@ type RosterGroup = {
 export function AttendanceClient({
   locale = 'fr',
   session,
-}: { locale?: string; session?: AttendanceSessionContext } = {}) {
+  initialMode,
+}: { locale?: string; session?: AttendanceSessionContext; initialMode?: 'scan' | 'manual' } = {}) {
   const t = useTranslations('Attendance');
   const tCommon = useTranslations('Common');
   const tStatus = useTranslations('Status');
@@ -467,10 +469,15 @@ export function AttendanceClient({
       // previous load.
       touchedRef.current = {};
 
-      // Fill in default 'present' for any student without an explicit saved record
-      for (const st of formattedStudents) {
-        if (!loadedStatuses[st.id]) {
-          loadedStatuses[st.id] = 'present';
+      // In manual mode, do not pre-fill all uncommitted rows with 'present'.
+      // If the register was already saved or locked, keep the saved mark.
+      // In scan mode, unscanned students default to absent.
+      if (scanListEngaged) {
+        for (const st of formattedStudents) {
+          if (!loadedStatuses[st.id]) {
+            const scan = acceptedByStudent.get(st.id);
+            loadedStatuses[st.id] = scan ? (scan.stagedStatus === 'late' ? 'late' : 'present') : 'absent';
+          }
         }
       }
 
@@ -895,6 +902,30 @@ export function AttendanceClient({
     }
   }, [t]);
 
+  const deactivateScan = useCallback(async () => {
+    const id = scanSessionIdRef.current;
+    if (!id) {
+      return;
+    }
+    await closeScanSession();
+  }, [closeScanSession]);
+
+  const autoActivatedRef = useRef(false);
+  useEffect(() => {
+    if (
+      initialMode === 'scan'
+      && session
+      && windowState === 'OPEN'
+      && !scanSessionId
+      && scanSessionChecked
+      && !scanSessionBusy
+      && !autoActivatedRef.current
+    ) {
+      autoActivatedRef.current = true;
+      void activateScan();
+    }
+  }, [initialMode, session, windowState, scanSessionId, scanSessionChecked, scanSessionBusy, activateScan]);
+
   const handleStatusChange = (id: string, status: AttendanceStatus) => {
     if (register?.status === 'LOCKED') {
       return;
@@ -1051,14 +1082,14 @@ export function AttendanceClient({
     }
     const currentClassName = classesList.find(c => c.id === selectedClass)?.name || selectedClass;
     const exportRows = roster.map(s => ({
-      'Élève': s.name,
-      'Matricule': s.matricule,
-      'Statut': statuses[s.id] === 'present' ? 'Présent' : statuses[s.id] === 'late' ? 'En Retard' : statuses[s.id] === 'absent' ? 'Absent' : 'Excusé',
-      'Retard (min)': lateMinutes[s.id] || '',
-      'Note / Motif': notes[s.id] || '',
-      'Classe': currentClassName,
-      'Date': selectedDate,
-      'Séance': `Période ${selectedPeriod}`,
+      [t('exportStudent')]: s.name,
+      [t('exportMatricule')]: s.matricule,
+      [t('exportStatus')]: statuses[s.id] === 'present' ? tStatus('present') : statuses[s.id] === 'late' ? tStatus('late') : statuses[s.id] === 'absent' ? tStatus('absent') : tStatus('excused'),
+      [t('exportLateMinutes')]: lateMinutes[s.id] || '',
+      [t('exportNote')]: notes[s.id] || '',
+      [t('exportClass')]: currentClassName,
+      [t('exportDate')]: selectedDate,
+      [t('exportPeriod')]: t('periodNumbered', { period: selectedPeriod }),
     }));
     exportToCsv(exportRows, `appel_${selectedDate}_periode_${selectedPeriod}`);
   };
@@ -1198,26 +1229,44 @@ export function AttendanceClient({
           <h1 className="text-2xl font-extrabold tracking-tight text-[#16212B]">{t('title')}</h1>
           <p className="mt-1 text-xs text-slate-500">{t('attendanceSheet')}</p>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Scanning is offered only while the register window is OPEN, and the
-              window is the shared rule — never re-derived here. */}
-          {session && windowState === 'OPEN' && !scanSessionId && (
-            <Button
-              size="sm"
-              onClick={activateScan}
-              disabled={scanSessionBusy || !occurrence || !scanSessionChecked}
-              className="
-                h-10 gap-2 rounded-xl bg-[#0EA5C4] px-4 text-xs font-bold text-white
-                shadow-xs
-                hover:bg-[#0B87A1]
-                disabled:opacity-50
-              "
-            >
-              {scanSessionBusy
-                ? <Loader2 className="size-4 animate-spin" />
-                : <ScanLine className="size-4" />}
-              {t('scanActivateBtn')}
-            </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {session && windowState === 'OPEN' && (
+            <div className="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!scanSessionId) {
+                    void activateScan();
+                  }
+                }}
+                disabled={scanSessionBusy}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                  scanSessionId
+                    ? 'bg-white text-[#0B6FA4] shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ScanLine className="size-3.5" />
+                {t('modeScan')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (scanSessionId) {
+                    void deactivateScan();
+                  }
+                }}
+                disabled={scanSessionBusy}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                  !scanSessionId
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <CheckSquare className="size-3.5" />
+                {t('modeManual')}
+              </button>
+            </div>
           )}
           {session && scanSessionId && (
             <span className="
