@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertStudentBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
@@ -27,6 +28,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       .where(and(eq(invoices.id, id), eq(invoices.tenantId, tenantId)))
       .limit(1);
     if (!invoice) {
+      throw new ApiError(404, 'INVOICE_NOT_FOUND', 'Facture introuvable.');
+    }
+    if (!(await assertStudentBranchScope(context, invoice.studentId, tenantId)).exists) {
       throw new ApiError(404, 'INVOICE_NOT_FOUND', 'Facture introuvable.');
     }
     if (invoice.status !== 'pending' && invoice.status !== 'partial') {

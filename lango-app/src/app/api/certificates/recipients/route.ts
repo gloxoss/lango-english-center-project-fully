@@ -6,6 +6,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
 import { db } from '@/libs/DB';
 import { user } from '@/models/Schema';
+import { branchWhere } from '@/libs/api/portal-scope';
 
 // Certificate recipients come from the same tenant's user table: students for
 // student definitions, staff roles for employee definitions. The certificates
@@ -37,6 +38,7 @@ export async function GET(request: Request) {
       .from(user)
       .where(and(
         eq(user.tenantId, tenantId),
+        branchWhere(context, user.branchId),
         type === 'employee'
           ? inArray(user.role, ['teacher', 'accountant', 'receptionist', 'guard', 'school_admin'])
           : inArray(user.role, ['student']),

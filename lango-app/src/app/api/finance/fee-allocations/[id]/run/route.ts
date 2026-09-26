@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
@@ -31,6 +32,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (!run) {
       throw new ApiError(404, 'ALLOCATION_RUN_NOT_FOUND', 'Lancement d\'allocation introuvable.');
     }
+    assertBranchScope(context, run.branchId);
     if (run.status !== 'previewed' && run.status !== 'approved') {
       throw new ApiError(409, 'ALLOCATION_ALREADY_RUN', `Lancement déjà traité (statut ${run.status}).`);
     }

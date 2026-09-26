@@ -22,7 +22,7 @@ export async function PUT(r: Request, { params }: { params: Promise<{ id: string
   try {
     const { tenantId, context } = await requireLibraryContext(r, 'library.policy.manage');
     const { id } = await params;
-    const data = await updateLoanPolicy(tenantId, id, await parseJson(r, schema));
+    const data = await updateLoanPolicy(tenantId, id, await parseJson(r, schema), context);
     recordAudit(context, 'update', 'library_loan_policy', id, { name: data.name });
     return NextResponse.json({ success: true, data });
   } catch (e) { return apiErrorResponse(e); }
@@ -32,7 +32,7 @@ export async function DELETE(r: Request, { params }: { params: Promise<{ id: str
   try {
     const { tenantId, context } = await requireLibraryContext(r, 'library.policy.manage');
     const { id } = await params;
-    const data = await deleteLoanPolicy(tenantId, id);
+    const data = await deleteLoanPolicy(tenantId, id, context);
     recordAudit(context, 'delete', 'library_loan_policy', id, { name: data.name });
     return NextResponse.json({ success: true, data });
   } catch (e) { return apiErrorResponse(e); }

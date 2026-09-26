@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const { tenantId, context } = await requireLibraryContext(request, 'library.circulation.operate');
     const body = await parseJson(request, schema);
     if (body.override) await requireCapability(context, 'library.circulation.override');
-    const data = await issueCopy(tenantId, context.userId, body);
+    const data = await issueCopy(tenantId, context.userId, body, context);
     recordAudit(context, 'create', 'library_loan', data.id, { copyId: body.copyId, memberId: body.memberId, override: body.override === true });
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (e) { return apiErrorResponse(e); }

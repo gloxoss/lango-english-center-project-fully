@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -52,12 +53,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const { id: applicantId } = await params;
     const body = await parseJson(req, addCommentSchema);
 
-    const [applicant] = await db.select({ id: applicants.id }).from(applicants)
+    const [applicant] = await db.select({ id: applicants.id, branchId: applicants.branchId }).from(applicants)
       .where(and(eq(applicants.id, applicantId), eq(applicants.tenantId, tenantId)))
       .limit(1);
     if (!applicant) {
       throw new ApiError(404, 'APPLICANT_NOT_FOUND', 'Candidat introuvable.');
     }
+    assertBranchScope(ctx, applicant.branchId);
 
     const [inserted] = await db.insert(admissionComments).values({
       tenantId,

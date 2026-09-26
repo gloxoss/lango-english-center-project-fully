@@ -6,6 +6,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireAddon } from '@/libs/api/entitlements';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { linkAccount } from '@/features/hr/services/offboarding-service';
 import { getEmployee } from '@/features/hr/services/employees-service';
 
@@ -21,6 +22,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     await requireCapability(ctx, 'hr.access.manage');
 
     const body = await parseJson(request, linkAccountSchema);
+    // Campus lock on the dossier before linking an account to it.
+    const target = await getEmployee(tenantId, id, false);
+    if (!target) throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable dans cet établissement.');
+    assertBranchScope(ctx, target.branchId);
     await linkAccount(tenantId, ctx.userId, id, body.userId);
 
     const sensitive = await hasCapability(ctx.userId, tenantId, ctx.role, 'hr.sensitive.read');

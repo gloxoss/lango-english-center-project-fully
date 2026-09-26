@@ -59,8 +59,6 @@ type EditableTeacher = TeacherDirectoryItem | TeacherDetail;
 
 const STATUS_VALUES: TeacherStatus[] = ['active', 'inactive', 'archived'];
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
-/** Same shell key the topbar campus switcher uses — one agreed scope. */
-const BRANCH_STORAGE_KEY = 'schoolos_active_branch_id';
 
 function parseQuery(params: URLSearchParams): TeacherDirectoryQuery {
   const statusRaw = params.get('status') ?? '';
@@ -152,30 +150,15 @@ export function TeachersManageView({ locale }: { locale: string }) {
         return;
       }
       setOptions(result.data);
-      // One authoritative scope: a whole-school principal's stored campus
-      // selection (same key the topbar switcher writes) seeds the directory
-      // URL. The id is only a hint — the server validates it.
-      if (!query.branchId && result.data.scope.homeBranchId === null) {
-        const stored = window.localStorage.getItem(BRANCH_STORAGE_KEY);
-        if (stored && result.data.branches.some(branch => branch.id === stored)) {
-          setQuery({ branchId: stored, page: 1 });
-        }
-      }
     });
     return () => {
       cancelled = true;
     };
   }, [query.branchId, setQuery]);
 
-  /** Any scope change is mirrored to the shell's stored selection. */
+  // The page-local campus filter lives in the URL only; the shell switcher's
+  // session-scoped choice is separate and read from the server context.
   const handleQueryChange = useCallback((partial: Partial<TeacherDirectoryQuery>) => {
-    if ('branchId' in partial) {
-      if (partial.branchId) {
-        window.localStorage.setItem(BRANCH_STORAGE_KEY, partial.branchId);
-      } else {
-        window.localStorage.removeItem(BRANCH_STORAGE_KEY);
-      }
-    }
     setQuery(partial);
   }, [setQuery]);
 
@@ -437,7 +420,6 @@ export function TeachersManageView({ locale }: { locale: string }) {
             options={options}
             onChange={handleQueryChange}
             onClear={() => {
-              window.localStorage.removeItem(BRANCH_STORAGE_KEY);
               router.push(`?`, { scroll: false });
             }}
           />

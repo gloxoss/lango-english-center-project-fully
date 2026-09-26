@@ -7,7 +7,8 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { employeeSalaryAssignments, salaryTemplates, user } from '@/models/Schema';
+import { employeeProfiles, employeeSalaryAssignments, salaryTemplates, user } from '@/models/Schema';
+import { assertBranchScope, branchWhere } from '@/libs/api/portal-scope';
 
 const assignSchema = z.object({
   userId: z.string().min(1),
@@ -38,11 +39,13 @@ export async function GET(request: Request) {
       })
       .from(employeeSalaryAssignments)
       .innerJoin(user, eq(employeeSalaryAssignments.userId, user.id))
+      .leftJoin(employeeProfiles, and(eq(employeeProfiles.userId, employeeSalaryAssignments.userId), eq(employeeProfiles.tenantId, tenantId)))
       .innerJoin(salaryTemplates, eq(employeeSalaryAssignments.templateId, salaryTemplates.id))
       .where(
         and(
           eq(employeeSalaryAssignments.tenantId, tenantId),
           userId ? eq(employeeSalaryAssignments.userId, userId) : undefined,
+          branchWhere(ctx, employeeProfiles.branchId),
         ),
       )
       .orderBy(desc(employeeSalaryAssignments.effectiveDate));
@@ -70,6 +73,14 @@ export async function POST(request: Request) {
     if (!targetUser) {
       throw new ApiError(404, 'USER_NOT_FOUND', 'Utilisateur introuvable dans cet établissement.');
     }
+
+    // Campus lock: the target employee must be on the caller's campus.
+    const [targetProfile] = await db
+      .select({ branchId: employeeProfiles.branchId })
+      .from(employeeProfiles)
+      .where(and(eq(employeeProfiles.userId, body.userId), eq(employeeProfiles.tenantId, tenantId)))
+      .limit(1);
+    assertBranchScope(ctx, targetProfile?.branchId ?? null);
 
     // Verify template belongs to tenant
     const [template] = await db

@@ -13,7 +13,7 @@ export async function POST(r: Request, { params }: { params: Promise<{ id: strin
     const { tenantId, context } = await requireLibraryContext(r, 'library.hold.manage');
     const { id } = await params;
     const { reason } = await parseJson(r, schema);
-    const data = await cancelHold(tenantId, context.userId, id, reason);
+    const data = await cancelHold(tenantId, context.userId, id, reason, context);
     recordAudit(context, 'update', 'library_hold', data.id, { action: 'cancel', reason });
     return NextResponse.json({ success: true, data });
   } catch (e) { return apiErrorResponse(e); }

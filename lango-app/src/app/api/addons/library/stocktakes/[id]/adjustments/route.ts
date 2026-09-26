@@ -5,8 +5,8 @@ import { listStocktakeAdjustments } from '@/features/library/services/library-op
 
 export async function GET(r: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { tenantId } = await requireLibraryContext(r, 'library.stocktake.manage');
+    const { tenantId, context } = await requireLibraryContext(r, 'library.stocktake.manage');
     const { id } = await params;
-    return NextResponse.json({ success: true, data: await listStocktakeAdjustments(tenantId, id) });
+    return NextResponse.json({ success: true, data: await listStocktakeAdjustments(tenantId, id, context) });
   } catch (e) { return apiErrorResponse(e); }
 }

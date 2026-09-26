@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertStudentBranchScope } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -59,11 +60,16 @@ export async function GET(req: NextRequest) {
     // teaching hub list.
     const requestedStudentId = new URL(req.url).searchParams.get('studentId');
     if (requestedStudentId) {
+      // Drill-down is campus-gated: a locked staff caller cannot read another
+      // campus's student homework list.
+      if (!(await assertStudentBranchScope(context, requestedStudentId, tenantId)).exists) {
+        return NextResponse.json({ success: false, error: { code: 'FORBIDDEN', message: 'Accès refusé.' } }, { status: 403 });
+      }
       const homeworkList = await HomeworkService.getHomeworkForStudent(tenantId, requestedStudentId);
       return NextResponse.json({ success: true, data: homeworkList });
     }
 
-    const homeworkList = await HomeworkService.listHomeworkForTeacher(tenantId);
+    const homeworkList = await HomeworkService.listHomeworkForTeacher(tenantId, context.branchId);
     return NextResponse.json({ success: true, data: homeworkList });
   } catch (error) {
     return apiErrorResponse(error);

@@ -1,10 +1,9 @@
 import type { RequestContext } from '@/libs/api/context';
 import { and, eq, gt, ilike, isNull, lte, or, sql } from 'drizzle-orm';
-import { ApiError } from '@/libs/api/errors';
 import { hasCapability } from '@/libs/api/permissions';
-import { requireTenantId } from '@/libs/api/portal-scope';
+import { branchWhere, requireTenantId } from '@/libs/api/portal-scope';
 import { db } from '@/libs/DB';
-import { branches, guardians, guardianStudents, invoices, user } from '@/models/Schema';
+import { guardians, guardianStudents, invoices, user } from '@/models/Schema';
 
 // ---------------------------------------------------------------------------
 // Role- and scope-aware portal search (replaces the broad header search for
@@ -14,8 +13,8 @@ import { branches, guardians, guardianStudents, invoices, user } from '@/models/
 //
 // Relevance (ENH-ADMIN-DASH-01): matching is accent- and case-insensitive and
 // covers name, email and matricule. Results are tenant-scoped,
-// capability-gated, and branch-scoped when the caller passes a branchId
-// (validated server-side like the dashboard summary does).
+// capability-gated, and branch-scoped from the server context (ctx.branchId)
+// — there is no client-supplied branch.
 // ---------------------------------------------------------------------------
 
 export type PortalSearchResult = {
@@ -73,25 +72,14 @@ function searchConditions(query: string) {
   );
 }
 
-export async function searchPortal(ctx: RequestContext, query: string, requestedBranchId?: string | null): Promise<PortalSearchResult> {
+export async function searchPortal(ctx: RequestContext, query: string): Promise<PortalSearchResult> {
   const tenantId = requireTenantId(ctx);
   const result: PortalSearchResult = { students: [], teachers: [], invoices: [] };
 
-  // Branch scope: the requested branch must be a real, active branch of THIS
-  // tenant (unless the principal is pinned, in which case the pin wins).
-  let effectiveBranchId: string | null = ctx.branchId ?? null;
-  if (!effectiveBranchId && requestedBranchId) {
-    const [branchRow] = await db
-      .select({ id: branches.id })
-      .from(branches)
-      .where(and(eq(branches.id, requestedBranchId), eq(branches.tenantId, tenantId), eq(branches.isActive, true)))
-      .limit(1);
-    if (!branchRow) {
-      throw new ApiError(403, 'FORBIDDEN', 'Succursale introuvable ou non autorisée.');
-    }
-    effectiveBranchId = branchRow.id;
-  }
-  const branchCondition = effectiveBranchId ? eq(user.branchId, effectiveBranchId) : undefined;
+  // Branch scope comes only from the server context: locked staff are
+  // confined to their campus, whole-school staff to their session's chosen
+  // campus (POST /api/portal/branch) or all of them.
+  const branchCondition = branchWhere(ctx, user.branchId);
 
   // Relationship-scoped: parents see only their linked children, never an
   // arbitrary student id from the same tenant.
@@ -182,8 +170,8 @@ export async function searchPortal(ctx: RequestContext, query: string, requested
       .where(and(
         eq(invoices.tenantId, tenantId),
         ilike(invoices.invoiceNumber, `%${query}%`),
-        effectiveBranchId
-          ? sql`exists (select 1 from "user" u2 where u2.id = ${invoices.studentId} and u2.branch_id = ${effectiveBranchId})`
+        ctx.branchId
+          ? sql`exists (select 1 from "user" u2 where u2.id = ${invoices.studentId} and u2.branch_id = ${ctx.branchId})`
           : undefined,
       ))
       .limit(5);

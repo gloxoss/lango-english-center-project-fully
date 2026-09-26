@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireAddon } from '@/libs/api/entitlements';
 import { requireCapability } from '@/libs/api/permissions';
-import { listEmploymentEvents } from '@/features/hr/services/employees-service';
+import { assertBranchScope } from '@/libs/api/portal-scope';
+import { getEmployee, listEmploymentEvents } from '@/features/hr/services/employees-service';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -12,6 +13,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const tenantId = requireTenant(ctx);
     await requireAddon(tenantId, 'human-resources');
     await requireCapability(ctx, 'hr.employee.read');
+
+    const employee = await getEmployee(tenantId, id, false);
+    if (!employee) throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable dans cet établissement.');
+    assertBranchScope(ctx, employee.branchId);
 
     const data = await listEmploymentEvents(tenantId, id);
 

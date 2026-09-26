@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { examTerms } from '@/features/assessment/models/assessment-schema';
 import { loadExamTermFacts } from '@/features/assessment/services/exam-term-facts';
+import { OutcomeService } from '@/features/assessment/services/outcome-service';
 import {
   checkTransition,
   EXAM_TERM_STAGES,
@@ -96,11 +97,23 @@ export async function PUT(
 
     // Closing a term is what publishes its results; isPublished is not a second
     // decision an admin can forget to make.
-    const [updated] = await db
-      .update(examTerms)
-      .set({ status: target, isPublished: target === 'closed' ? true : term.isPublished })
-      .where(and(eq(examTerms.id, id), eq(examTerms.tenantId, tenantId)))
-      .returning();
+    const updated = await db.transaction(async (tx) => {
+      const [termUpdate] = await tx
+        .update(examTerms)
+        .set({ status: target, isPublished: target === 'closed' ? true : term.isPublished })
+        .where(and(eq(examTerms.id, id), eq(examTerms.tenantId, tenantId)))
+        .returning();
+
+      if (target === 'closed') {
+        await OutcomeService.publishOutcomes(context, {
+          examTermId: id,
+          tx,
+          reason: 'Exam term closed',
+        });
+      }
+
+      return termUpdate;
+    });
 
     recordAudit(context, 'update', 'exam_term_stage', id, { from: term.status, to: target });
 

@@ -30,7 +30,7 @@ export async function POST(r: Request) {
   try {
     const { tenantId, context } = await requireLibraryContext(r, 'library.policy.manage');
     const b = await parseJson(r, schema);
-    const data = await createLoanPolicy(tenantId, b);
+    const data = await createLoanPolicy(tenantId, b, context);
     recordAudit(context, 'create', 'library_loan_policy', data.id, { name: data.name, patronCategory: data.patronCategory });
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (e) { return apiErrorResponse(e); }

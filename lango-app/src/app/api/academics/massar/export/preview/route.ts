@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     const report = await validateMassarStudentRoster(tenantId, {
       classSectionId: body.classSectionId,
       branchId: effectiveBranchId,
+      ctx,
       studentIds: body.studentIds,
     });
 

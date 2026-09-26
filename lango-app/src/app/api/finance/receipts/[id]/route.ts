@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
@@ -23,6 +24,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         paymentId: receipts.paymentId,
         studentName: user.name,
         studentEmail: user.email,
+        studentBranchId: user.branchId,
         amount: receipts.amount,
         paymentDate: receipts.paymentDate,
         allocations: receipts.allocations,
@@ -36,8 +38,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (!row) {
       throw new ApiError(404, 'RECEIPT_NOT_FOUND', 'Reçu introuvable.');
     }
+    assertBranchScope(context, row.studentBranchId);
+    const { studentBranchId: _scopeOnly, ...receipt } = row;
 
-    return NextResponse.json({ success: true, data: row });
+    return NextResponse.json({ success: true, data: receipt });
   } catch (error) {
     return apiErrorResponse(error);
   }

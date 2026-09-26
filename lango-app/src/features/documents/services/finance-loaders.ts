@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { GET as getStatementResponse } from '@/app/api/finance/statements/route';
 import type { RequestContext } from '@/libs/api/context';
 import { ApiError } from '@/libs/api/errors';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { brandingFileKey, readUploadedFile } from '@/libs/api/uploads';
 import { db } from '@/libs/DB';
 import { receipts } from '@/features/finance/models/student-accounting-schema';
@@ -34,9 +35,9 @@ export async function loadSchoolBrand(tenantId: string) {
   };
 }
 
-async function requireStudent(tenantId: string, studentId: string, branchId?: string | null) {
+async function requireStudent(ctx: RequestContext, tenantId: string, studentId: string) {
   const [student] = await db.select({ id: user.id, name: user.name }).from(user)
-    .where(and(eq(user.tenantId, tenantId), eq(user.id, studentId), branchId ? eq(user.branchId, branchId) : undefined)).limit(1);
+    .where(and(eq(user.tenantId, tenantId), eq(user.id, studentId), branchWhere(ctx, user.branchId))).limit(1);
   if (!student) throw new ApiError(404, 'NOT_FOUND', 'Document introuvable.');
   return student;
 }
@@ -48,7 +49,7 @@ export async function loadFinanceDocument(request: Request, context: RequestCont
   if (input.kind === 'invoice') {
     const [invoice] = await db.select().from(invoices).where(and(eq(invoices.tenantId, tenantId), eq(invoices.id, input.sourceId))).limit(1);
     if (!invoice) throw new ApiError(404, 'NOT_FOUND', 'Facture introuvable.');
-    const student = await requireStudent(tenantId, invoice.studentId, context.branchId);
+    const student = await requireStudent(context, tenantId, invoice.studentId);
     const items = await db.select().from(invoiceItems).where(and(eq(invoiceItems.tenantId, tenantId), eq(invoiceItems.invoiceId, invoice.id)));
     return {
       kind: 'invoice', title: 'Facture', reference: invoice.invoiceNumber, filename: `facture-${invoice.invoiceNumber}.pdf`,
@@ -67,7 +68,7 @@ export async function loadFinanceDocument(request: Request, context: RequestCont
   if (input.kind === 'receipt') {
     const [receipt] = await db.select().from(receipts).where(and(eq(receipts.tenantId, tenantId), eq(receipts.id, input.sourceId))).limit(1);
     if (!receipt) throw new ApiError(404, 'NOT_FOUND', 'Reçu introuvable.');
-    const student = await requireStudent(tenantId, receipt.studentId, context.branchId);
+    const student = await requireStudent(context, tenantId, receipt.studentId);
     const [payment] = receipt.paymentId ? await db.select({ status: payments.status, method: payments.paymentMethod, reference: payments.referenceId })
       .from(payments).where(and(eq(payments.tenantId, tenantId), eq(payments.id, receipt.paymentId))).limit(1) : [];
     const allocations = Array.isArray(receipt.allocations) ? receipt.allocations as Array<{ invoiceNumber?: string; amount?: string }> : [];
@@ -83,7 +84,7 @@ export async function loadFinanceDocument(request: Request, context: RequestCont
       totals: [{ label: 'Montant reçu', value: money(receipt.amount), strong: true }],
     };
   }
-  await requireStudent(tenantId, input.sourceId, context.branchId);
+  await requireStudent(context, tenantId, input.sourceId);
   const url = new URL('/api/finance/statements', request.url);
   url.searchParams.set('studentId', input.sourceId);
   if (input.startDate) url.searchParams.set('startDate', input.startDate);

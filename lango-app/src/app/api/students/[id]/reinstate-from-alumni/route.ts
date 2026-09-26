@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
@@ -22,6 +23,16 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     await requireCapability(context, 'admissions.manage');
 
     const { id: alumnusId } = await params;
+
+    const [existing] = await db
+      .select({ branchId: user.branchId })
+      .from(user)
+      .where(and(eq(user.id, alumnusId), eq(user.tenantId, tenantId), eq(user.role, 'alumni')))
+      .limit(1);
+    if (!existing) {
+      throw new ApiError(409, 'NOT_ALUMNI', 'Cet utilisateur n\'est pas un(e) ancien(ne) élève pour cet établissement.');
+    }
+    assertBranchScope(context, existing.branchId);
 
     const [updated] = await db
       .update(user)

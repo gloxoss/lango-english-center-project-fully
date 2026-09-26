@@ -3,6 +3,7 @@ import { and, desc, eq, ne, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -42,6 +43,9 @@ export async function GET(req: NextRequest) {
     if (studentId) {
       conditions.push(eq(refunds.studentId, studentId));
     }
+    // Money follows the student's campus (plan section 5, student mode).
+    const branchCondition = branchWhere(ctx, user.branchId);
+    if (branchCondition) conditions.push(branchCondition);
 
     const records = await db
       .select({

@@ -109,8 +109,8 @@ export async function GET(req: NextRequest) {
 
     // The pass threshold is the tenant's stored grading policy
     // (academic.passThreshold — edited on /dashboard/academics/grading/policies,
-    // shared with report cards). assessmentResults.finalPercentage is always a
-    // 0-100 percentage, so the threshold goes through the one shared
+    // shared with report cards). Scores are normalized on the /20 scale,
+    // so the threshold goes through the one shared
     // conversion before comparing.
     const [{ value: passThresholdValue }, { value: gradingScaleValue }] = await Promise.all([
       getEffectiveValueWithLegacyFallback(tenantId, null, 'academic.passThreshold'),

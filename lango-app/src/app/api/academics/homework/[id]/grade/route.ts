@@ -2,18 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { recordAudit } from '@/libs/api/audit';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireRequestContext, requireTenant , type RequestContext } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { assessmentDefinitions, homeworkAttempts } from '@/features/assessment/models/assessment-schema';
+import { classes, classSubjects } from '@/models/Schema';
 import { HomeworkService } from '@/features/assessment/services/homework-service';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 
 const gradeSchema = z.object({
   score: z.number().min(0),
   feedbackText: z.string().trim().max(2000).optional(),
 }).strict();
+
+/** Campus lock: homework lives on the campus of the class behind its subject. */
+async function assertHomeworkCampus(context: RequestContext, tenantId: string, homeworkId: string) {
+  const [campus] = await db
+    .select({ branchId: classes.branchId })
+    .from(assessmentDefinitions)
+    .leftJoin(classSubjects, eq(assessmentDefinitions.classSubjectId, classSubjects.id))
+    .leftJoin(classes, eq(classSubjects.classId, classes.id))
+    .where(and(eq(assessmentDefinitions.id, homeworkId), eq(assessmentDefinitions.tenantId, tenantId)))
+    .limit(1);
+  assertBranchScope(context, campus?.branchId ?? null);
+}
 
 export async function POST(
   req: NextRequest,
@@ -39,6 +53,7 @@ export async function POST(
       }
     }
 
+    await assertHomeworkCampus(context, tenantId, id);
     const graded = await HomeworkService.gradeHomeworkAttempt({
       tenantId,
       attemptId: id,

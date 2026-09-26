@@ -1,16 +1,20 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/libs/DB';
-import { employeeLeaveBalances, leaveCategories, leaveRequests, user } from '@/models/Schema';
+import { employeeLeaveBalances, employeeProfiles, leaveCategories, leaveRequests, user } from '@/models/Schema';
 import { ApiError } from '@/libs/api/errors';
+import { branchWhere } from '@/libs/api/portal-scope';
+import type { RequestContext } from '@/libs/api/context';
 
 export type ListLeaveRequestsParams = {
   tenantId: string;
   /** Restrict to one user's requests. Undefined = all users (HR admin view). */
   userId?: string;
   statusFilter?: string;
+  /** When present, only requests of the caller's campus are returned. */
+  ctx?: RequestContext;
 };
 
-export async function listLeaveRequests({ tenantId, userId, statusFilter }: ListLeaveRequestsParams) {
+export async function listLeaveRequests({ tenantId, userId, statusFilter, ctx }: ListLeaveRequestsParams) {
   return db
     .select({
       id: leaveRequests.id,
@@ -30,11 +34,13 @@ export async function listLeaveRequests({ tenantId, userId, statusFilter }: List
     .from(leaveRequests)
     .innerJoin(user, eq(leaveRequests.userId, user.id))
     .innerJoin(leaveCategories, eq(leaveRequests.categoryId, leaveCategories.id))
+    .leftJoin(employeeProfiles, eq(employeeProfiles.userId, user.id))
     .where(
       and(
         eq(leaveRequests.tenantId, tenantId),
         userId ? eq(leaveRequests.userId, userId) : undefined,
         statusFilter && statusFilter !== 'all' ? eq(leaveRequests.status, statusFilter) : undefined,
+        ctx ? branchWhere(ctx, employeeProfiles.branchId) : undefined,
       ),
     );
 }

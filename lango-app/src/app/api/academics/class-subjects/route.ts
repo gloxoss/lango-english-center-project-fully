@@ -8,6 +8,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { getTeacherClassSubjectPairs } from '@/libs/api/teacher-scope';
 import { classSubjectCreateSchema, classSubjectUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { assessmentDefinitions } from '@/features/assessment/models/assessment-schema';
 import { academicClassOfferings, assessmentPlans, classes, classScheduleSlots, classSubjects, semesters, subjects, subjectTeachers } from '@/models/Schema';
 
 type Context = Awaited<ReturnType<typeof requireRequestContext>>;
@@ -135,6 +136,11 @@ export async function GET(request: Request) {
     // this endpoint) with the whole school, so a teacher could select - and
     // then read the ranked results of - a class they do not teach.
     if (context.role === 'teacher') {
+      // Teacher rule (owner decision 2026-09-26): assignments win. A teacher
+      // sees the class-subjects they are currently assigned to, including on
+      // another campus — and nothing else there — so the assignment list IS
+      // the scope and the campus filter must NOT stack on top of it (it would
+      // hide every cross-campus assignment).
       const pairs = await getTeacherClassSubjectPairs(tenantId, context.userId);
       const allowedIds = [...new Set([...pairs].map(pair => pair.split('|')[1]).filter((id): id is string => Boolean(id)))];
       if (allowedIds.length === 0) {
@@ -147,12 +153,12 @@ export async function GET(request: Request) {
         });
       }
       conditions.push(inArray(classSubjects.id, allowedIds));
+    } else if (context.branchId) {
+      // Campus lock stays strict for admins and staff.
+      conditions.push(eq(classes.branchId, context.branchId));
     }
     if (offeringId) {
       conditions.push(eq(classSubjects.offeringId, offeringId));
-    }
-    if (context.branchId) {
-      conditions.push(eq(classes.branchId, context.branchId));
     }
     const search = searchParams.get('search')?.trim();
     if (search) {
@@ -192,7 +198,16 @@ export async function GET(request: Request) {
         .orderBy(asc(classes.name), asc(classSubjects.displayOrder), asc(classSubjects.id))
         .limit(pagination.limit)
         .offset(pagination.offset),
-      db.select({ total: count() }).from(classSubjects).where(where),
+      // Same joins as the list: the where clause references subjects (search)
+      // and classes (branch scope), so counting joinless would 500 for a
+      // campus-limited caller or any ?search=. leftJoin keeps the row count
+      // 1:1 with class_subjects.
+      db
+        .select({ total: count() })
+        .from(classSubjects)
+        .leftJoin(subjects, eq(classSubjects.subjectId, subjects.id))
+        .leftJoin(classes, eq(classSubjects.classId, classes.id))
+        .where(where),
     ]);
 
     return NextResponse.json({
@@ -347,7 +362,14 @@ export async function DELETE(request: Request) {
       .from(classScheduleSlots)
       .where(and(eq(classScheduleSlots.tenantId, tenantId), eq(classScheduleSlots.classSubjectId, id)));
 
-    const totalDependents = (assessmentCount?.count ?? 0) + (subjectTeacherCount?.count ?? 0) + (scheduleSlotCount?.count ?? 0);
+    // assessment_definitions has no FK to class_subjects: without this count a
+    // subject with real grades could be deleted and its outcomes orphaned.
+    const [definitionCount] = await db
+      .select({ count: count() })
+      .from(assessmentDefinitions)
+      .where(and(eq(assessmentDefinitions.tenantId, tenantId), eq(assessmentDefinitions.classSubjectId, id)));
+
+    const totalDependents = (assessmentCount?.count ?? 0) + (definitionCount?.count ?? 0) + (subjectTeacherCount?.count ?? 0) + (scheduleSlotCount?.count ?? 0);
 
     if (totalDependents > 0) {
       throw new ApiError(409, 'IN_USE', 'Impossible de supprimer cette matière : elle est liée à des données académiques existantes.');

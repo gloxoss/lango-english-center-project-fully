@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
     const isHrAdmin = ['school_admin', 'accountant'].includes(ctx.role);
 
-    const rows = await listPayslips({ tenantId, userId: isHrAdmin ? undefined : ctx.userId });
+    const rows = await listPayslips({ tenantId, userId: isHrAdmin ? undefined : ctx.userId, ctx });
 
     return NextResponse.json({ success: true, data: rows });
   } catch (err) {

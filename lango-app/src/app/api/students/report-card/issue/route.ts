@@ -6,6 +6,7 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
+import { assertBranchScope, assertStudentBranchScope } from '@/libs/api/portal-scope';
 import { getClassReportCards } from '@/features/academics/services/report-card-service';
 import {
   ensureDefaultReportCardTemplate,
@@ -15,7 +16,7 @@ import {
 } from '@/features/academics/services/report-card-document-service';
 import { examTerms } from '@/features/assessment/models/assessment-schema';
 import { db } from '@/libs/DB';
-import { sessionYears } from '@/models/Schema';
+import { classSections, classes, sessionYears } from '@/models/Schema';
 
 const issueSchema = z.object({
   templateVersionId: z.string().uuid().optional(),
@@ -37,6 +38,25 @@ export async function POST(request: Request) {
 
     if (!body.studentId && !body.classSectionId) {
       throw new ApiError(400, 'VALIDATION_ERROR', 'studentId ou classSectionId requis.');
+    }
+
+    // Campus lock on the bulletin target: the student's campus, or the class's.
+    if (body.studentId) {
+      const studentScope = await assertStudentBranchScope(context, body.studentId, tenantId);
+      if (!studentScope.exists) {
+        throw new ApiError(404, 'NOT_FOUND', 'Élève introuvable dans cet établissement.');
+      }
+    } else {
+      const [section] = await db
+        .select({ branchId: classes.branchId })
+        .from(classSections)
+        .innerJoin(classes, eq(classes.id, classSections.classId))
+        .where(and(eq(classSections.id, body.classSectionId!), eq(classSections.tenantId, tenantId)))
+        .limit(1);
+      if (!section) {
+        throw new ApiError(404, 'NOT_FOUND', 'Classe introuvable dans cet établissement.');
+      }
+      assertBranchScope(context, section.branchId);
     }
 
     // Audit 3, P0-F: resolve the bulletin window (explicit exam term, else the

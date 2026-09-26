@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { payrollPeriods, payrollRunLines, payslips, user } from '@/models/Schema';
+import { employeeProfiles, payrollPeriods, payrollRunLines, payslips, user } from '@/models/Schema';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { renderPayslipHtml } from '@/features/hr/services/payslips';
 
 // GET /api/hr/payslips/[id] — Fetch single payslip (with auth guard)
@@ -22,6 +23,7 @@ export async function GET(
       .select({
         id: payslips.id,
         userId: payslips.userId,
+        branchId: employeeProfiles.branchId,
         issuedAt: payslips.issuedAt,
         employeeName: user.name,
         employeeEmail: user.email,
@@ -39,6 +41,7 @@ export async function GET(
       })
       .from(payslips)
       .innerJoin(user, eq(payslips.userId, user.id))
+      .leftJoin(employeeProfiles, eq(employeeProfiles.userId, user.id))
       .innerJoin(payrollPeriods, eq(payslips.periodId, payrollPeriods.id))
       .innerJoin(payrollRunLines, eq(payslips.runLineId, payrollRunLines.id))
       .where(and(eq(payslips.id, id), eq(payslips.tenantId, tenantId)))
@@ -47,6 +50,9 @@ export async function GET(
     if (!row) {
       throw new ApiError(404, 'NOT_FOUND', 'Bulletin de paie introuvable.');
     }
+
+    // Campus lock: a payslip lives on its employee's campus.
+    assertBranchScope(ctx, row.branchId);
 
     // Ownership check: non-HR staff can only view their own payslip
     const isHrAdmin = ['school_admin', 'accountant'].includes(ctx.role);

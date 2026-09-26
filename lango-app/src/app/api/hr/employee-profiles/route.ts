@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -61,6 +62,7 @@ export async function GET(request: Request) {
           search
             ? or(ilike(user.name, `%${search}%`), ilike(user.email, `%${search}%`))
             : undefined,
+          branchWhere(ctx, employeeProfiles.branchId),
         ),
       )
       .orderBy(desc(employeeProfiles.createdAt));

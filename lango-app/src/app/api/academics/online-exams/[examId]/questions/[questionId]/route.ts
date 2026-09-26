@@ -3,7 +3,9 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireRequestContext, requireTenant, type RequestContext } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
+import { classes, classSubjects } from '@/models/Schema';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -27,15 +29,25 @@ const updateQuestionSchema = z.object({
 type RouteParams = { params: Promise<{ examId: string; questionId: string }> };
 
 /** Verify both exam and question belong to the tenant, and return the exam owner. */
-async function resolveQuestion(tenantId: string, examId: string, questionId: string) {
+async function resolveQuestion(tenantId: string, examId: string, questionId: string, ctx?: RequestContext) {
   const [exam] = await db
-    .select({ id: onlineExams.id, createdById: onlineExams.createdById })
+    .select({ id: onlineExams.id, createdById: onlineExams.createdById, classSubjectId: onlineExams.classSubjectId })
     .from(onlineExams)
     .where(and(eq(onlineExams.id, examId), eq(onlineExams.tenantId, tenantId)))
     .limit(1);
 
   if (!exam) {
     throw new ApiError(404, 'EXAM_NOT_FOUND', 'Examen introuvable.');
+  }
+  // Campus lock: campus of the class behind the exam's subject.
+  const [campus] = await db
+    .select({ branchId: classes.branchId })
+    .from(classSubjects)
+    .innerJoin(classes, eq(classSubjects.classId, classes.id))
+    .where(eq(classSubjects.id, exam.classSubjectId))
+    .limit(1);
+  if (ctx) {
+    assertBranchScope(ctx, campus?.branchId ?? null);
   }
 
   const [question] = await db
@@ -71,7 +83,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
     const { examId, questionId } = await params;
     const body = await parseJson(req, updateQuestionSchema);
 
-    const { exam } = await resolveQuestion(tenantId, examId, questionId);
+    const { exam } = await resolveQuestion(tenantId, examId, questionId, ctx);
     assertExamOwnership(ctx, exam);
 
     // Validate MCQ constraint if options are being replaced
@@ -143,7 +155,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     await requireCapability(ctx, 'grading.manage');
 
     const { examId, questionId } = await params;
-    const { exam } = await resolveQuestion(tenantId, examId, questionId);
+    const { exam } = await resolveQuestion(tenantId, examId, questionId, ctx);
     assertExamOwnership(ctx, exam);
 
     // Options cascade-delete via FK onDelete('cascade') on questionId

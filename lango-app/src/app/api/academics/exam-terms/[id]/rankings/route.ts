@@ -1,8 +1,10 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { assessmentDefinitions } from '@/features/assessment/models/assessment-schema';
+import { classes, classSubjects } from '@/models/Schema';
 import { ExamMasterService } from '@/features/assessment/services/exam-master-service';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
@@ -23,10 +25,17 @@ export async function GET(
       throw new ApiError(422, 'VALIDATION_ERROR', 'Le paramètre assessmentDefinitionId est requis.');
     }
 
-    const [definition] = await db.select({ id: assessmentDefinitions.id }).from(assessmentDefinitions).where(and(eq(assessmentDefinitions.id, assessmentDefinitionId), eq(assessmentDefinitions.tenantId, tenantId))).limit(1);
+    const [definition] = await db
+      .select({ id: assessmentDefinitions.id, branchId: classes.branchId })
+      .from(assessmentDefinitions)
+      .leftJoin(classSubjects, eq(assessmentDefinitions.classSubjectId, classSubjects.id))
+      .leftJoin(classes, eq(classSubjects.classId, classes.id))
+      .where(and(eq(assessmentDefinitions.id, assessmentDefinitionId), eq(assessmentDefinitions.tenantId, tenantId)))
+      .limit(1);
     if (!definition) {
       throw new ApiError(404, 'NOT_FOUND', 'Épreuve introuvable.');
     }
+    assertBranchScope(context, definition.branchId);
 
     const rankings = await ExamMasterService.generateTermRankings(tenantId, assessmentDefinitionId);
     return NextResponse.json({ success: true, data: rankings });

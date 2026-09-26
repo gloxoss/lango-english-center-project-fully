@@ -6,6 +6,8 @@ import { ExamMasterService } from '@/features/assessment/services/exam-master-se
 import { requireExamTermStage } from '@/features/assessment/services/exam-term-guard';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
+import type { RequestContext } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { classes, classSections, sections, tenants, user } from '@/models/Schema';
 
 export type MassarImportResult = {
@@ -47,6 +49,7 @@ export async function validateMassarStudentRoster(
     classSectionId?: string;
     branchId?: string;
     studentIds?: string[];
+    ctx?: RequestContext;
   },
 ): Promise<MassarValidationReport> {
   const conditions = [
@@ -60,6 +63,7 @@ export async function validateMassarStudentRoster(
   if (options?.branchId) {
     conditions.push(eq(user.branchId, options.branchId));
   }
+  { const bw = branchWhere(options?.ctx, user.branchId); if (bw) conditions.push(bw); }
   if (options?.studentIds && options.studentIds.length > 0) {
     conditions.push(inArray(user.id, options.studentIds));
   }
@@ -134,6 +138,7 @@ export async function generateMassarStudentRoster(
     branchId?: string;
     studentIds?: string[];
     onlyValid?: boolean;
+    ctx?: RequestContext;
   },
 ): Promise<{ buffer: Buffer; filename: string }> {
   const [tenant] = await db
@@ -170,6 +175,7 @@ export async function generateMassarStudentRoster(
   if (options?.branchId) {
     conditions.push(eq(user.branchId, options.branchId));
   }
+  { const bw = branchWhere(options?.ctx, user.branchId); if (bw) conditions.push(bw); }
   if (options?.studentIds && options.studentIds.length > 0) {
     conditions.push(inArray(user.id, options.studentIds));
   }

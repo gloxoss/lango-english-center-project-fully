@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -37,13 +38,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { id } = await params;
 
     const [structure] = await db
-      .select({ id: feeStructures.id, name: feeStructures.name })
+      .select({ id: feeStructures.id, name: feeStructures.name, branchId: feeStructures.branchId })
       .from(feeStructures)
       .where(and(eq(feeStructures.id, id), eq(feeStructures.tenantId, tenantId)))
       .limit(1);
     if (!structure) {
       return NextResponse.json({ success: false, message: 'Structure tarifaire introuvable.' }, { status: 404 });
     }
+    assertBranchScope(context, structure.branchId);
 
     const versions = await db
       .select()

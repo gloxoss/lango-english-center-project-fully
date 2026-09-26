@@ -1,6 +1,8 @@
 import { and, asc, desc, eq, getTableColumns, ilike, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { ApiError } from '@/libs/api/errors';
+import type { RequestContext } from '@/libs/api/context';
+import { assertBranchScope, assertWritableBranch, branchWhere } from '@/libs/api/portal-scope';
 import { cancelHold } from '@/features/library/services/library-operations-service';
 import {
   branches,
@@ -133,8 +135,8 @@ export async function createCopy(tenantId: string, input: {
   }
 }
 
-export async function listMembers(tenantId: string, query = '') {
-  const conditions = [eq(libraryMembers.tenantId, tenantId), eq(user.tenantId, tenantId)];
+export async function listMembers(tenantId: string, query = '', ctx?: RequestContext) {
+  const conditions = [eq(libraryMembers.tenantId, tenantId), eq(user.tenantId, tenantId), branchWhere(ctx, libraryMembers.branchId)];
   if (query.trim()) conditions.push(or(ilike(user.name, `%${query.trim()}%`), ilike(libraryMembers.memberNumber, `%${query.trim()}%`))!);
   return db.select({
     id: libraryMembers.id, memberNumber: libraryMembers.memberNumber, state: libraryMembers.state,
@@ -144,7 +146,7 @@ export async function listMembers(tenantId: string, query = '') {
     .where(and(...conditions)).orderBy(asc(user.name)).limit(50);
 }
 
-export async function getMemberDetail(tenantId: string, memberId: string) {
+export async function getMemberDetail(tenantId: string, memberId: string, ctx?: RequestContext) {
   const [member] = await db.select({
     ...getTableColumns(libraryMembers),
     branchName: branches.name,
@@ -158,6 +160,7 @@ export async function getMemberDetail(tenantId: string, memberId: string) {
     .where(and(eq(libraryMembers.id, memberId), eq(libraryMembers.tenantId, tenantId), eq(user.tenantId, tenantId)))
     .limit(1);
   if (!member) throw new ApiError(404, 'NOT_FOUND', 'Adhérent introuvable.');
+  assertBranchScope(ctx, member.branchId);
 
   const [activeLoans, openCharges, waitingHolds] = await Promise.all([
     db.select({ loanId: libraryLoans.id, dueDate: libraryLoans.dueDate, issuedAt: libraryLoans.issuedAt, renewedCount: libraryLoans.renewedCount, accessionNumber: libraryCopies.accessionNumber, title: libraryBibliographicRecords.title })
@@ -182,12 +185,13 @@ export async function getMemberDetail(tenantId: string, memberId: string) {
   return { ...member, activeLoans, openCharges, waitingHolds };
 }
 
-export async function createMember(tenantId: string, input: { userId: string; memberNumber: string; branchId: string }) {
+export async function createMember(tenantId: string, input: { userId: string; memberNumber: string; branchId: string }, ctx?: RequestContext) {
   const [[person], [branch]] = await Promise.all([
     db.select({ id: user.id }).from(user).where(and(eq(user.id, input.userId), eq(user.tenantId, tenantId), eq(user.userStatus, 'active'))).limit(1),
     db.select({ id: branches.id }).from(branches).where(and(eq(branches.id, input.branchId), eq(branches.tenantId, tenantId))).limit(1),
   ]);
   if (!person || !branch) throw new ApiError(422, 'INVALID_REFERENCE', 'Utilisateur ou succursale introuvable.');
+  await assertWritableBranch(ctx, input.branchId);
   try {
     const [row] = await db.insert(libraryMembers).values({ tenantId, ...input }).returning();
     return row!;
@@ -225,7 +229,7 @@ async function chargeLoanOnce(tx: DbExecutor, tenantId: string, loan: { memberId
   return charge ?? null;
 }
 
-export async function issueCopy(tenantId: string, actorId: string, input: { copyId: string; memberId: string; note?: string | null; idempotencyKey?: string | null; override?: boolean; overrideReason?: string | null }) {
+export async function issueCopy(tenantId: string, actorId: string, input: { copyId: string; memberId: string; note?: string | null; idempotencyKey?: string | null; override?: boolean; overrideReason?: string | null }, ctx?: RequestContext) {
   const override = input.override === true && Boolean(input.overrideReason);
   return db.transaction(async tx => {
     // Idempotent checkout: a repeated scan with the same key returns the loan.
@@ -234,11 +238,13 @@ export async function issueCopy(tenantId: string, actorId: string, input: { copy
         .where(and(eq(libraryLoans.tenantId, tenantId), eq(libraryLoans.idempotencyKey, input.idempotencyKey))).limit(1);
       if (existing) return existing;
     }
-    const { policy, blocked } = await resolveMemberPolicy(tx, tenantId, input.memberId);
+    const { policy, blocked, member } = await resolveMemberPolicy(tx, tenantId, input.memberId);
     if (blocked && !override) throw new ApiError(409, 'MEMBER_BLOCKED', 'Le compte de l’adhérent est bloqué.');
+    assertBranchScope(ctx, member.branchId);
     const [copy] = await tx.select().from(libraryCopies)
       .where(and(eq(libraryCopies.id, input.copyId), eq(libraryCopies.tenantId, tenantId))).for('update').limit(1);
     if (!copy) throw new ApiError(422, 'INVALID_COPY', 'Exemplaire introuvable.');
+    assertBranchScope(ctx, copy.branchId);
     // A double loan is never allowed, even with override - the DB partial-unique
     // index is the final arbiter for concurrent workers.
     if (copy.state === 'checked_out' || copy.state === 'in_transit' || copy.state === 'lost' || copy.state === 'withdrawn') {
@@ -282,7 +288,7 @@ export async function issueCopy(tenantId: string, actorId: string, input: { copy
   });
 }
 
-export async function listActiveLoans(tenantId: string) {
+export async function listActiveLoans(tenantId: string, ctx?: RequestContext) {
   return db.select({
     loanId: libraryLoans.id, dueDate: libraryLoans.dueDate, renewedCount: libraryLoans.renewedCount, issuedAt: libraryLoans.issuedAt,
     copyId: libraryCopies.id, accessionNumber: libraryCopies.accessionNumber, title: libraryBibliographicRecords.title,
@@ -293,14 +299,18 @@ export async function listActiveLoans(tenantId: string) {
     .innerJoin(libraryBibliographicRecords, eq(libraryEditions.recordId, libraryBibliographicRecords.id))
     .innerJoin(libraryMembers, eq(libraryLoans.memberId, libraryMembers.id))
     .innerJoin(user, eq(libraryMembers.userId, user.id))
-    .where(and(eq(libraryLoans.tenantId, tenantId), eq(libraryCopies.tenantId, tenantId), eq(libraryMembers.tenantId, tenantId), isNull(libraryLoans.returnedAt)))
+    .where(and(eq(libraryLoans.tenantId, tenantId), eq(libraryCopies.tenantId, tenantId), eq(libraryMembers.tenantId, tenantId), isNull(libraryLoans.returnedAt), branchWhere(ctx, libraryCopies.branchId)))
     .orderBy(desc(libraryLoans.issuedAt)).limit(200);
 }
 
-export async function renewLoan(tenantId: string, actorId: string, loanId: string, expectedRenewedCount?: number) {
+export async function renewLoan(tenantId: string, actorId: string, loanId: string, expectedRenewedCount?: number, ctx?: RequestContext) {
   return db.transaction(async tx => {
     const [loan] = await tx.select().from(libraryLoans).where(and(eq(libraryLoans.id, loanId), eq(libraryLoans.tenantId, tenantId))).for('update').limit(1);
     if (!loan || loan.returnedAt) throw new ApiError(409, 'LOAN_NOT_ACTIVE', 'Prêt non actif.');
+    // Campus lock: the loan lives on the copy's campus.
+    const [scopeCopy] = await tx.select({ branchId: libraryCopies.branchId }).from(libraryCopies)
+      .where(and(eq(libraryCopies.id, loan.copyId), eq(libraryCopies.tenantId, tenantId))).limit(1);
+    assertBranchScope(ctx, scopeCopy?.branchId ?? null);
     // Optimistic-concurrency idempotency: if the caller's expected count no
     // longer matches, a previous retry already renewed - return it unchanged.
     if (expectedRenewedCount !== undefined && loan.renewedCount !== expectedRenewedCount) return loan;
@@ -320,10 +330,14 @@ export async function renewLoan(tenantId: string, actorId: string, loanId: strin
   });
 }
 
-export async function returnLoan(tenantId: string, actorId: string, input: { loanId: string; condition: 'good' | 'damaged' | 'lost'; note?: string | null }) {
+export async function returnLoan(tenantId: string, actorId: string, input: { loanId: string; condition: 'good' | 'damaged' | 'lost'; note?: string | null }, ctx?: RequestContext) {
   return db.transaction(async tx => {
     const [loan] = await tx.select().from(libraryLoans).where(and(eq(libraryLoans.id, input.loanId), eq(libraryLoans.tenantId, tenantId))).for('update').limit(1);
     if (!loan) throw new ApiError(404, 'NOT_FOUND', 'Prêt introuvable.');
+    // Campus lock: the loan lives on the copy's campus.
+    const [scopeCopy] = await tx.select({ branchId: libraryCopies.branchId }).from(libraryCopies)
+      .where(and(eq(libraryCopies.id, loan.copyId), eq(libraryCopies.tenantId, tenantId))).limit(1);
+    assertBranchScope(ctx, scopeCopy?.branchId ?? null);
     // Idempotent return: a repeated/duplicate scan returns the already-closed loan.
     if (loan.returnedAt) return loan;
     const now = new Date();

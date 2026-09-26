@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertStudentBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -37,6 +38,9 @@ export async function POST(request: Request) {
       .limit(1);
 
     if (!invoice) {
+      throw new ApiError(404, 'NOT_FOUND', 'Facture introuvable.');
+    }
+    if (!(await assertStudentBranchScope(context, invoice.studentId, tenantId)).exists) {
       throw new ApiError(404, 'NOT_FOUND', 'Facture introuvable.');
     }
 

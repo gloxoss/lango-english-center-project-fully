@@ -1,6 +1,7 @@
 import { and, asc, count, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const pagination = parsePagination(searchParams);
-    const where = and(eq(user.tenantId, tenantId), inArray(user.role, ['teacher', 'accountant', 'receptionist', 'guard', 'school_admin']));
+    const where = and(eq(user.tenantId, tenantId), inArray(user.role, ['teacher', 'accountant', 'receptionist', 'guard', 'school_admin']), branchWhere(context, user.branchId));
 
     const [rows, totalRows] = await Promise.all([
       db.select({

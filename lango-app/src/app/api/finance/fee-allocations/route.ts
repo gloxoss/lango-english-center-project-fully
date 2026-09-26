@@ -1,6 +1,7 @@
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
       .leftJoin(feeStructures, eq(feeStructureVersions.feeStructureId, feeStructures.id))
       .leftJoin(branches, eq(feeAllocationRuns.branchId, branches.id))
       .leftJoin(user, eq(feeAllocationRuns.runById, user.id))
-      .where(eq(feeAllocationRuns.tenantId, tenantId))
+      .where(and(eq(feeAllocationRuns.tenantId, tenantId), branchWhere(context, feeAllocationRuns.branchId)))
       .orderBy(desc(feeAllocationRuns.createdAt));
 
     const counts = await db

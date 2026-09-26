@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertStudentBranchScope } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -32,6 +33,10 @@ export async function POST(request: Request) {
 
     for (const studentId of body.studentIds) {
       try {
+        if (!(await assertStudentBranchScope(context, studentId, tenantId)).exists) {
+          results.push({ studentId, success: false, error: 'Élève introuvable.' });
+          continue;
+        }
         const result = await db.transaction(tx =>
           transitionStudentToAlumni(tx, tenantId, studentId, context.userId, body.graduationCohortSessionYearId),
         );

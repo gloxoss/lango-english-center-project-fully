@@ -207,8 +207,9 @@ export type StoreInput = {
   status?: 'active' | 'archived';
 };
 
-export async function listStores(tenantId: string, opts: { status?: 'active' | 'archived'; search?: string } = {}) {
+export async function listStores(tenantId: string, opts: { status?: 'active' | 'archived'; search?: string; branchId?: string | null } = {}) {
   const conditions = [eq(inventoryStores.tenantId, tenantId)];
+  if (opts.branchId) conditions.push(eq(inventoryStores.branchId, opts.branchId));
   if (opts.status) {
     conditions.push(eq(inventoryStores.status, opts.status));
   }

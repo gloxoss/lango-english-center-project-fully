@@ -1,15 +1,19 @@
 import { and, eq, inArray, isNotNull } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { MONTH_NAMES_FR } from '@/libs/i18n/months';
-import { payrollPeriods, payrollRunLines, payslips, user } from '@/models/Schema';
+import { employeeProfiles, payrollPeriods, payrollRunLines, payslips, user } from '@/models/Schema';
+import { branchWhere } from '@/libs/api/portal-scope';
+import type { RequestContext } from '@/libs/api/context';
 
 export type ListPayslipsParams = {
   tenantId: string;
   /** Restrict to one user's payslips. Undefined = all users (HR admin view). */
   userId?: string;
+  /** When present, only payslips of the caller's campus are returned. */
+  ctx?: RequestContext;
 };
 
-export async function listPayslips({ tenantId, userId }: ListPayslipsParams) {
+export async function listPayslips({ tenantId, userId, ctx }: ListPayslipsParams) {
   return db
     .select({
       id: payslips.id,
@@ -29,12 +33,14 @@ export async function listPayslips({ tenantId, userId }: ListPayslipsParams) {
     .innerJoin(user, eq(payslips.userId, user.id))
     .innerJoin(payrollPeriods, eq(payslips.periodId, payrollPeriods.id))
     .innerJoin(payrollRunLines, eq(payslips.runLineId, payrollRunLines.id))
+    .leftJoin(employeeProfiles, eq(employeeProfiles.userId, user.id))
     .where(
       and(
         eq(payslips.tenantId, tenantId),
         isNotNull(payslips.issuedAt),
         inArray(payrollPeriods.status, ['locked', 'approved', 'posted', 'paid', 'closed']),
         userId ? eq(payslips.userId, userId) : undefined,
+        ctx ? branchWhere(ctx, employeeProfiles.branchId) : undefined,
       ),
     );
 }

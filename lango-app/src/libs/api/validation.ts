@@ -44,6 +44,9 @@ export const optionalDate = () =>
 
 export const studentCreateSchema = z.object({
   fullName: z.string().trim().min(2).max(255),
+  // DB4 (BRANCH-SCOPE-01): explicit campus when the session runs under
+  // "Tous les sites"; the route validates it against the tenant's branches.
+  branchId: z.string().uuid().nullable().optional(),
   email: z.email().max(255).optional(),
   matricule: z.string().trim().min(1).max(50).regex(/^[\w/-]+$/).optional(),
   // classSectionId replaces the old free-text level/className. Optional: a

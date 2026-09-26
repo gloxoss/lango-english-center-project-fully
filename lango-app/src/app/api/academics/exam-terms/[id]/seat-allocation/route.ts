@@ -5,6 +5,8 @@ import { ExamMasterService } from '@/features/assessment/services/exam-master-se
 import { requireExamTermStage } from '@/features/assessment/services/exam-term-guard';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope, branchWhere } from '@/libs/api/portal-scope';
+import { examHalls } from '@/models/Schema';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -36,9 +38,22 @@ export async function POST(
 
     const body = await parseJson(request, seatAllocationSchema);
 
-    const validStudents = await db.select({ id: user.id }).from(user).where(and(inArray(user.id, body.studentIds), eq(user.tenantId, tenantId)));
+    const validStudents = await db.select({ id: user.id }).from(user).where(and(inArray(user.id, body.studentIds), eq(user.tenantId, tenantId), branchWhere(context, user.branchId)));
     if (validStudents.length !== new Set(body.studentIds).size) {
-      throw new ApiError(422, 'VALIDATION_ERROR', 'Un ou plusieurs élèves n\'appartiennent pas à cet établissement.');
+      throw new ApiError(422, 'VALIDATION_ERROR', 'Un ou plusieurs élèves n\'appartiennent pas à cet établissement ou à votre campus.');
+    }
+
+    // Halls are branch-owned (exam_halls.branchId): a locked caller may only
+    // seat candidates into their own campus halls.
+    const halls = await db
+      .select({ id: examHalls.id, branchId: examHalls.branchId })
+      .from(examHalls)
+      .where(and(inArray(examHalls.id, body.examHallIds), eq(examHalls.tenantId, tenantId)));
+    if (halls.length !== new Set(body.examHallIds).size) {
+      throw new ApiError(422, 'VALIDATION_ERROR', 'Une ou plusieurs salles sont introuvables.');
+    }
+    for (const hall of halls) {
+      assertBranchScope(context, hall.branchId);
     }
 
     const result = await ExamMasterService.generateSeatAllocations({

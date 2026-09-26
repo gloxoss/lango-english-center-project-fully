@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertStudentBranchScope } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -22,6 +23,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const { id: studentId } = await params;
     const body = await parseJson(req, transitionSchema);
+    if (!(await assertStudentBranchScope(context, studentId, tenantId)).exists) {
+      return NextResponse.json({ success: false, message: 'Élève introuvable.' }, { status: 404 });
+    }
 
     const result = await db.transaction(tx =>
       transitionStudentToAlumni(tx, tenantId, studentId, context.userId, body.graduationCohortSessionYearId),

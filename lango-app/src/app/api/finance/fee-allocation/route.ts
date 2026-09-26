@@ -1,10 +1,11 @@
 import { and, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
-import { classSections, feeStructureAssignments, feeStructures, invoices, user } from '@/models/Schema';
+import { classSections, feeStructureAssignments, feeStructures, invoices, user, classes } from '@/models/Schema';
 
 // GET /api/finance/fee-allocation?classId= — real per-student billing status
 // for a class's assigned fee structure: an existing invoice if one was
@@ -25,10 +26,11 @@ export async function GET(request: Request) {
     }
 
     const [assignment] = await db
-      .select({ feeStructureId: feeStructureAssignments.feeStructureId, feeStructureName: feeStructures.name, baseAmount: feeStructures.amount })
+      .select({ feeStructureId: feeStructureAssignments.feeStructureId, feeStructureName: feeStructures.name, baseAmount: feeStructures.amount, classBranchId: classes.branchId })
       .from(feeStructureAssignments)
       .innerJoin(feeStructures, eq(feeStructureAssignments.feeStructureId, feeStructures.id))
-      .where(and(eq(feeStructureAssignments.tenantId, tenantId), eq(feeStructureAssignments.classId, classId)))
+      .innerJoin(classes, eq(feeStructureAssignments.classId, classes.id))
+      .where(and(eq(feeStructureAssignments.tenantId, tenantId), eq(feeStructureAssignments.classId, classId), branchWhere(context, classes.branchId)))
       .limit(1);
 
     if (!assignment) {

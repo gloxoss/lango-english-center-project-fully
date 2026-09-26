@@ -4,6 +4,8 @@ import { and, eq } from 'drizzle-orm';
 import { assessmentDefinitions } from '@/features/assessment/models/assessment-schema';
 import { getTeacherClassSectionIds, getTeacherClassSubjectPairs } from '@/libs/api/teacher-scope';
 import { db } from '@/libs/DB';
+import { classes, classSubjects } from '@/models/Schema';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { resolveMarksheetRoster } from './marksheet-roster';
 
 /**
@@ -27,6 +29,22 @@ export async function loadScopedMarksheet(
   const payload = await resolveMarksheetRoster(tenantId, assessmentDefinitionId);
   if (!payload) {
     return null;
+  }
+
+  // Campus lock: the marksheet's campus is the class behind its classSubject.
+  // Applied to every role (teachers included) BEFORE the subject narrowing.
+  {
+    const [campus] = await db
+      .select({ branchId: classes.branchId })
+      .from(assessmentDefinitions)
+      .leftJoin(classSubjects, eq(assessmentDefinitions.classSubjectId, classSubjects.id))
+      .leftJoin(classes, eq(classSubjects.classId, classes.id))
+      .where(and(
+        eq(assessmentDefinitions.id, assessmentDefinitionId),
+        eq(assessmentDefinitions.tenantId, tenantId),
+      ))
+      .limit(1);
+    assertBranchScope(context, campus?.branchId ?? null);
   }
 
   if (context.role !== 'teacher') {

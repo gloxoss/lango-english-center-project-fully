@@ -1,11 +1,12 @@
 import type { NextRequest } from 'next/server';
-import { and, desc, eq, inArray, or } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
 import { auditLogs, guardianStudents, user } from '@/models/Schema';
+import { branchWhere } from '@/libs/api/portal-scope';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -17,10 +18,21 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     const { id: guardianId } = await params;
 
+    // A guardian row carries no branch of its own; its campus is the campus of
+    // its linked students. Narrow the visible links to the active branch, and
+    // a guardian whose links all live elsewhere is invisible (404).
+    const [totalLinks] = await db
+      .select({ n: count() })
+      .from(guardianStudents)
+      .where(and(eq(guardianStudents.guardianId, guardianId), eq(guardianStudents.tenantId, tenantId)));
     const links = await db
       .select({ id: guardianStudents.id })
       .from(guardianStudents)
-      .where(and(eq(guardianStudents.guardianId, guardianId), eq(guardianStudents.tenantId, tenantId)));
+      .innerJoin(user, eq(user.id, guardianStudents.studentId))
+      .where(and(eq(guardianStudents.guardianId, guardianId), eq(guardianStudents.tenantId, tenantId), branchWhere(ctx, user.branchId)));
+    if (totalLinks && Number(totalLinks.n) > 0 && links.length === 0) {
+      return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: 'Tuteur introuvable.' } }, { status: 404 });
+    }
     const linkIds = links.map(l => l.id);
 
     const entityConditions = [and(eq(auditLogs.entityType, 'guardian'), eq(auditLogs.entityId, guardianId))!];

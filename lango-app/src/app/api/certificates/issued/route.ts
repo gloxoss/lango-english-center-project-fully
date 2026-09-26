@@ -1,6 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
@@ -39,11 +40,12 @@ export async function GET(request: Request) {
         eq(certificateDefinitions.id, issuedCertificates.definitionId),
         eq(certificateDefinitions.tenantId, tenantId),
       ))
-      .leftJoin(user, eq(user.id, issuedCertificates.recipientId))
+      .innerJoin(user, eq(user.id, issuedCertificates.recipientId))
       .where(and(
         eq(issuedCertificates.tenantId, tenantId),
         status ? eq(issuedCertificates.status, status as 'valid' | 'replaced' | 'revoked') : undefined,
         definitionId ? eq(issuedCertificates.definitionId, definitionId) : undefined,
+        branchWhere(context, user.branchId),
       ))
       .orderBy(desc(issuedCertificates.issuedAt));
 

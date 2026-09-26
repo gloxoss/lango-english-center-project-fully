@@ -3,11 +3,12 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { classSessionExceptions, classScheduleSlots } from '@/models/Schema';
+import { classes, classScheduleSlots, classSections, classSessionExceptions } from '@/models/Schema';
 
 /**
  * A dated deviation from the weekly timetable (phase 6).
@@ -65,14 +66,18 @@ export async function POST(request: Request) {
     }
 
     const [slot] = await db
-      .select({ id: classScheduleSlots.id })
+      .select({ id: classScheduleSlots.id, branchId: classes.branchId })
       .from(classScheduleSlots)
+      .innerJoin(classSections, eq(classScheduleSlots.classSectionId, classSections.id))
+      .innerJoin(classes, eq(classSections.classId, classes.id))
       .where(and(eq(classScheduleSlots.id, body.classScheduleSlotId), eq(classScheduleSlots.tenantId, tenantId)))
       .limit(1);
 
     if (!slot) {
       throw new ApiError(404, 'NOT_FOUND', 'Créneau introuvable');
     }
+    // An exception is campus data of the slot's class.
+    assertBranchScope(context, slot.branchId);
 
     // Only the field the type is about is stored, so a room change cannot carry
     // a stale substitute forward.

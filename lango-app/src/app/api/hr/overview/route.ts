@@ -2,6 +2,7 @@ import { and, count, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { db } from '@/libs/DB';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireAddon } from '@/libs/api/entitlements';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     const [headcountRows, hiresThisMonth, departuresThisMonth, unlinked, expiring, salaryTotal] = await Promise.all([
       db.select({ employmentStatus: employeeProfiles.employmentStatus, value: count() })
         .from(employeeProfiles)
-        .where(eq(employeeProfiles.tenantId, tenantId))
+        .where(and(eq(employeeProfiles.tenantId, tenantId), branchWhere(ctx, employeeProfiles.branchId)))
         .groupBy(employeeProfiles.employmentStatus),
       db.select({ value: count() }).from(employeeProfiles)
         .where(and(

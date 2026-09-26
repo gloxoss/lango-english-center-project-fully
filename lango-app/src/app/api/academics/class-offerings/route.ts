@@ -2,7 +2,8 @@ import { and, eq, ne } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireRequestContext, requireTenant, type RequestContext } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -25,14 +26,19 @@ export const classOfferingUpdateSchema = z.object({
   displayOrder: z.number().int().optional(),
 }).strict();
 
-async function assertReferencesBelongToTenant(tenantId: string, refs: { sessionYearId: string; classId: string; sectionId: string }) {
+async function assertReferencesBelongToTenant(tenantId: string, refs: { sessionYearId: string; classId: string; sectionId: string }, ctx?: RequestContext) {
   const [sessionRow] = await db.select({ id: sessionYears.id }).from(sessionYears).where(and(eq(sessionYears.id, refs.sessionYearId), eq(sessionYears.tenantId, tenantId))).limit(1);
   if (!sessionRow) {
     throw new ApiError(422, 'INVALID_REFERENCE', 'La session académique indiquée n\'existe pas pour cet établissement.');
   }
-  const [classRow] = await db.select({ id: classes.id }).from(classes).where(and(eq(classes.id, refs.classId), eq(classes.tenantId, tenantId))).limit(1);
+  const [classRow] = await db.select({ id: classes.id, branchId: classes.branchId }).from(classes).where(and(eq(classes.id, refs.classId), eq(classes.tenantId, tenantId))).limit(1);
   if (!classRow) {
     throw new ApiError(422, 'INVALID_REFERENCE', 'La classe indiquée n\'existe pas pour cet établissement.');
+  }
+  // An offering lives on its class's campus: a locked caller cannot place
+  // one outside their branch (checked whenever a context is provided).
+  if (ctx) {
+    assertBranchScope(ctx, classRow.branchId);
   }
   const [sectionRow] = await db.select({ id: sections.id }).from(sections).where(and(eq(sections.id, refs.sectionId), eq(sections.tenantId, tenantId))).limit(1);
   if (!sectionRow) {
@@ -99,7 +105,7 @@ export async function POST(request: Request) {
       sessionYearId: body.sessionYearId,
       classId: body.classId,
       sectionId: body.sectionId,
-    });
+    }, context);
 
     const [existing] = await db
       .select({ id: academicClassOfferings.id })

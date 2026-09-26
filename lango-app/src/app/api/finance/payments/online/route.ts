@@ -8,11 +8,12 @@ import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { getTenantCurrency } from '@/libs/finance/currency';
 import { validatePaymentMethod } from '@/libs/finance/payment-methods';
 import { getPaymentProvider } from '@/libs/payments';
 import { resolveSecretByKey } from '@/features/settings/services/secrets-service';
-import { invoices, paymentGatewaySessions } from '@/models/Schema';
+import { invoices, paymentGatewaySessions, user } from '@/models/Schema';
 
 const onlinePaymentSchema = z.object({
   invoiceId: z.string().uuid(),
@@ -42,6 +43,14 @@ export async function POST(request: Request) {
     if (invoice.status === 'cancelled') {
       throw new ApiError(409, 'INVOICE_CANCELLED', 'Une facture annulée ne peut pas être réglée.');
     }
+
+    // Campus lock: the invoice's campus is the owning student's branch.
+    const [student] = await db
+      .select({ branchId: user.branchId })
+      .from(user)
+      .where(and(eq(user.id, invoice.studentId), eq(user.tenantId, tenantId)))
+      .limit(1);
+    assertBranchScope(context, student?.branchId ?? null);
 
     const methodConfig = await validatePaymentMethod(tenantId, body.paymentMethod);
     if (!methodConfig || !methodConfig.provider) {

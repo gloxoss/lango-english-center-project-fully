@@ -2,6 +2,7 @@ import { and, eq, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { getClassReportCards } from '@/features/academics/services/report-card-service';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireAnyCapability } from '@/libs/api/permissions';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
     let targetClassSectionId: string;
     if (studentId) {
       const [student] = await db
-        .select({ classSectionId: user.classSectionId })
+        .select({ classSectionId: user.classSectionId, branchId: user.branchId })
         .from(user)
         .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId), eq(user.role, 'student')))
         .limit(1);
@@ -39,6 +40,7 @@ export async function GET(request: Request) {
       if (!student) {
         return NextResponse.json({ success: false, message: 'Élève introuvable.' }, { status: 404 });
       }
+      assertBranchScope(context, student.branchId);
       if (!student.classSectionId) {
         return NextResponse.json({ success: false, message: 'Élève non affecté à une classe.' }, { status: 422 });
       }

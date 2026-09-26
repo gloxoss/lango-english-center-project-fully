@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { examHalls } from '@/features/assessment/models/assessment-schema';
@@ -8,6 +8,7 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
+import { assertWritableBranch, branchWhere } from '@/libs/api/portal-scope';
 import { db } from '@/libs/DB';
 
 const createExamHallSchema = z.object({
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'grading.manage');
 
-    const halls = await db.select().from(examHalls).where(eq(examHalls.tenantId, tenantId)).orderBy(desc(examHalls.createdAt));
+    const halls = await db.select().from(examHalls).where(and(eq(examHalls.tenantId, tenantId), branchWhere(context, examHalls.branchId))).orderBy(desc(examHalls.createdAt));
     return NextResponse.json({ success: true, data: halls });
   } catch (error) {
     return apiErrorResponse(error);
@@ -37,6 +38,10 @@ export async function POST(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'grading.manage');
     const body = await parseJson(request, createExamHallSchema);
+    // DB4 + campus lock: an explicit hall campus must be writable by the caller.
+    if (body.branchId) {
+      await assertWritableBranch(context, body.branchId);
+    }
 
     const hall = await ExamMasterService.createExamHall({ tenantId, ...body });
     recordAudit(context, 'create', 'exam_hall', hall!.id, { name: body.name });

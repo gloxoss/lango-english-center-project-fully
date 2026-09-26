@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertWritableBranch, branchWhere } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -28,7 +29,14 @@ export async function POST(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'finance.manage');
     const body = await parseJson(request, previewSchema);
-    const branchId = body.branchId ?? null;
+    let branchId = body.branchId ?? null;
+    if (branchId != null) {
+      // A locked caller may only target their own campus; "Tous les sites"
+      // must pick a valid active campus of the tenant.
+      await assertWritableBranch(context, branchId);
+    } else if (context.branchId) {
+      branchId = context.branchId;
+    }
 
     const [version] = await db
       .select()
@@ -70,6 +78,7 @@ export async function POST(request: Request) {
     } else {
       const conditions = [eq(user.tenantId, tenantId), eq(user.role, 'student')];
       if (branchId) conditions.push(eq(user.branchId, branchId));
+      { const bc = branchWhere(context, user.branchId); if (bc) conditions.push(bc); }
       const rows = await db.select({ id: user.id }).from(user).where(and(...conditions));
       studentIds = rows.map(r => r.id);
     }

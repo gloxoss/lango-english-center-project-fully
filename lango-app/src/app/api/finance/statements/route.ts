@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { and, eq, inArray } from 'drizzle-orm';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
@@ -40,13 +41,14 @@ export async function GET(req: NextRequest) {
     }
 
     const [student] = await db
-      .select({ id: user.id, name: user.name })
+      .select({ id: user.id, name: user.name, branchId: user.branchId })
       .from(user)
       .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId)))
       .limit(1);
     if (!student) {
       throw new ApiError(404, 'NOT_FOUND', 'Étudiant introuvable.');
     }
+    assertBranchScope(ctx, student.branchId);
 
     const startDate = searchParams.get('startDate') ?? null;
     const endDate = searchParams.get('endDate') ?? null;

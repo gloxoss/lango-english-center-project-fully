@@ -18,10 +18,9 @@ import {
   overdueInvoiceCondition,
 } from '@/libs/finance/definitions';
 import { casablancaTodayIso } from '@/libs/finance/today';
+import { assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
 import {
   announcements,
-  assessmentResults,
-  assessments,
   attendance,
   attendanceFlags,
   classes,
@@ -152,11 +151,15 @@ export async function GET(request: Request) {
         .from(invoices)
         .where(and(eq(invoices.tenantId, tenantId), invoicedInvoiceCondition(invoices.status))),
       db.select({
-        avg: sql<number>`coalesce(avg(${assessmentResults.finalPercentage}), 0)::float`,
+        avg: sql<number>`coalesce(avg(${assessmentOutcomes.normalizedScore} * 5), 0)::float`,
         count: sql<number>`count(*)::int`,
       })
-        .from(assessmentResults)
-        .where(and(eq(assessmentResults.tenantId, tenantId), sql`${assessmentResults.finalPercentage} is not null`)),
+        .from(assessmentOutcomes)
+        .where(and(
+          eq(assessmentOutcomes.tenantId, tenantId),
+          eq(assessmentOutcomes.status, 'graded'),
+          sql`${assessmentOutcomes.normalizedScore} is not null`,
+        )),
       db.select({
         severity: attendanceFlags.severity,
         type: attendanceFlags.type,
@@ -235,17 +238,17 @@ export async function GET(request: Request) {
         ))
         .groupBy(sql`to_char(${attendance.date}, 'YYYY-MM')`),
       db.select({
-        month: sql<string>`to_char(${assessments.assessmentDate}, 'YYYY-MM')`,
-        avg: sql<number>`coalesce(avg(${assessmentResults.finalPercentage}), 0)::float`,
+        month: sql<string>`to_char(${assessmentOutcomes.createdAt}, 'YYYY-MM')`,
+        avg: sql<number>`coalesce(avg(${assessmentOutcomes.normalizedScore} * 5), 0)::float`,
       })
-        .from(assessmentResults)
-        .innerJoin(assessments, eq(assessmentResults.assessmentId, assessments.id))
+        .from(assessmentOutcomes)
         .where(and(
-          eq(assessmentResults.tenantId, tenantId),
-          sql`${assessmentResults.finalPercentage} is not null`,
-          gte(assessments.assessmentDate, sixMonthsAgo),
+          eq(assessmentOutcomes.tenantId, tenantId),
+          eq(assessmentOutcomes.status, 'graded'),
+          sql`${assessmentOutcomes.normalizedScore} is not null`,
+          gte(sql`substring(${assessmentOutcomes.createdAt}::text, 1, 10)`, sixMonthsAgo),
         ))
-        .groupBy(sql`to_char(${assessments.assessmentDate}, 'YYYY-MM')`),
+        .groupBy(sql`to_char(${assessmentOutcomes.createdAt}, 'YYYY-MM')`),
     ]);
 
     const totalStudents = studentCountRows[0]?.count ?? 0;

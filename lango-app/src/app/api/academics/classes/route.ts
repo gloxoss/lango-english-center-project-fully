@@ -12,6 +12,7 @@ import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
 import { classCreateSchema, classUpdateSchema, parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
+import { assessmentDefinitions } from '@/features/assessment/models/assessment-schema';
 import {
   academicClassOfferings,
   assessmentPlans,
@@ -78,12 +79,22 @@ async function resolveWritableBranch(
     const [branch] = await db
       .select({ id: branches.id })
       .from(branches)
-      .where(and(eq(branches.id, requested), eq(branches.tenantId, tenantId)))
+      .where(and(eq(branches.id, requested), eq(branches.tenantId, tenantId), eq(branches.isActive, true)))
       .limit(1);
     if (!branch) {
       throw new ApiError(422, 'INVALID_BRANCH', 'Le campus sélectionné n\'existe pas pour cet établissement.');
     }
     return requested;
+  }
+  // DB4: at a school WITH campuses, a class is never created campusless —
+  // the caller must choose. Branchless schools keep branchless classes.
+  const [anyBranch] = await db
+    .select({ id: branches.id })
+    .from(branches)
+    .where(and(eq(branches.tenantId, tenantId), eq(branches.isActive, true)))
+    .limit(1);
+  if (anyBranch) {
+    throw new ApiError(422, 'BRANCH_REQUIRED', 'Le campus est requis : choisissez un campus pour cette classe.');
   }
   return null;
 }
@@ -167,7 +178,7 @@ async function classDependencyBlockers(tenantId: string, classId: string) {
     .from(classSubjects)
     .where(and(eq(classSubjects.tenantId, tenantId), eq(classSubjects.classId, classId)));
 
-  const [sectionRows, placementRows, attendanceRows, registerRows, offeringRows, subjectRows, classTeacherRows, subjectTeacherRows, slotRows, planRows] = await Promise.all([
+  const [sectionRows, placementRows, attendanceRows, registerRows, offeringRows, subjectRows, classTeacherRows, subjectTeacherRows, slotRows, planRows, definitionRows] = await Promise.all([
     db.select({ n: count() }).from(classSections).where(and(eq(classSections.tenantId, tenantId), eq(classSections.classId, classId))),
     db.select({ n: count() }).from(studentPlacements).where(and(eq(studentPlacements.tenantId, tenantId), inArray(studentPlacements.classSectionId, sectionIds))),
     db.select({ n: count() }).from(attendance).where(and(eq(attendance.tenantId, tenantId), eq(attendance.studentGroupId, classId))),
@@ -178,6 +189,9 @@ async function classDependencyBlockers(tenantId: string, classId: string) {
     db.select({ n: count() }).from(subjectTeachers).where(and(eq(subjectTeachers.tenantId, tenantId), inArray(subjectTeachers.classSectionId, sectionIds))),
     db.select({ n: count() }).from(classScheduleSlots).where(and(eq(classScheduleSlots.tenantId, tenantId), inArray(classScheduleSlots.classSectionId, sectionIds))),
     db.select({ n: count() }).from(assessmentPlans).where(and(eq(assessmentPlans.tenantId, tenantId), inArray(assessmentPlans.classSubjectId, classSubjectIds))),
+    // Canonical assessments carry no FK to class_subjects; count them so a
+    // class with real grades is never deleted.
+    db.select({ n: count() }).from(assessmentDefinitions).where(and(eq(assessmentDefinitions.tenantId, tenantId), inArray(assessmentDefinitions.classSubjectId, classSubjectIds))),
   ]);
 
   return [
@@ -191,6 +205,7 @@ async function classDependencyBlockers(tenantId: string, classId: string) {
     { key: 'subject_teacher_assignments', count: Number(subjectTeacherRows[0]?.n ?? 0) },
     { key: 'timetable_slots', count: Number(slotRows[0]?.n ?? 0) },
     { key: 'assessment_plans', count: Number(planRows[0]?.n ?? 0) },
+    { key: 'assessments', count: Number(definitionRows[0]?.n ?? 0) },
   ].filter(blocker => blocker.count > 0);
 }
 

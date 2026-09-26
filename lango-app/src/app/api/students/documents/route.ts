@@ -3,6 +3,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { contentTypeFor, resolveTenantPath, saveUploadedFile } from '@/libs/api/uploads';
@@ -136,9 +137,7 @@ export async function POST(request: Request) {
     if (!student) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'L\'élève indiqué n\'existe pas pour cet établissement.');
     }
-    if (context.branchId && student.branchId && student.branchId !== context.branchId) {
-      throw new ApiError(403, 'FORBIDDEN', 'Accès non autorisé pour cette succursale.');
-    }
+    assertBranchScope(context, student.branchId);
     await assertTeacherTeachesStudent(context, tenantId, student.classSectionId);
 
     const ext = await saveUploadedFile(tenantId, `documents/${studentId}/${documentType}.{ext}`, file, ALLOWED_TYPES, MAX_SIZE_BYTES);

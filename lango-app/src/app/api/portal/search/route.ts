@@ -15,7 +15,6 @@ export async function GET(request: Request) {
     requireTenantId(context);
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q')?.trim();
-    const branchId = searchParams.get('branchId');
 
     if (!query || query.length < 2) {
       return NextResponse.json({
@@ -24,7 +23,8 @@ export async function GET(request: Request) {
       });
     }
 
-    const data = await searchPortal(context, query, branchId);
+    // No client branch parameter: searchPortal scopes from ctx.branchId.
+    const data = await searchPortal(context, query);
     return NextResponse.json({ success: true, data });
   } catch (error) {
     return apiErrorResponse(error);

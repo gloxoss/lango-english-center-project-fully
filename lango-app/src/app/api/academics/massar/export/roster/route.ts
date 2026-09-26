@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     const { buffer, filename } = await generateMassarStudentRoster(tenantId, {
       classSectionId,
       branchId: effectiveBranchId,
+      ctx,
       studentIds,
       onlyValid,
     });

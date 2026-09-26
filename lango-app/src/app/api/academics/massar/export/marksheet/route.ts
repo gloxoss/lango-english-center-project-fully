@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
+import { and, eq } from 'drizzle-orm';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { generateMassarMarksheet } from '@/features/academics/services/massar-sync-service';
+import { assessmentDefinitions } from '@/features/assessment/models/assessment-schema';
+import { classSubjects, classes } from '@/models/Schema';
+import { db } from '@/libs/DB';
 
 export async function GET(request: Request) {
   try {
@@ -14,6 +19,16 @@ export async function GET(request: Request) {
     if (!assessmentDefId) {
       return NextResponse.json({ success: false, message: 'assessmentDefId requis.' }, { status: 400 });
     }
+
+    // Campus lock: the marksheet's campus is the class behind the definition.
+    const [campus] = await db
+      .select({ branchId: classes.branchId })
+      .from(assessmentDefinitions)
+      .leftJoin(classSubjects, eq(assessmentDefinitions.classSubjectId, classSubjects.id))
+      .leftJoin(classes, eq(classSubjects.classId, classes.id))
+      .where(and(eq(assessmentDefinitions.id, assessmentDefId), eq(assessmentDefinitions.tenantId, tenantId)))
+      .limit(1);
+    assertBranchScope(ctx, campus?.branchId ?? null);
 
     const { buffer, filename } = await generateMassarMarksheet(tenantId, assessmentDefId);
 

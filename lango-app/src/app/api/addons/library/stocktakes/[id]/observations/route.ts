@@ -13,7 +13,7 @@ export async function POST(r: Request, { params }: { params: Promise<{ id: strin
     const { tenantId, context } = await requireLibraryContext(r, 'library.stocktake.manage');
     const { id } = await params;
     const b = await parseJson(r, schema);
-    const data = await observeCopy(tenantId, context.userId, id, b.copyId, b.found, b.note);
+    const data = await observeCopy(tenantId, context.userId, id, b.copyId, b.found, b.note, context);
     recordAudit(context, 'update', 'library_stocktake_observation', data.id, { stocktakeId: id, copyId: b.copyId, found: b.found });
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (e) { return apiErrorResponse(e); }

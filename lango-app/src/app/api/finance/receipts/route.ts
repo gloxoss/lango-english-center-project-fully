@@ -2,6 +2,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
@@ -38,7 +39,12 @@ export async function GET(request: Request) {
       .from(receipts)
       .innerJoin(studentAlias, eq(receipts.studentId, studentAlias.id))
       .leftJoin(cashierAlias, eq(receipts.createdById, cashierAlias.id))
-      .where(studentId ? and(eq(receipts.tenantId, tenantId), eq(receipts.studentId, studentId)) : eq(receipts.tenantId, tenantId))
+      .where(and(
+        eq(receipts.tenantId, tenantId),
+        studentId ? eq(receipts.studentId, studentId) : undefined,
+        // Money follows the student's campus (plan section 5, student mode).
+        branchWhere(context, studentAlias.branchId),
+      ))
       .orderBy(desc(receipts.createdAt));
 
     return NextResponse.json({ success: true, data: rows, total: rows.length });

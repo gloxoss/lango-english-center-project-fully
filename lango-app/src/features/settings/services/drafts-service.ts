@@ -2,6 +2,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { ApiError } from '@/libs/api/errors';
 import type { RequestContext } from '@/libs/api/context';
 import { requireTenant } from '@/libs/api/context';
+import { assertBranchScope, assertWritableBranch, branchWhere } from '@/libs/api/portal-scope';
 import { recordAudit } from '@/libs/api/audit';
 import { db } from '@/libs/DB';
 import { getDefinition, getEffectiveValue, setSettingValue } from '@/libs/settings/registry';
@@ -45,6 +46,7 @@ export async function listDrafts(
     .where(and(
       eq(settingDrafts.tenantId, tenantId),
       status ? eq(settingDrafts.status, status) : undefined,
+      branchWhere(context, settingDrafts.branchId),
     ))
     .orderBy(desc(settingDrafts.createdAt));
 }
@@ -60,6 +62,8 @@ export async function getDraft(
     .where(and(eq(settingDrafts.tenantId, tenantId), eq(settingDrafts.id, id)))
     .limit(1);
   if (!draft) throw new ApiError(404, 'NOT_FOUND', 'Proposition introuvable.');
+  // Campus lock: a draft lives on the campus it was filed for (null = tenant-wide).
+  assertBranchScope(context, draft.branchId);
   return draft;
 }
 
@@ -81,7 +85,12 @@ export async function createDraft(context: RequestContext, input: CreateDraftInp
     throw new ApiError(422, 'VALIDATION_ERROR', msg);
   }
 
-  const branchId = input.branchId ?? context.branchId ?? null;
+  // Campus lock: a branch-locked author may only file drafts for their own
+  // campus, and an explicit branch must be an active branch of the tenant.
+  if (input.branchId) {
+    await assertWritableBranch(context, input.branchId);
+  }
+  const branchId = context.branchLocked ? context.branchId : (input.branchId ?? context.branchId ?? null);
   if (branchId && def.scope !== 'branch') {
     throw new ApiError(400, 'SCOPE_ERROR', `Le paramètre "${input.key}" ne peut pas être surchargé au niveau filiale.`);
   }

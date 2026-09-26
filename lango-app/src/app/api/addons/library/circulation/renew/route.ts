@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   try {
     const { tenantId, context } = await requireLibraryContext(request, 'library.circulation.operate');
     const { loanId, expectedRenewedCount } = await parseJson(request, schema);
-    const data = await renewLoan(tenantId, context.userId, loanId, expectedRenewedCount);
+    const data = await renewLoan(tenantId, context.userId, loanId, expectedRenewedCount, context);
     recordAudit(context, 'update', 'library_loan', data.id, { action: 'renew', expectedRenewedCount });
     return NextResponse.json({ success: true, data });
   } catch (e) { return apiErrorResponse(e); }

@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
       })
       .from(cashierSessions)
       .innerJoin(user, eq(cashierSessions.cashierId, user.id))
-      .where(and(...conditions))
+      .where(and(...conditions, branchWhere(context, user.branchId)))
       .orderBy(desc(cashierSessions.openedAt));
 
     return NextResponse.json({ success: true, data: records });

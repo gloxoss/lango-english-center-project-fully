@@ -1,6 +1,7 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
 import { classes, classScheduleSlots, classSections, classSubjects, sections, subjects, user } from '@/models/Schema';
@@ -194,7 +195,7 @@ export async function GET(request: Request) {
       .innerJoin(classSubjects, eq(classScheduleSlots.classSubjectId, classSubjects.id))
       .innerJoin(subjects, eq(classSubjects.subjectId, subjects.id))
       .innerJoin(user, eq(classScheduleSlots.teacherId, user.id))
-      .where(eq(classScheduleSlots.tenantId, tenantId));
+      .where(and(eq(classScheduleSlots.tenantId, tenantId), branchWhere(context, classes.branchId)));
 
     const slots: SlotRow[] = rows.map(r => ({
       id: r.id,

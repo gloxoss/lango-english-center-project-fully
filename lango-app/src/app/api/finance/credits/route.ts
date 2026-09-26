@@ -6,6 +6,7 @@ import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
 import { studentCredits } from '@/models/Schema';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { user } from '@/models/Schema';
 
 // GET /api/finance/credits?studentId= — tenant-scoped student credit balance
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get('studentId');
 
-    const conditions = [eq(studentCredits.tenantId, tenantId)];
+    const conditions = [eq(studentCredits.tenantId, tenantId), branchWhere(context, user.branchId)];
     if (studentId) conditions.push(eq(studentCredits.studentId, studentId));
 
     const records = await db

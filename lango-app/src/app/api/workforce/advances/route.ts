@@ -2,6 +2,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { requireWorkforceAddon } from '@/libs/api/entitlements';
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(ctx);
     await requireWorkforceAddon(tenantId);
     await requireCapability(ctx, 'payroll.advances.manage');
-    const rows = await db.select({ id: salaryAdvances.id, employeeId: salaryAdvances.employeeId, employeeName: user.name, requestedAmount: salaryAdvances.requestedAmount, approvedAmount: salaryAdvances.approvedAmount, repaidAmount: salaryAdvances.repaidAmount, monthlyInstallment: salaryAdvances.monthlyInstallment, reason: salaryAdvances.reason, status: salaryAdvances.status, requestedAt: salaryAdvances.requestedAt, rejectionReason: salaryAdvances.rejectionReason }).from(salaryAdvances).innerJoin(employeeProfiles, and(eq(salaryAdvances.employeeId, employeeProfiles.id), eq(employeeProfiles.tenantId, tenantId))).innerJoin(user, eq(employeeProfiles.userId, user.id)).where(eq(salaryAdvances.tenantId, tenantId)).orderBy(desc(salaryAdvances.createdAt));
+    const rows = await db.select({ id: salaryAdvances.id, employeeId: salaryAdvances.employeeId, employeeName: user.name, requestedAmount: salaryAdvances.requestedAmount, approvedAmount: salaryAdvances.approvedAmount, repaidAmount: salaryAdvances.repaidAmount, monthlyInstallment: salaryAdvances.monthlyInstallment, reason: salaryAdvances.reason, status: salaryAdvances.status, requestedAt: salaryAdvances.requestedAt, rejectionReason: salaryAdvances.rejectionReason }).from(salaryAdvances).innerJoin(employeeProfiles, and(eq(salaryAdvances.employeeId, employeeProfiles.id), eq(employeeProfiles.tenantId, tenantId))).innerJoin(user, eq(employeeProfiles.userId, user.id)).where(and(eq(salaryAdvances.tenantId, tenantId), branchWhere(ctx, employeeProfiles.branchId))).orderBy(desc(salaryAdvances.createdAt));
     return NextResponse.json({ success: true, data: rows.map(r => ({ ...r, requestedAmount: Number(r.requestedAmount), approvedAmount: r.approvedAmount == null ? null : Number(r.approvedAmount), repaidAmount: Number(r.repaidAmount), monthlyInstallment: r.monthlyInstallment == null ? null : Number(r.monthlyInstallment) })) });
   } catch (error) { return apiErrorResponse(error); }
 }

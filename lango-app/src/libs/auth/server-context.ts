@@ -6,10 +6,22 @@ import { tenants, user } from '@/models/Schema';
 import { APP_ROLES, type AppRole } from '@/libs/api/context';
 import { resolveActiveContext } from '@/features/portal/services/active-context';
 
+// Patron roles are never branch-filtered: their context branch is always
+// null, even with a stray user.branchId. Kept local (mirroring
+// isPatronRole in features/portal/services/active-context) so suites that
+// mock active-context with an explicit export list keep working.
+function isPatronRole(role: AppRole): boolean {
+  return role === 'parent' || role === 'student' || role === 'alumni';
+}
+
 export type ServerUserContext = {
   userId: string;
   tenantId: string | null;
   branchId: string | null;
+  /** True when the principal is hard-locked to their assigned branch
+   *  (user.branchId set, staff role). Same semantics as RequestContext
+   *  (optional, absent = "not locked"). */
+  branchLocked?: boolean;
   role: AppRole;
   baseRole: AppRole;
   name: string | null;
@@ -78,10 +90,21 @@ export async function getServerUserContext(): Promise<ServerUserContext | null> 
     }
   }
 
+  // Same branch-scope rules as requireRequestContext: the branch comes only
+  // from the server-resolved context, patron roles are never filtered, and a
+  // lock always confines.
+  const activeBranchId = isPatronRole(effectiveRole)
+    ? null
+    : principal.branchId ?? activeCtx?.activeBranchId ?? null;
+  const branchLocked = activeCtx
+    ? activeCtx.branchLocked
+    : principal.branchId !== null && !isPatronRole(effectiveRole);
+
   return {
     userId: principal.id,
     tenantId: resolvedTenantId,
-    branchId: activeCtx?.activeBranchId ?? principal.branchId,
+    branchId: activeBranchId,
+    branchLocked,
     role: effectiveRole,
     baseRole: principal.role,
     name: principal.name,

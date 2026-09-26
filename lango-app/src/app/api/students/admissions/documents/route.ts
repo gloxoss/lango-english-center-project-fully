@@ -5,6 +5,7 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { saveUploadedFile } from '@/libs/api/uploads';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { db } from '@/libs/DB';
 import { applicantDocuments, applicants } from '@/models/Schema';
 
@@ -27,6 +28,17 @@ export async function GET(request: Request) {
     if (!applicantId) {
       return NextResponse.json({ success: false, message: 'applicantId requis.' }, { status: 400 });
     }
+
+    // Campus lock on the applicant before listing its documents.
+    const [applicant] = await db
+      .select({ branchId: applicants.branchId })
+      .from(applicants)
+      .where(and(eq(applicants.id, applicantId), eq(applicants.tenantId, tenantId)))
+      .limit(1);
+    if (!applicant) {
+      throw new ApiError(404, 'NOT_FOUND', 'La demande d\'admission indiquée n\'existe pas pour cet établissement.');
+    }
+    assertBranchScope(context, applicant.branchId);
 
     const rows = await db
       .select({ documentType: applicantDocuments.documentType, fileExt: applicantDocuments.fileExt, uploadedAt: applicantDocuments.uploadedAt })
@@ -68,13 +80,14 @@ export async function POST(request: Request) {
     }
 
     const [applicant] = await db
-      .select({ id: applicants.id })
+      .select({ id: applicants.id, branchId: applicants.branchId })
       .from(applicants)
       .where(and(eq(applicants.id, applicantId), eq(applicants.tenantId, tenantId)))
       .limit(1);
     if (!applicant) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'La demande d\'admission indiquée n\'existe pas pour cet établissement.');
     }
+    assertBranchScope(context, applicant.branchId);
 
     const ext = await saveUploadedFile(tenantId, `applicant-documents/${applicantId}/${documentType}.{ext}`, file, ALLOWED_TYPES, MAX_SIZE_BYTES);
 

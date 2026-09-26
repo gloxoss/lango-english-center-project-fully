@@ -3,11 +3,12 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope, branchWhere } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { classSections, classSubjects, onlineExams, user } from '@/models/Schema';
+import { classSections, classSubjects, onlineExams, user, classes } from '@/models/Schema';
 
 const createExamSchema = z.object({
   classSubjectId: z.string().uuid(),
@@ -51,10 +52,13 @@ export async function GET(request: Request) {
     }
 
     const items = await db
-      .select()
+      .select({ exam: onlineExams })
       .from(onlineExams)
-      .where(eq(onlineExams.tenantId, tenantId))
-      .orderBy(desc(onlineExams.createdAt));
+      .leftJoin(classSubjects, eq(onlineExams.classSubjectId, classSubjects.id))
+      .leftJoin(classes, eq(classSubjects.classId, classes.id))
+      .where(and(eq(onlineExams.tenantId, tenantId), branchWhere(context, classes.branchId)))
+      .orderBy(desc(onlineExams.createdAt))
+      .then(rows => rows.map(r => r.exam));
 
     return NextResponse.json({
       success: true,
@@ -71,6 +75,15 @@ export async function POST(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'grading.manage');
     const body = await parseJson(request, createExamSchema);
+
+    // An exam is campus data of the class behind its class-subject.
+    const [csBranch] = await db
+      .select({ branchId: classes.branchId })
+      .from(classSubjects)
+      .innerJoin(classes, eq(classSubjects.classId, classes.id))
+      .where(and(eq(classSubjects.id, body.classSubjectId), eq(classSubjects.tenantId, tenantId)))
+      .limit(1);
+    assertBranchScope(context, csBranch?.branchId ?? null);
 
     const [exam] = await db
       .insert(onlineExams)

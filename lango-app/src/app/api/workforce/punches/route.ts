@@ -5,6 +5,7 @@ import { computeHmacHash } from '@/libs/api/badge-crypto';
 import { isCredentialExpired } from '@/libs/api/badge-service';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
       })
       .from(workforcePunchEvents)
       .leftJoin(user, eq(workforcePunchEvents.employeeId, user.id))
-      .where(eq(workforcePunchEvents.tenantId, tenantId))
+      .where(and(eq(workforcePunchEvents.tenantId, tenantId), branchWhere(context, user.branchId)))
       .orderBy(desc(workforcePunchEvents.scannedAt))
       .limit(50);
 

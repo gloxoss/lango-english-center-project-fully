@@ -9,11 +9,18 @@ const { assertOnlineExamAuthoringAccess } = await import('@/features/assessment/
 
 const EXAM = { id: 'exam-1', createdById: 'author-1', classSubjectId: 'cs-1' };
 
-/** Queue the rows returned by successive `select().from().where().limit()` calls. */
+/** Queue the rows returned by successive select chains (plain or with joins). */
 function queue(...results: unknown[][]) {
   let i = 0;
+  const chain: Record<string, unknown> = {
+    where: () => ({ limit: async () => results[i++] ?? [] }),
+  };
+  chain.innerJoin = () => chain;
+  chain.leftJoin = () => chain;
   vi.mocked(db.select).mockImplementation((() => ({
-    from: () => ({ where: () => ({ limit: async () => results[i++] ?? [] }) }),
+    from: () => chain,
+    innerJoin: () => chain,
+    leftJoin: () => chain,
   })) as never);
 }
 
@@ -23,14 +30,14 @@ beforeEach(() => vi.clearAllMocks());
 
 describe('assertOnlineExamAuthoringAccess', () => {
   it('lets the author and admins in', async () => {
-    queue([EXAM]);
+    queue([EXAM], [{ branchId: null }]);
     await expect(assertOnlineExamAuthoringAccess(ctx('teacher', 'author-1'), 't', 'exam-1')).resolves.toBe('exam-1');
-    queue([EXAM]);
+    queue([EXAM], [{ branchId: null }]);
     await expect(assertOnlineExamAuthoringAccess(ctx('school_admin', 'adm'), 't', 'exam-1')).resolves.toBe('exam-1');
   });
 
   it('lets an assigned subject teacher in', async () => {
-    queue([EXAM], [{ id: 'st-1' }]);
+    queue([EXAM], [{ branchId: null }], [{ id: 'st-1' }]); // campus row consumed first
     await expect(assertOnlineExamAuthoringAccess(ctx('teacher', 'other-t'), 't', 'exam-1')).resolves.toBe('exam-1');
   });
 

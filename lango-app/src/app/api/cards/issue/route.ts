@@ -6,6 +6,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
 import { recordAudit } from '@/libs/api/audit';
 import { parseJson } from '@/libs/api/validation';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { issueDocument } from '@/features/cards/services/issue-service';
 import { and, eq } from 'drizzle-orm';
 import { documentEvents } from '@/features/cards/models/cards-schema';
@@ -40,9 +41,7 @@ export async function POST(request: Request) {
         throw new ApiError(404, 'NOT_FOUND', 'Élève introuvable pour cet établissement.');
       }
 
-      if (context.branchId && studentRow.branchId && studentRow.branchId !== context.branchId) {
-        throw new ApiError(403, 'FORBIDDEN', 'Accès interdit à cette succursale pour l\'émission de carte.');
-      }
+      assertBranchScope(context, studentRow.branchId);
     }
 
     const result = await issueDocument({

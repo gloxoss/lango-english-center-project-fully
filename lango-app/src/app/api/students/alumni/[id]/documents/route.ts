@@ -4,6 +4,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { saveUploadedFile } from '@/libs/api/uploads';
@@ -56,10 +57,11 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       throw new ApiError(422, 'VALIDATION_ERROR', 'Fichier requis.');
     }
 
-    const [alumnus] = await db.select({ id: user.id }).from(user).where(and(eq(user.id, alumnusId), eq(user.tenantId, tenantId), eq(user.role, 'alumni'))).limit(1);
+    const [alumnus] = await db.select({ id: user.id, branchId: user.branchId }).from(user).where(and(eq(user.id, alumnusId), eq(user.tenantId, tenantId), eq(user.role, 'alumni'))).limit(1);
     if (!alumnus) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'L\'ancien(ne) élève indiqué(e) n\'existe pas pour cet établissement.');
     }
+    assertBranchScope(context, alumnus.branchId);
 
     const documentId = randomUUID();
     const ext = await saveUploadedFile(tenantId, `alumni-documents/${alumnusId}/${documentId}.{ext}`, file, ALLOWED_TYPES, MAX_SIZE_BYTES);

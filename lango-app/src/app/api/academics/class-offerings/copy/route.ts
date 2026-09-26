@@ -1,4 +1,5 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -88,14 +89,25 @@ export async function POST(request: Request) {
     }
 
     // Fetch active offerings from source session
+    // Campus scope: a locked caller copies only offerings whose class is in
+    // their branch; "Tous les sites" (no branch) copies the whole session.
+    const sourceConditions = [
+      eq(academicClassOfferings.tenantId, tenantId),
+      eq(academicClassOfferings.sessionYearId, body.sourceSessionYearId),
+      eq(academicClassOfferings.status, 'active'),
+    ];
+    if (context.branchId) {
+      const branchClasses = await db
+        .select({ id: classes.id })
+        .from(classes)
+        .where(and(eq(classes.tenantId, tenantId), branchWhere(context, classes.branchId)));
+      // A branch with no classes simply copies nothing.
+      sourceConditions.push(inArray(academicClassOfferings.classId, branchClasses.map(c => c.id)));
+    }
     let sourceOfferings = await db
       .select()
       .from(academicClassOfferings)
-      .where(and(
-        eq(academicClassOfferings.tenantId, tenantId),
-        eq(academicClassOfferings.sessionYearId, body.sourceSessionYearId),
-        eq(academicClassOfferings.status, 'active'),
-      ));
+      .where(and(...sourceConditions));
 
     if (sourceOfferings.length === 0) {
       throw new ApiError(400, 'BAD_REQUEST', 'La session source ne contient aucune offre de classe active.');

@@ -39,6 +39,7 @@ beforeEach(() => {
 describe('invoice cancel', () => {
   it('takes the same per-invoice lock as payments before reading', async () => {
     selectResults.push([{ id: 'inv-1', status: 'pending', paidAmount: 0, invoiceNumber: 'INV-1' }]);
+    selectResults.push([{ branchId: 'branch-a' }]); // student campus read (branch scope)
     updateResults.push([{ id: 'inv-1', status: 'cancelled' }]);
     const res = await cancel();
 
@@ -57,6 +58,7 @@ describe('invoice cancel', () => {
 
   it('refuses when the status changed before the update landed', async () => {
     selectResults.push([{ id: 'inv-1', status: 'pending', paidAmount: 0, invoiceNumber: 'INV-1' }]);
+    selectResults.push([{ branchId: 'branch-a' }]); // student campus read (branch scope)
     updateResults.push([]);
     const res = await cancel();
 

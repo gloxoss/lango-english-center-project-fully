@@ -9,10 +9,25 @@ import { ApiError } from './errors';
 export const APP_ROLES = ['super_admin', 'school_admin', 'teacher', 'accountant', 'student', 'alumni', 'parent', 'receptionist', 'guard', 'librarian'] as const;
 export type AppRole = (typeof APP_ROLES)[number];
 
+// Patron roles are never branch-filtered: their context branch is always
+// null, even with a stray user.branchId. Kept local (mirroring
+// isPatronRole in features/portal/services/active-context) so suites that
+// mock active-context with an explicit export list keep working.
+function isPatronRole(role: AppRole): boolean {
+  return role === 'parent' || role === 'student' || role === 'alumni';
+}
+
 export type RequestContext = {
   userId: string;
   tenantId: string | null;
   branchId: string | null;
+  /** True when the principal is hard-locked to their assigned branch
+   *  (user.branchId set, staff role). False for whole-school staff (who may
+   *  choose a campus server-side), patrons and super-admin. Optional with
+   *  default false so synthetic contexts (kiosks, workers, tests) that bypass
+   *  requireRequestContext stay valid: absent means "not locked". The two
+   *  real context builders always set it explicitly. */
+  branchLocked?: boolean;
   role: AppRole;
   baseRole: AppRole;
   name: string;
@@ -122,17 +137,25 @@ export async function requireRequestContext(
   }
 
   // Authoritative-only branch scope. resolveActiveContext has already
-  // revalidated a stored active branch against user.branchId, so a stored
-  // branch is the only value that can differ from the principal's. A
-  // client-supplied x-branch-id / ?branchId= is never honored: without a
-  // multi-assignment table, user.branchId is the only branch this principal
-  // may reference, so a header claiming a different branch is a forgery.
-  const activeBranchId = activeCtx?.activeBranchId ?? principal.branchId ?? null;
+  // revalidated a stored active branch against user.branchId / the tenant's
+  // active branches, so a stored branch is the only value that can differ
+  // from the principal's. A client-supplied x-branch-id / ?branchId= is never
+  // honored as a source: the branch comes from the server context, and a
+  // client may only NARROW it where a route explicitly allows that.
+  // Order matters: patrons never filter; a lock always confines (a stored
+  // context cannot widen it); whole-school staff get their stored choice.
+  const activeBranchId = isPatronRole(effectiveRole)
+    ? null
+    : principal.branchId ?? activeCtx?.activeBranchId ?? null;
+  const branchLocked = activeCtx
+    ? activeCtx.branchLocked
+    : principal.branchId !== null && !isPatronRole(effectiveRole);
 
   return {
     userId: principal.id,
     tenantId: resolvedTenantId,
     branchId: activeBranchId,
+    branchLocked,
     role: effectiveRole,
     baseRole: principal.role,
     name: principal.name,

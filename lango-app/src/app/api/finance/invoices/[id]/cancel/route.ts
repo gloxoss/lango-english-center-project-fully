@@ -2,10 +2,11 @@ import { and, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
-import { invoiceEvents, invoices } from '@/models/Schema';
+import { invoiceEvents, invoices, user } from '@/models/Schema';
 
 // PUT /api/finance/invoices/:id/cancel — void an issued (pending) invoice that
 // has not been paid. A cancelled invoice is excluded from receivables and
@@ -31,6 +32,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       if (!invoice) {
         throw new ApiError(404, 'INVOICE_NOT_FOUND', 'Facture introuvable.');
       }
+      // Money follows the student's campus: a locked caller cannot cancel
+      // another campus's invoice (queried on the tx connection).
+      const [studentBranch] = await tx
+        .select({ branchId: user.branchId })
+        .from(user)
+        .where(and(eq(user.id, invoice.studentId), eq(user.tenantId, tenantId), eq(user.role, 'student')))
+        .limit(1);
+      assertBranchScope(context, studentBranch?.branchId ?? null);
       if (invoice.status !== 'pending' || Number(invoice.paidAmount ?? 0) > 0) {
         throw new ApiError(409, 'INVOICE_NOT_CANCELLABLE', 'Seule une facture émise et non réglée peut être annulée.');
       }

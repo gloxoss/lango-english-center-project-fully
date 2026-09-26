@@ -5,8 +5,8 @@ import { getMemberDetail } from '@/features/library/services/library-service';
 
 export async function GET(r: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { tenantId } = await requireLibraryContext(r, 'library.circulation.operate');
+    const { tenantId, context } = await requireLibraryContext(r, 'library.circulation.operate');
     const { id } = await params;
-    return NextResponse.json({ success: true, data: await getMemberDetail(tenantId, id) });
+    return NextResponse.json({ success: true, data: await getMemberDetail(tenantId, id, context) });
   } catch (e) { return apiErrorResponse(e); }
 }

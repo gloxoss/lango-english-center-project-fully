@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertWritableBranch, branchWhere } from '@/libs/api/portal-scope';
 import { apiErrorResponse, ApiError } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
     const rows = await db
       .select()
       .from(feeStructures)
-      .where(eq(feeStructures.tenantId, tenantId))
+      .where(and(eq(feeStructures.tenantId, tenantId), branchWhere(context, feeStructures.branchId)))
       .limit(pagination.limit)
       .offset(pagination.offset);
 
@@ -35,6 +36,9 @@ export async function POST(request: Request) {
     const tenantId = requireTenant(context);
     await requireCapability(context, 'finance.approve');
     const body = await parseJson(request, feeStructureCreateSchema);
+    if (body.branchId != null) {
+      await assertWritableBranch(context, body.branchId);
+    }
 
     const [inserted] = await db
       .insert(feeStructures)

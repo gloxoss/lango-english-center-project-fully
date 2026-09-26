@@ -1,6 +1,7 @@
 import { and, count, desc, eq, ilike } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
@@ -20,6 +21,9 @@ export async function GET(request: Request) {
     const search = searchParams.get('search');
 
     const conditions = [eq(user.tenantId, tenantId), eq(user.role, 'alumni')];
+    // Campus scope travels with the alumnus's user row (student mode).
+    const branchCondition = branchWhere(context, user.branchId);
+    if (branchCondition) conditions.push(branchCondition);
     if (search) {
       conditions.push(ilike(user.name, `%${search}%`));
     }

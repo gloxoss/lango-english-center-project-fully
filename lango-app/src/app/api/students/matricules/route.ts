@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -31,9 +32,9 @@ export async function GET(request: Request) {
       eq(user.role, 'student'),
       eq(user.tenantId, tenantId),
     ];
-    if (context.branchId) {
-      conditions.push(eq(user.branchId, context.branchId));
-    }
+    const branchCondition = branchWhere(context, user.branchId);
+
+    if (branchCondition) conditions.push(branchCondition);
 
     const [nextMatricule, [stats]] = await Promise.all([
       previewMatricule(db, tenantId),
@@ -94,9 +95,9 @@ export async function POST(request: Request) {
         eq(user.tenantId, tenantId),
         eq(user.role, 'student'),
       ];
-      if (context.branchId) {
-        studentConditions.push(eq(user.branchId, context.branchId));
-      }
+      const branchCondition = branchWhere(context, user.branchId);
+
+      if (branchCondition) studentConditions.push(branchCondition);
       const [found] = await db
         .select({ id: user.id, name: user.name, matricule: user.matricule })
         .from(user)
@@ -114,9 +115,9 @@ export async function POST(request: Request) {
         eq(user.role, 'student'),
         sql`(${user.matricule} IS NULL OR ${user.matricule} = '')`,
       ];
-      if (context.branchId) {
-        unassignedConditions.push(eq(user.branchId, context.branchId));
-      }
+      const branchCondition = branchWhere(context, user.branchId);
+
+      if (branchCondition) unassignedConditions.push(branchCondition);
 
       const [candidate] = await db
         .select({ id: user.id, name: user.name })
@@ -187,9 +188,9 @@ export async function PATCH(request: Request) {
       eq(user.tenantId, tenantId),
       eq(user.role, 'student'),
     ];
-    if (context.branchId) {
-      studentConditions.push(eq(user.branchId, context.branchId));
-    }
+    const branchCondition = branchWhere(context, user.branchId);
+
+    if (branchCondition) studentConditions.push(branchCondition);
 
     const [existingStudent] = await db
       .select({

@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson, scheduleSlotCreateSchema, scheduleSlotUpdateSchema } from '@/libs/api/validation';
@@ -68,6 +69,11 @@ export async function GET(request: Request) {
     if (roomLabel) {
       filters.push(eq(classScheduleSlots.roomLabel, roomLabel));
     }
+    // The timetable is branch-scoped through each slot's class.
+    const branchCondition = branchWhere(context, classes.branchId);
+    if (branchCondition) {
+      filters.push(branchCondition);
+    }
 
     const rows = await db
       .select({
@@ -108,7 +114,7 @@ export async function POST(request: Request) {
     await requireCapability(context, 'academics.manage');
     const body = await parseJson(request, scheduleSlotCreateSchema);
 
-    await assertSlotIsValid(tenantId, body);
+    await assertSlotIsValid(tenantId, body, undefined, context);
 
     const [inserted] = await db
       .insert(classScheduleSlots)
@@ -146,7 +152,7 @@ export async function PUT(request: Request) {
       offeringId: body.offeringId !== undefined ? body.offeringId : existing.offeringId,
       versionId: body.versionId !== undefined ? body.versionId : existing.versionId,
     };
-    await assertSlotIsValid(tenantId, merged, body.id);
+    await assertSlotIsValid(tenantId, merged, body.id, context);
 
     const [updated] = await db
       .update(classScheduleSlots)

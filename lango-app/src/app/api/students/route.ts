@@ -7,6 +7,7 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
+import { assertBranchScope, assertWritableBranch, branchWhere } from '@/libs/api/portal-scope';
 import { parseJson, studentCreateSchema, studentUpdateSchema } from '@/libs/api/validation';
 import { csvSafeCell } from '@/libs/csv-safe';
 import { db } from '@/libs/DB';
@@ -15,11 +16,10 @@ import { casablancaTodayIso } from '@/libs/finance/today';
 import { reserveMatricule } from '@/libs/services/matricule';
 import { resolveStudentGuardianProjection } from '@/libs/services/student-guardian-projection';
 import { hardDeleteStudent, transitionStudentLifecycle } from '@/libs/services/student-lifecycle';
+import { assessmentDefinitions, assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
 import {
   alumniDirectoryConsent,
   alumniRequests,
-  assessmentResults,
-  assessments,
   attendance,
   branches,
   classes,
@@ -270,16 +270,20 @@ async function getStudentDetail(tenantId: string, id: string, branchId?: string 
       .orderBy(desc(studentPlacements.startDate), desc(studentPlacements.createdAt)),
     db
       .select({
-        id: assessmentResults.id,
-        title: assessments.title,
-        finalPercentage: assessmentResults.finalPercentage,
-        gradeCode: assessmentResults.gradeCode,
-        date: assessments.assessmentDate,
+        id: assessmentOutcomes.id,
+        title: assessmentDefinitions.title,
+        finalPercentage: sql<string>`round((${assessmentOutcomes.normalizedScore} * 5)::numeric, 2)::text`,
+        gradeCode: assessmentOutcomes.grade,
+        date: assessmentOutcomes.createdAt,
       })
-      .from(assessmentResults)
-      .innerJoin(assessments, eq(assessmentResults.assessmentId, assessments.id))
-      .where(and(eq(assessmentResults.tenantId, tenantId), eq(assessmentResults.studentId, id)))
-      .orderBy(desc(assessments.assessmentDate), desc(assessmentResults.createdAt))
+      .from(assessmentOutcomes)
+      .innerJoin(assessmentDefinitions, eq(assessmentOutcomes.assessmentDefinitionId, assessmentDefinitions.id))
+      .where(and(
+        eq(assessmentOutcomes.tenantId, tenantId),
+        eq(assessmentOutcomes.studentId, id),
+        inArray(assessmentOutcomes.status, ['graded', 'exempted', 'absent']),
+      ))
+      .orderBy(desc(assessmentOutcomes.createdAt))
       .limit(5),
     row.student.graduationCohortSessionYearId
       ? db.select({ name: sessionYears.name }).from(sessionYears).where(eq(sessionYears.id, row.student.graduationCohortSessionYearId)).limit(1)
@@ -423,14 +427,16 @@ export async function GET(request: Request) {
     const tenantId = requireTenant(context);
     const { searchParams } = new URL(request.url);
 
-    // 1. Authoritative Branch Scoping
-    let effectiveBranchId: string | undefined = context.branchId || undefined;
+    // 1. Authoritative Branch Scoping — the context branch is the lock; a
+    // ?branchId= may only NARROW a whole-school view, validated against this
+    // tenant's ACTIVE branches (never widen a lock).
+    let effectiveBranchId: string | null = context.branchId;
     const requestedBranchId = searchParams.get('branchId');
     if (!context.branchId && requestedBranchId && requestedBranchId !== 'all') {
       const [bRow] = await db
         .select({ id: branches.id })
         .from(branches)
-        .where(and(eq(branches.id, requestedBranchId), eq(branches.tenantId, tenantId)))
+        .where(and(eq(branches.id, requestedBranchId), eq(branches.tenantId, tenantId), eq(branches.isActive, true)))
         .limit(1);
       if (!bRow) {
         throw new ApiError(403, 'FORBIDDEN', 'Succursale demandée non autorisée ou introuvable.');
@@ -452,9 +458,8 @@ export async function GET(request: Request) {
         return NextResponse.json({ success: false, message: 'Élève non trouvé' }, { status: 404 });
       }
 
-      if (context.branchId && studentExists.branchId && studentExists.branchId !== context.branchId) {
-        return NextResponse.json({ success: false, message: 'Accès interdit à cette succursale.' }, { status: 403 });
-      }
+      // Same tenant checked above; the branch lock denies cross-campus reads.
+      assertBranchScope(context, studentExists.branchId);
 
       const detail = await getStudentDetail(tenantId, id, effectiveBranchId);
       if (!detail) {
@@ -491,8 +496,13 @@ export async function GET(request: Request) {
       eq(user.tenantId, tenantId),
     ];
 
-    if (effectiveBranchId) {
-      filters.push(eq(user.branchId, effectiveBranchId));
+    // Context-driven scope (undefined under "Tous les sites"); a validated
+    // narrowing choice (≠ the context branch) keeps its explicit equality.
+    const branchFilter = effectiveBranchId && effectiveBranchId !== context.branchId
+      ? eq(user.branchId, effectiveBranchId)
+      : branchWhere(context, user.branchId);
+    if (branchFilter) {
+      filters.push(branchFilter);
     }
 
     if (search.trim()) {
@@ -544,7 +554,7 @@ export async function GET(request: Request) {
     const today = new Date().toISOString().slice(0, 10);
 
     // 4. Institutional Scope Queries for KPIs (NOT distorted by search text)
-    const institutionalBranchFilter = effectiveBranchId ? eq(user.branchId, effectiveBranchId) : undefined;
+    const institutionalBranchFilter = branchWhere(context, user.branchId);
     const [currentSessionYear] = await db
       .select({ id: sessionYears.id, startDate: sessionYears.startDate, name: sessionYears.name })
       .from(sessionYears)
@@ -852,15 +862,41 @@ export async function POST(request: Request) {
       cleanMassar = rawMassar;
     }
 
-    // Resolve Authoritative Branch
+    // Resolve Authoritative Branch (DB4 — the campus is never guessed):
+    // an explicit body.branchId is always validated (a locked caller may
+    // only re-affirm their own); otherwise locked staff default to their
+    // branch; under "Tous les sites" the placed class's branch can supply
+    // it; with none of those and the school HAS campuses, refuse (a
+    // branchless school keeps branchless creates — invariant 4).
     let branchId = context.branchId;
+    if (body.branchId) {
+      await assertWritableBranch(context, body.branchId);
+      branchId = body.branchId;
+    }
+    if (!branchId && body.classSectionId) {
+      const [placement] = await db
+        .select({ branchId: classes.branchId })
+        .from(classSections)
+        .innerJoin(classes, eq(classes.id, classSections.classId))
+        .where(and(eq(classSections.id, body.classSectionId), eq(classSections.tenantId, tenantId)))
+        .limit(1);
+      if (placement?.branchId) {
+        await assertWritableBranch(context, placement.branchId);
+        branchId = placement.branchId;
+      }
+    }
     if (!branchId) {
-      const [defaultBranch] = await db
+      // DB4 only bites where a campus exists to choose: a school with no
+      // active branches keeps branchless creates (invariant 4 — single/
+      // branchless tenants must behave exactly as before).
+      const [anyBranch] = await db
         .select({ id: branches.id })
         .from(branches)
-        .where(and(eq(branches.tenantId, tenantId), eq(branches.isDefault, true)))
+        .where(and(eq(branches.tenantId, tenantId), eq(branches.isActive, true)))
         .limit(1);
-      branchId = defaultBranch?.id ?? null;
+      if (anyBranch) {
+        throw new ApiError(422, 'BRANCH_REQUIRED', 'Le campus est requis : choisissez un campus ou une classe pour inscrire l\'élève.');
+      }
     }
 
     if (body.classSectionId) {

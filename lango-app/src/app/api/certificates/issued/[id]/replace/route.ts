@@ -4,7 +4,9 @@ import { z } from 'zod';
 import { certificateDefinitions, certificateEvents, issuedCertificates } from '@/features/certificates/models/certificates-schema';
 import { issueCertificate } from '@/features/certificates/services/issue-service';
 import { recordAudit } from '@/libs/api/audit';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireRequestContext, requireTenant, type RequestContext } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
+import { user } from '@/models/Schema';
 import { requireAddon } from '@/libs/api/entitlements';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
@@ -15,6 +17,16 @@ const replaceSchema = z.object({
   reason: z.string().trim().min(1).max(500).optional(),
 }).strict();
 
+/** Campus lock: an issued certificate follows its recipient's campus. */
+async function assertCertificateCampus(context: RequestContext, recipientId: string | null) {
+  if (!recipientId) return;
+  const [recipient] = await db
+    .select({ branchId: user.branchId })
+    .from(user)
+    .where(eq(user.id, recipientId))
+    .limit(1);
+  assertBranchScope(context, recipient?.branchId ?? null);
+}
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
@@ -26,6 +38,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const body = await parseJson(request, replaceSchema);
 
     const [original] = await db.select().from(issuedCertificates).where(and(eq(issuedCertificates.tenantId, tenantId), eq(issuedCertificates.id, id))).limit(1);
+    assertCertificateCampus(context, original?.recipientId ?? null);
     if (!original) {
       throw new ApiError(404, 'NOT_FOUND', 'Certificat émis introuvable pour cet établissement.');
     }

@@ -2,6 +2,8 @@ import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
+import { user } from '@/models/Schema';
 import { apiErrorResponse, ApiError } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
@@ -44,6 +46,16 @@ export async function POST(request: Request) {
         throw new ApiError(400, 'REQUEST_NOT_APPROVED',
           'La demande doit être approuvée avant l\'émission (statut actuel: ' + req.status + ').');
       }
+    }
+
+    {
+      // An issued certificate follows its recipient's campus.
+      const [recipient] = await db
+        .select({ branchId: user.branchId })
+        .from(user)
+        .where(eq(user.id, body.recipientId))
+        .limit(1);
+      assertBranchScope(context, recipient?.branchId ?? null);
     }
 
     const result = await issueCertificate({

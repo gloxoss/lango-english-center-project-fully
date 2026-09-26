@@ -452,8 +452,9 @@ describe('SchoolOS Matricule & Student Identifier Authoritative Domain', () => {
       // 3. rawMassar duplicate check in user
       mockDbSelect.mockReturnValueOnce(createChainableQuery(() => []));
 
-      // 4. Default branch lookup in branches
-      mockDbSelect.mockReturnValueOnce(createChainableQuery(() => [{ id: 'branch-default' }]));
+      // 4. Branch-presence check (DB4): this tenant has no branches, so a
+      // branchless create stays allowed (invariant 4).
+      mockDbSelect.mockReturnValueOnce(createChainableQuery(() => []));
 
       // 5. User insert
       const insertedRow = {

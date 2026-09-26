@@ -1,9 +1,10 @@
 import type { NextRequest } from 'next/server';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -43,7 +44,11 @@ export async function GET(req: NextRequest) {
       .from(paymentReversals)
       .innerJoin(payments, eq(paymentReversals.paymentId, payments.id))
       .innerJoin(user, eq(payments.studentId, user.id))
-      .where(eq(paymentReversals.tenantId, tenantId))
+      .where(and(
+        eq(paymentReversals.tenantId, tenantId),
+        // Money follows the student's campus (plan section 5, student mode).
+        branchWhere(context, user.branchId),
+      ))
       .orderBy(desc(paymentReversals.createdAt));
 
     return NextResponse.json({ success: true, data: records });

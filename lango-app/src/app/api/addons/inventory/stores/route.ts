@@ -29,6 +29,7 @@ export async function GET(request: Request) {
     const data = await listStores(tenantId, {
       ...(status === 'active' || status === 'archived' ? { status } : {}),
       search: url.searchParams.get('search') ?? undefined,
+      branchId: context.branchId ?? null,
     });
 
     return NextResponse.json({ success: true, data });

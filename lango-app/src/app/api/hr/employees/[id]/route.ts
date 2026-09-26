@@ -6,6 +6,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireAddon } from '@/libs/api/entitlements';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { getEmployee, updateEmployee } from '@/features/hr/services/employees-service';
 
 const employeePatchSchema = z.object({
@@ -46,6 +47,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (!data) {
       throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable dans cet établissement.');
     }
+    assertBranchScope(ctx, data.branchId);
 
     return NextResponse.json({ success: true, data });
   } catch (error) {
@@ -62,6 +64,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     await requireCapability(ctx, 'hr.employee.manage');
 
     const body = await parseJson(request, employeePatchSchema);
+    const existing = await getEmployee(tenantId, id, false);
+    if (!existing) {
+      throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable dans cet établissement.');
+    }
+    assertBranchScope(ctx, existing.branchId);
     await updateEmployee(tenantId, ctx.userId, id, body);
 
     // Return the redacted projection so write responses obey the same §5

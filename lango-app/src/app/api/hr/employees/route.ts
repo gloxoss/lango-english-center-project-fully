@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertWritableBranch } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { recordAudit } from '@/libs/api/audit';
 import { requireAddon } from '@/libs/api/entitlements';
@@ -53,8 +54,12 @@ export async function GET(request: Request) {
     const role = url.searchParams.get('role') ?? undefined;
 
     const sensitive = await hasCapability(ctx.userId, tenantId, ctx.role, 'hr.sensitive.read');
+    const effectiveBranchId = ctx.branchId ?? branchId;
+    if (effectiveBranchId) {
+      await assertWritableBranch(ctx, effectiveBranchId);
+    }
     const data = await listEmployees(tenantId, {
-      search, departmentId, designationId, branchId, employmentStatus, loginStatus, role,
+      search, departmentId, designationId, branchId: effectiveBranchId, employmentStatus, loginStatus, role,
     }, sensitive);
 
     return NextResponse.json({ success: true, data });
@@ -71,6 +76,10 @@ export async function POST(request: Request) {
     await requireCapability(ctx, 'hr.employee.manage');
 
     const body = await parseJson(request, employeeSchema) as CreateEmployeeInput;
+    if (body.branchId != null) {
+      // A locked caller may only place employees in their own campus.
+      await assertWritableBranch(ctx, body.branchId);
+    }
     const profile = await createEmployee(tenantId, ctx.userId, body);
 
     // Re-read through the redacted projection so the write response obeys the

@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -29,6 +30,14 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     const { id: applicantId } = await params;
     const body = await parseJson(req, updateChecklistSchema);
+
+    const [existing] = await db.select({ branchId: applicants.branchId }).from(applicants)
+      .where(and(eq(applicants.id, applicantId), eq(applicants.tenantId, tenantId)))
+      .limit(1);
+    if (!existing) {
+      throw new ApiError(404, 'APPLICANT_NOT_FOUND', 'Candidat introuvable.');
+    }
+    assertBranchScope(ctx, existing.branchId);
 
     const [updated] = await db.update(applicants)
       .set(body)

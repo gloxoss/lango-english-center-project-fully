@@ -80,11 +80,16 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
   const [mediums, setMediums] = useState<RefOption[]>([]);
   const [shifts, setShifts] = useState<RefOption[]>([]);
   const [streams, setStreams] = useState<RefOption[]>([]);
+  // Campus context (DB4): the create form needs the branch list plus whether
+  // the viewer is locked to one campus or browsing "Tous les sites".
+  const [branchOptions, setBranchOptions] = useState<RefOption[]>([]);
+  const [branchScope, setBranchScope] = useState<'pinned' | 'all'>('all');
+  const [activeBranchId, setActiveBranchId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ClassRow | null>(null);
-  const [form, setForm] = useState({ name: '', mediumId: '', shiftId: '', streamId: '', cycle: '', periodType: 'semester', sectionCount: '1', teacherId: '' });
+  const [form, setForm] = useState({ name: '', mediumId: '', shiftId: '', streamId: '', cycle: '', periodType: 'semester', sectionCount: '1', teacherId: '', branchId: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -349,6 +354,13 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
     fetch('/api/academics/rooms?pageSize=200').then(r => r.json()).then(j => j?.success && setRooms(j.data));
     fetch('/api/academics/sections?pageSize=200').then(r => r.json()).then(j => j?.success && setAllSections(j.data));
     fetch('/api/academics/teacher-availability').then(r => r.json()).then(j => j?.success && setAvailability(j.data));
+    fetch('/api/settings/branches').then(r => r.json()).then(j => {
+      if (j?.success) {
+        setBranchOptions(j.data);
+        setBranchScope(j.meta?.branchScope ?? 'all');
+        setActiveBranchId(j.meta?.activeBranchId ?? null);
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -364,7 +376,9 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', mediumId: mediums[0]?.id ?? '', shiftId: '', streamId: '', cycle: '', periodType: 'semester', sectionCount: '1', teacherId: '' });
+    // DB4: prefill the campus with the chosen branch when one is selected;
+    // under "Tous les sites" without a choice the server refuses (422).
+    setForm({ name: '', mediumId: mediums[0]?.id ?? '', shiftId: '', streamId: '', cycle: '', periodType: 'semester', sectionCount: '1', teacherId: '', branchId: branchScope === 'all' ? (activeBranchId ?? '') : '' });
     setShowForm(true);
   };
 
@@ -379,12 +393,18 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
       periodType: cls.periodType || (cls.includeSemesters ? 'semester' : 'trimester'),
       sectionCount: '0',
       teacherId: '',
+      branchId: branchScope === 'all' ? (activeBranchId ?? '') : '',
     });
     setShowForm(true);
   };
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.mediumId) {
+      return;
+    }
+    // DB4: under "Tous les sites" a class is never created campusless.
+    if (!editing && branchScope === 'all' && branchOptions.length > 0 && !form.branchId) {
+      setError(cp('campusRequired'));
       return;
     }
     setSaving(true);
@@ -398,7 +418,7 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
         cycle: form.cycle || undefined,
         periodType: form.periodType || 'semester',
         includeSemesters: form.periodType === 'semester',
-        ...(!editing ? { sectionCount: Number(form.sectionCount) || 0, teacherId: form.teacherId || undefined } : {}),
+        ...(!editing ? { sectionCount: Number(form.sectionCount) || 0, teacherId: form.teacherId || undefined, branchId: form.branchId || undefined } : {}),
         ...(editing ? { id: editing.id } : {}),
       };
       const res = await fetch('/api/academics/classes', {
@@ -560,6 +580,25 @@ export function ClassesClient({ locale }: { locale?: string } = {}) {
                   <AlertCircle className="mt-0.5 size-3 shrink-0" />
                   {t('namingWarning')}
                 </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <label className="font-bold text-slate-600">{cp('campus')}</label>
+              {branchScope === 'pinned' ? (
+                <p className="
+                  flex h-9 items-center rounded-xl bg-slate-100 px-3 text-xs font-semibold text-slate-500
+                ">
+                  {branchOptions.find(b => b.id === activeBranchId)?.name ?? cp('campusFixed')}
+                </p>
+              ) : (
+                <select
+                  value={form.branchId}
+                  onChange={e => setForm({ ...form, branchId: e.target.value })}
+                  className="h-9 w-full rounded-xl border border-slate-200 px-3"
+                >
+                  <option value="">{cp('campusRequired')}</option>
+                  {branchOptions.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
               )}
             </div>
             <div className="space-y-1">

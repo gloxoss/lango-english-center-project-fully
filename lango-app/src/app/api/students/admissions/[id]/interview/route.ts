@@ -3,7 +3,8 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireRequestContext, requireTenant, type RequestContext } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -20,12 +21,15 @@ const setInterviewSchema = z.object({
   notes: z.string().trim().max(2000).optional().nullable(),
 }).strict();
 
-async function assertApplicantBelongsToTenant(tenantId: string, applicantId: string) {
-  const [row] = await db.select({ id: applicants.id }).from(applicants)
+async function assertApplicantBelongsToTenant(tenantId: string, applicantId: string, ctx?: RequestContext) {
+  const [row] = await db.select({ id: applicants.id, branchId: applicants.branchId }).from(applicants)
     .where(and(eq(applicants.id, applicantId), eq(applicants.tenantId, tenantId)))
     .limit(1);
   if (!row) {
     throw new ApiError(404, 'APPLICANT_NOT_FOUND', 'Candidat introuvable.');
+  }
+  if (ctx) {
+    assertBranchScope(ctx, row.branchId);
   }
 }
 
@@ -38,7 +42,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     await requireCapability(ctx, 'admissions.view');
 
     const { id: applicantId } = await params;
-    await assertApplicantBelongsToTenant(tenantId, applicantId);
+    await assertApplicantBelongsToTenant(tenantId, applicantId, ctx);
 
     const [interview] = await db.select().from(admissionInterviews)
       .where(and(eq(admissionInterviews.applicantId, applicantId), eq(admissionInterviews.tenantId, tenantId)))
@@ -58,7 +62,7 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
 
     const { id: applicantId } = await params;
     const body = await parseJson(req, setInterviewSchema);
-    await assertApplicantBelongsToTenant(tenantId, applicantId);
+    await assertApplicantBelongsToTenant(tenantId, applicantId, ctx);
 
     if (body.interviewerId) {
       const [interviewer] = await db.select({ id: user.id }).from(user)

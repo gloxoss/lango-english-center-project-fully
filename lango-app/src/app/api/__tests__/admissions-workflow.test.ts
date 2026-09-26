@@ -189,7 +189,7 @@ describe('SchoolOS Admissions & Inscriptions Workflow — P0 & P1 Architectural 
 
       await expect(
         AdmissionService.getAdmissionDetail(branchAAdminContext, 'app-campus-b'),
-      ).rejects.toThrowError(/Accès interdit à cette succursale/);
+      ).rejects.toThrowError(/Accès refusé : filiale différente/);
     });
 
     it('3. Automatically restricts listAdmissions query to admin branch', async () => {
@@ -212,7 +212,7 @@ describe('SchoolOS Admissions & Inscriptions Workflow — P0 & P1 Architectural 
 
       await expect(
         AdmissionService.updateAdmission(branchAAdminContext, 'app-campus-b', { firstName: 'NewName' }),
-      ).rejects.toThrowError(/Accès interdit à cette succursale/);
+      ).rejects.toThrowError(/Accès refusé : filiale différente/);
     });
 
     it('5. Blocks cross-branch decision (approveAdmission throws 403 BRANCH_ACCESS_DENIED)', async () => {
@@ -227,7 +227,7 @@ describe('SchoolOS Admissions & Inscriptions Workflow — P0 & P1 Architectural 
 
       await expect(
         AdmissionService.approveAdmission(branchAAdminContext, 'app-campus-b'),
-      ).rejects.toThrowError(/Accès interdit à cette succursale/);
+      ).rejects.toThrowError(/Accès refusé : filiale différente/);
     });
 
     it('6. Blocks cross-branch rejection (rejectAdmission throws 403 BRANCH_ACCESS_DENIED)', async () => {
@@ -242,7 +242,7 @@ describe('SchoolOS Admissions & Inscriptions Workflow — P0 & P1 Architectural 
 
       await expect(
         AdmissionService.rejectAdmission(branchAAdminContext, 'app-campus-b', 'Dossier incomplet'),
-      ).rejects.toThrowError(/Accès interdit à cette succursale/);
+      ).rejects.toThrowError(/Accès refusé : filiale différente/);
     });
   });
 
@@ -702,8 +702,8 @@ describe('SchoolOS Admissions & Inscriptions Workflow — P0 & P1 Architectural 
 
       expect(res.status).toBe(403);
       const json = await res.json();
-      expect(json.error.code).toBe('BRANCH_ACCESS_DENIED');
-      expect(json.error.message).toMatch(/Accès interdit à cette succursale/);
+      // assertBranchScope (DB6): one app-wide 403 code for cross-campus access.
+      expect(json.error.code).toBe('FORBIDDEN');
     });
 
     it('24. Staff internal notes thread (comments) rejects unauthorized roles with 403', async () => {

@@ -4,6 +4,7 @@ import { and, desc, eq, isNull } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { hashSetupToken } from '@/libs/setup-token';
 import { db } from '@/libs/DB';
@@ -24,13 +25,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { id: studentId } = await params;
 
     const [student] = await db
-      .select({ id: user.id, name: user.name })
+      .select({ id: user.id, name: user.name, branchId: user.branchId })
       .from(user)
       .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId), eq(user.role, 'student')))
       .limit(1);
     if (!student) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'Élève introuvable pour cet établissement.');
     }
+    assertBranchScope(context, student.branchId);
 
     const { value: loginAccessMethodValue } = await getEffectiveValueWithLegacyFallback(tenantId, null, 'security.loginAccessMethod');
     const loginAccessMethod = (loginAccessMethodValue as string) || 'invite_link';

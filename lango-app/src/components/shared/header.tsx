@@ -63,11 +63,8 @@ export function Header({ locale }: { locale: string }) {
       return;
     }
     const timeout = setTimeout(() => {
-      const branch = typeof window !== 'undefined' ? localStorage.getItem('schoolos_active_branch_id') : null;
+      // Branch scope is server-side (session choice / lock); no branch param.
       const params = new URLSearchParams({ q: term });
-      if (branch) {
-        params.set('branchId', branch);
-      }
       fetch(`/api/portal/search?${params}`)
         .then(res => (res.ok ? res.json() : null))
         .then((resData) => {

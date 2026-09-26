@@ -43,10 +43,11 @@ async function verifyHeadEmployee(tenantId: string, headEmployeeId?: string | nu
 
 export async function listDepartments(
   tenantId: string,
-  opts: { status?: 'active' | 'archived'; search?: string } = {},
+  opts: { status?: 'active' | 'archived'; search?: string; branchId?: string | null } = {},
 ) {
   const conditions = [eq(departments.tenantId, tenantId)];
   if (opts.status) conditions.push(eq(departments.status, opts.status));
+  if (opts.branchId) conditions.push(eq(departments.branchId, opts.branchId));
   const searchCond = opts.search
     ? or(
         ilike(departments.name, `%${opts.search}%`),

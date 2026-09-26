@@ -1,11 +1,12 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { getTeacherClassSubjectPairs } from '@/libs/api/teacher-scope';
 import { db } from '@/libs/DB';
-import { calculateClassRanks, calculateMoroccanAverage, getMoroccanMention, percentageToTwenty } from '@/libs/grading/moroccan-grade-engine';
-import { assessmentPlans, assessmentResults, assessments, classes, classSections, classSubjects, subjects, user } from '@/models/Schema';
+import { calculateClassRanks, calculateMoroccanAverage, getMoroccanMention } from '@/libs/grading/moroccan-grade-engine';
+import { assessmentDefinitions, assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
+import { classes, classSections, classSubjects, subjects, user } from '@/models/Schema';
 
 // ponytail: no per-assessment/per-subject coefficient exists in the schema
 // (assessmentPlanCriteria weighted rubrics were deliberately skipped when
@@ -56,28 +57,39 @@ export async function GET(request: Request) {
       .where(and(eq(user.tenantId, tenantId), eq(user.role, 'student'), eq(classSections.classId, classSubject.classId)));
 
     const studentIds = roster.map(s => s.id);
-    let resultRows: { studentId: string; title: string; finalPercentage: string | null }[] = [];
+    let resultRows: { studentId: string; title: string; score20: number }[] = [];
     if (studentIds.length > 0) {
-      resultRows = await db
-        .select({ studentId: assessmentResults.studentId, title: assessments.title, finalPercentage: assessmentResults.finalPercentage })
-        .from(assessmentResults)
-        .innerJoin(assessments, eq(assessmentResults.assessmentId, assessments.id))
-        .innerJoin(assessmentPlans, eq(assessments.assessmentPlanId, assessmentPlans.id))
+      const outcomeRows = await db
+        .select({
+          studentId: assessmentOutcomes.studentId,
+          title: assessmentDefinitions.title,
+          normalizedScore: assessmentOutcomes.normalizedScore,
+        })
+        .from(assessmentOutcomes)
+        .innerJoin(
+          assessmentDefinitions,
+          eq(assessmentOutcomes.assessmentDefinitionId, assessmentDefinitions.id),
+        )
         .where(and(
-          eq(assessmentPlans.classSubjectId, classSubjectId),
-          eq(assessmentResults.tenantId, tenantId),
-          inArray(assessmentResults.studentId, studentIds),
+          eq(assessmentDefinitions.classSubjectId, classSubjectId),
+          eq(assessmentOutcomes.tenantId, tenantId),
+          inArray(assessmentOutcomes.studentId, studentIds),
+          eq(assessmentOutcomes.status, 'graded'),
+          sql`${assessmentOutcomes.normalizedScore} is not null`,
         ));
+      resultRows = outcomeRows
+        .filter(r => r.normalizedScore !== null)
+        .map(r => ({
+          studentId: r.studentId,
+          title: r.title,
+          score20: Number(r.normalizedScore),
+        }));
     }
 
     const byStudent = new Map<string, { title: string; grade: number }[]>();
     for (const row of resultRows) {
-      if (row.finalPercentage === null) {
-        continue;
-      }
       const list = byStudent.get(row.studentId) ?? [];
-      // final_percentage is 0-100; the Moroccan engine below expects /20.
-      list.push({ title: row.title, grade: percentageToTwenty(Number(row.finalPercentage)) });
+      list.push({ title: row.title, grade: row.score20 });
       byStudent.set(row.studentId, list);
     }
 

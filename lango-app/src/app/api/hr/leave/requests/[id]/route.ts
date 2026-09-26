@@ -8,7 +8,8 @@ import { requireCapability } from '@/libs/api/permissions';
 import { requireWorkforceAddon } from '@/libs/api/entitlements';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
-import { employeeLeaveBalances, leaveRequests } from '@/models/Schema';
+import { employeeLeaveBalances, employeeProfiles, leaveRequests } from '@/models/Schema';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 
 const reviewSchema = z.object({
   action: z.enum(['approved', 'rejected']),
@@ -41,6 +42,13 @@ export async function PATCH(
       if (!req) {
         throw new ApiError(404, 'NOT_FOUND', 'Demande de congé introuvable.');
       }
+      // Campus lock: the request's campus is the requester's profile branch.
+      const [requesterProfile] = await tx
+        .select({ branchId: employeeProfiles.branchId })
+        .from(employeeProfiles)
+        .where(and(eq(employeeProfiles.userId, req.userId), eq(employeeProfiles.tenantId, tenantId)))
+        .limit(1);
+      assertBranchScope(ctx, requesterProfile?.branchId ?? null);
       if (req.status !== 'pending') {
         throw new ApiError(409, 'ALREADY_REVIEWED', `Cette demande est déjà ${req.status}.`);
       }

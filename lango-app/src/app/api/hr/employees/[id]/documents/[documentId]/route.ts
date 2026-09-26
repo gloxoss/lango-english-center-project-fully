@@ -7,6 +7,8 @@ import { requireAddon } from '@/libs/api/entitlements';
 import { requireCapability } from '@/libs/api/permissions';
 import { contentTypeFor, readUploadedFile } from '@/libs/api/uploads';
 import { getDocument, setDocumentArchived } from '@/features/hr/services/documents-service';
+import { assertBranchScope } from '@/libs/api/portal-scope';
+import { getEmployee } from '@/features/hr/services/employees-service';
 
 type RouteParams = { params: Promise<{ id: string; documentId: string }> };
 
@@ -23,6 +25,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     await requireCapability(ctx, 'hr.documents.read');
 
     const { id, documentId } = await params;
+    // Campus lock through the owning dossier before touching the document.
+    const employee = await getEmployee(tenantId, id, false);
+    if (!employee) throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable dans cet établissement.');
+    assertBranchScope(ctx, employee.branchId);
     const doc = await getDocument(tenantId, id, documentId);
     if (!doc) throw new ApiError(404, 'NOT_FOUND', 'Document introuvable pour cet employé.');
 
@@ -49,6 +55,10 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     await requireCapability(ctx, 'hr.documents.manage');
 
     const { id, documentId } = await params;
+    // Campus lock through the owning dossier before mutating the document.
+    const employee = await getEmployee(tenantId, id, false);
+    if (!employee) throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable dans cet établissement.');
+    assertBranchScope(ctx, employee.branchId);
     const body = await req.json().catch(() => null);
     const archived = body?.archived === true || body?.archived === false ? body.archived : undefined;
     if (archived === undefined) {

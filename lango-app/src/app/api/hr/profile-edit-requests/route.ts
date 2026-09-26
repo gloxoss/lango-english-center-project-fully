@@ -8,6 +8,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { employeeProfileEditRequests, employeeProfiles, user } from '@/models/Schema';
+import { assertBranchScope, branchWhere } from '@/libs/api/portal-scope';
 import { parseSensitiveProfileChanges } from '@/features/hr/services/profile-edit-requests';
 
 const decisionSchema = z.object({ id: z.string().uuid(), decision: z.enum(['approved', 'rejected']), reason: z.string().trim().max(500).optional() }).strict().superRefine((v, ctx) => {
@@ -19,9 +20,11 @@ async function guard(request: Request) {
 }
 export async function GET(request: Request) {
   try {
-    const { tenantId } = await guard(request);
+    const { ctx, tenantId } = await guard(request);
     const rows = await db.select({ id: employeeProfileEditRequests.id, employeeId: employeeProfileEditRequests.employeeId, userId: employeeProfileEditRequests.userId, employeeName: user.name, requestType: employeeProfileEditRequests.requestType, proposedChanges: employeeProfileEditRequests.proposedChanges, reason: employeeProfileEditRequests.reason, status: employeeProfileEditRequests.status, reauthenticatedAt: employeeProfileEditRequests.reauthenticatedAt, createdAt: employeeProfileEditRequests.createdAt }).from(employeeProfileEditRequests)
-      .innerJoin(user, and(eq(user.id, employeeProfileEditRequests.userId), eq(user.tenantId, tenantId))).where(eq(employeeProfileEditRequests.tenantId, tenantId)).orderBy(desc(employeeProfileEditRequests.createdAt));
+      .innerJoin(user, and(eq(user.id, employeeProfileEditRequests.userId), eq(user.tenantId, tenantId)))
+      .leftJoin(employeeProfiles, and(eq(employeeProfiles.userId, employeeProfileEditRequests.userId), eq(employeeProfiles.tenantId, tenantId)))
+      .where(and(eq(employeeProfileEditRequests.tenantId, tenantId), branchWhere(ctx, employeeProfiles.branchId))).orderBy(desc(employeeProfileEditRequests.createdAt));
     return NextResponse.json({ success: true, data: rows });
   } catch (error) { return apiErrorResponse(error); }
 }
@@ -32,6 +35,9 @@ export async function PATCH(request: Request) {
       const [pending] = await tx.select().from(employeeProfileEditRequests).where(and(eq(employeeProfileEditRequests.id, body.id), eq(employeeProfileEditRequests.tenantId, tenantId), eq(employeeProfileEditRequests.status, 'pending'))).for('update').limit(1);
       if (!pending) throw new ApiError(404, 'REQUEST_NOT_FOUND', 'Demande introuvable ou déjà traitée.');
       if (pending.userId === ctx.userId) throw new ApiError(409, 'SELF_APPROVAL_FORBIDDEN', 'Vous ne pouvez pas approuver votre propre demande.');
+      // Campus lock: the request's campus is its employee's profile branch.
+      const [reqProfile] = await tx.select({ branchId: employeeProfiles.branchId }).from(employeeProfiles).where(and(eq(employeeProfiles.userId, pending.userId), eq(employeeProfiles.tenantId, tenantId))).limit(1);
+      assertBranchScope(ctx, reqProfile?.branchId ?? null);
       if (body.decision === 'approved') {
         const changes = parseSensitiveProfileChanges(pending.proposedChanges);
         const [updated] = await tx.update(employeeProfiles).set({ ...changes, updatedAt: new Date().toISOString() }).where(and(eq(employeeProfiles.id, pending.employeeId), eq(employeeProfiles.tenantId, tenantId), eq(employeeProfiles.userId, pending.userId))).returning({ id: employeeProfiles.id });

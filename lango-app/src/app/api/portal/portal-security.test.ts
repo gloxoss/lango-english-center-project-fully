@@ -155,13 +155,14 @@ describe('Role Portals Foundation — authorization primitives', () => {
     it('clears a stored active branch that is not the principal authoritative branch (P1)', async () => {
       setQueue([{ userId: 'u1', activeRole: 'student', activeBranchId: 'B1', tenantId: 'T1' }]);
       const ctx = await resolveActiveContext('sess-1', { id: 'u1', tenantId: 'T1', baseRole: 'student', branchId: 'B2' });
-      expect(ctx).toEqual({ activeRole: 'student', activeBranchId: null });
+      // Patron role: the branch is dropped AND never locks (branchLocked false).
+      expect(ctx).toEqual({ activeRole: 'student', activeBranchId: null, branchLocked: false });
     });
 
     it('clears a stored active branch when the principal has no authoritative branch (P1)', async () => {
       setQueue([{ userId: 'u1', activeRole: 'student', activeBranchId: 'B1', tenantId: 'T1' }]);
       const ctx = await resolveActiveContext('sess-1', { id: 'u1', tenantId: 'T1', baseRole: 'student', branchId: null });
-      expect(ctx).toEqual({ activeRole: 'student', activeBranchId: null });
+      expect(ctx).toEqual({ activeRole: 'student', activeBranchId: null, branchLocked: false });
     });
 
     it('clears a stored active branch that no longer exists in the tenant (P1)', async () => {
@@ -172,16 +173,26 @@ describe('Role Portals Foundation — authorization primitives', () => {
         [],
       ]);
       const ctx = await resolveActiveContext('sess-1', { id: 'u1', tenantId: 'T1', baseRole: 'student', branchId: 'B1' });
-      expect(ctx).toEqual({ activeRole: 'student', activeBranchId: null });
+      expect(ctx).toEqual({ activeRole: 'student', activeBranchId: null, branchLocked: false });
     });
 
     it('keeps a stored active branch that matches the authoritative assignment and tenant', async () => {
       setQueueSequence([
-        [{ userId: 'u1', activeRole: 'student', activeBranchId: 'B1', tenantId: 'T1' }],
+        [{ userId: 'u1', activeRole: 'teacher', activeBranchId: 'B1', tenantId: 'T1' }],
         [{ id: 'B1' }],
       ]);
+      // Staff role: an own-branch stored choice survives validation and the
+      // principal stays locked.
+      const ctx = await resolveActiveContext('sess-1', { id: 'u1', tenantId: 'T1', baseRole: 'teacher', branchId: 'B1' });
+      expect(ctx).toEqual({ activeRole: 'teacher', activeBranchId: 'B1', branchLocked: true });
+    });
+
+    it('drops the stored branch of a patron context even when it matches (B1-01)', async () => {
+      setQueue([{ userId: 'u1', activeRole: 'student', activeBranchId: 'B1', tenantId: 'T1' }]);
+      // A student/parent context is never branch-filtered: the stored branch
+      // is dropped outright and no branch lookup even runs.
       const ctx = await resolveActiveContext('sess-1', { id: 'u1', tenantId: 'T1', baseRole: 'student', branchId: 'B1' });
-      expect(ctx).toEqual({ activeRole: 'student', activeBranchId: 'B1' });
+      expect(ctx).toEqual({ activeRole: 'student', activeBranchId: null, branchLocked: false });
     });
   });
 

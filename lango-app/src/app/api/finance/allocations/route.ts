@@ -5,7 +5,8 @@ import { requireRequestContext } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
-import { invoices, paymentAllocations } from '@/models/Schema';
+import { branchWhere } from '@/libs/api/portal-scope';
+import { invoices, paymentAllocations, user } from '@/models/Schema';
 
 export async function GET(req: NextRequest) {
   try {
@@ -37,7 +38,8 @@ export async function GET(req: NextRequest) {
       })
       .from(paymentAllocations)
       .innerJoin(invoices, eq(paymentAllocations.invoiceId, invoices.id))
-      .where(and(...conditions))
+      .innerJoin(user, eq(invoices.studentId, user.id))
+      .where(and(...conditions, branchWhere(ctx, user.branchId)))
       .orderBy(desc(paymentAllocations.createdAt));
 
     return NextResponse.json({ success: true, data: allocations });

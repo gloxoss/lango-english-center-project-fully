@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
@@ -25,6 +26,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (!run) {
       throw new ApiError(404, 'ALLOCATION_RUN_NOT_FOUND', 'Lancement d\'allocation introuvable.');
     }
+    assertBranchScope(context, run.branchId);
     if (run.status !== 'previewed') {
       throw new ApiError(409, 'ALLOCATION_NOT_APPROVABLE', `Lancement non approuvable (statut ${run.status}).`);
     }

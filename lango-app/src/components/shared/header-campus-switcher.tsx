@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, ChevronDown, Lock } from 'lucide-react';
+import { Building2, ChevronDown, Lock, Network } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { getBranchPageMode } from '@/libs/api/branch-page-modes';
 
 export type BranchItem = {
   id: string;
@@ -20,9 +21,12 @@ export type BranchItem = {
 
 type BranchScope = 'all' | 'pinned';
 
-// THE authoritative global branch context. Every other surface (dashboard
-// summary, search, widgets) derives its branch from the value this switcher
-// persists; the dashboard header renders no selector of its own.
+// THE authoritative global branch context. The chosen campus lives in the
+// user's session ON THE SERVER (portal_active_contexts, set through POST
+// /api/portal/branch) — never in the browser. Every staff surface derives its
+// branch from the server context; picking a campus here reloads the page so
+// every page re-reads it (DB5). The dashboard header renders no selector of
+// its own.
 export function HeaderCampusSwitcher() {
   const t = useTranslations('Common');
   const th = useTranslations('DashboardHome');
@@ -32,6 +36,10 @@ export function HeaderCampusSwitcher() {
   const [scope, setScope] = useState<BranchScope>('all');
   const [loaded, setLoaded] = useState(false);
 
+  // What the switcher means on THIS page (B5-01): shared pages show a
+  // "tenant-wide" pill, personal pages hide the switcher entirely.
+  const pageMode = getBranchPageMode(pathname);
+
   useEffect(() => {
     fetch('/api/settings/branches')
       .then(res => (res.ok ? res.json() : null))
@@ -40,18 +48,9 @@ export function HeaderCampusSwitcher() {
           setBranches(json.data);
           const serverScope: BranchScope = json.meta?.branchScope === 'pinned' ? 'pinned' : 'all';
           setScope(serverScope);
-          const pinned: string | null = json.meta?.pinnedBranchId ?? null;
-          const saved = localStorage.getItem('schoolos_active_branch_id');
-          if (serverScope === 'pinned') {
-            // Branch-pinned principal: confined server-side; mirror the pin.
-            setSelectedBranchId(pinned);
-          } else if (saved) {
-            if (json.data.some((b: BranchItem) => b.id === saved)) {
-              setSelectedBranchId(saved);
-            } else {
-              localStorage.removeItem('schoolos_active_branch_id');
-            }
-          }
+          // The server context is the single source: the active campus (or
+          // null = "Tous les sites") comes from the session, not storage.
+          setSelectedBranchId(json.meta?.activeBranchId ?? null);
         }
       })
       .catch(() => {})
@@ -62,11 +61,30 @@ export function HeaderCampusSwitcher() {
     return null;
   }
 
-  // Pinned scope or single-branch tenant: static indicator pill, no menu.
-  if (scope === 'pinned' || branches.length <= 1) {
+  // Personal page: the campus choice is meaningless here — no switcher.
+  if (pageMode === 'personal') {
+    return null;
+  }
+
+  // Shared page (or pinned scope or single-branch tenant): static pill.
+  if (pageMode === 'shared' || scope === 'pinned' || branches.length <= 1) {
     const singleBranch = scope === 'pinned'
       ? branches.find(b => b.id === selectedBranchId)
       : branches[0];
+    if (pageMode === 'shared' && scope !== 'pinned') {
+      return (
+        <div
+          className="
+            flex items-center gap-1.5 rounded-xl border border-slate-200/80
+            bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-[#16212B]
+          "
+          title={t('allBranches')}
+        >
+          <Network className="size-3.5 text-slate-500" />
+          <span className="max-w-[140px] truncate">{t('allBranches')}</span>
+        </div>
+      );
+    }
     return (
       <div
         className="
@@ -95,19 +113,21 @@ export function HeaderCampusSwitcher() {
 
   const selectedBranch = branches.find(b => b.id === selectedBranchId);
 
+  // Persist to the session server-side, then reload: every staff page reads
+  // the branch from its server context, so a full reload is the one way to
+  // guarantee they all agree (DB5).
   const handleSelect = (id: string | null) => {
-    if (id) {
-      localStorage.setItem('schoolos_active_branch_id', id);
-    } else {
-      localStorage.removeItem('schoolos_active_branch_id');
-    }
-    setSelectedBranchId(id);
-    window.dispatchEvent(new CustomEvent('schoolos:branch-changed', { detail: { branchId: id } }));
-    // Dashboard pages listen for the event and refetch reactively; other
-    // surfaces read the branch on load, so they need one refresh.
-    if (!pathname || !/^\/[a-z]{2}\/dashboard/.test(pathname)) {
-      window.location.reload();
-    }
+    fetch('/api/portal/branch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ branchId: id }),
+    })
+      .then((res) => {
+        if (res.ok) {
+          window.location.reload();
+        }
+      })
+      .catch(() => {});
   };
 
   return (

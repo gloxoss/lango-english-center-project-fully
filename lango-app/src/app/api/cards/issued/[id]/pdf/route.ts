@@ -1,6 +1,8 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
+import { user as userTable } from '@/models/Schema';
 import { apiErrorResponse, ApiError } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
@@ -20,6 +22,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const [doc] = await db.select().from(issuedDocuments)
       .where(and(eq(issuedDocuments.tenantId, tenantId), eq(issuedDocuments.id, id)))
       .limit(1);
+    if (doc?.subjectId && (doc.subjectType === 'student' || doc.subjectType === 'employee')) {
+      const [rec] = await db
+        .select({ branchId: userTable.branchId })
+        .from(userTable)
+        .where(eq(userTable.id, doc.subjectId))
+        .limit(1);
+      assertBranchScope(context, rec?.branchId ?? null);
+    }
     if (!doc) throw new ApiError(404, 'NOT_FOUND', 'Document émis introuvable.');
 
     const [version] = await db.select().from(documentTemplateVersions)

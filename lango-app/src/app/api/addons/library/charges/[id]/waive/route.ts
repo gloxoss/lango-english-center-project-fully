@@ -13,7 +13,7 @@ export async function POST(r: Request, { params }: { params: Promise<{ id: strin
     const { tenantId, context } = await requireLibraryContext(r, 'library.charge.waive');
     const { id } = await params;
     const { reason } = await parseJson(r, schema);
-    const data = await waiveCharge(tenantId, context.userId, id, reason);
+    const data = await waiveCharge(tenantId, context.userId, id, reason, context);
     recordAudit(context, 'update', 'library_charge', data.id, { action: 'waive', reason });
     return NextResponse.json({ success: true, data });
   } catch (e) { return apiErrorResponse(e); }

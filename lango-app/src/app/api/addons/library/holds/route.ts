@@ -10,8 +10,8 @@ const schema = z.object({ copyId: z.uuid(), memberId: z.uuid() }).strict();
 
 export async function GET(r: Request) {
   try {
-    const { tenantId } = await requireLibraryContext(r, 'library.hold.manage');
-    return NextResponse.json({ success: true, data: await listHolds(tenantId) });
+    const { tenantId, context } = await requireLibraryContext(r, 'library.hold.manage');
+    return NextResponse.json({ success: true, data: await listHolds(tenantId, context) });
   } catch (e) { return apiErrorResponse(e); }
 }
 
@@ -19,7 +19,7 @@ export async function POST(r: Request) {
   try {
     const { tenantId, context } = await requireLibraryContext(r, 'library.hold.manage');
     const b = await parseJson(r, schema);
-    const data = await placeHold(tenantId, context.userId, b.copyId, b.memberId);
+    const data = await placeHold(tenantId, context.userId, b.copyId, b.memberId, context);
     recordAudit(context, 'create', 'library_hold', data.id, { copyId: b.copyId, memberId: b.memberId });
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (e) { return apiErrorResponse(e); }

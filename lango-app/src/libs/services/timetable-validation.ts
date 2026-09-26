@@ -1,5 +1,7 @@
 import { and, eq, gte, isNull, ne, or } from 'drizzle-orm';
 import { ApiError } from '@/libs/api/errors';
+import type { RequestContext } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { db } from '@/libs/DB';
 import { classes, classScheduleSlots, classSections, classSubjects, subjectTeachers, teacherAvailability, user } from '@/models/Schema';
 
@@ -32,7 +34,7 @@ export function overlaps(aStart: string, aEnd: string, bStart: string, bEnd: str
  * range must be valid, and the slot must not double-book a teacher, room, or
  * class-section against any other slot already on the timetable.
  */
-export async function assertSlotIsValid(tenantId: string, candidate: SlotCandidate, excludeSlotId?: string): Promise<void> {
+export async function assertSlotIsValid(tenantId: string, candidate: SlotCandidate, excludeSlotId?: string, ctx?: RequestContext): Promise<void> {
   if (!(candidate.startTime < candidate.endTime)) {
     throw new ApiError(422, 'INVALID_TIME_RANGE', 'L\'heure de fin doit être après l\'heure de début.');
   }
@@ -45,6 +47,11 @@ export async function assertSlotIsValid(tenantId: string, candidate: SlotCandida
     .limit(1);
   if (!section) {
     throw new ApiError(422, 'INVALID_REFERENCE', 'La classe/section indiquée n\'existe pas pour cet établissement.');
+  }
+  // A slot lives on its class's campus: a locked caller cannot schedule
+  // outside their branch (checked whenever a context is provided).
+  if (ctx) {
+    assertBranchScope(ctx, section.branchId);
   }
 
   const [classSubject] = await db.select({ id: classSubjects.id }).from(classSubjects).where(and(eq(classSubjects.id, candidate.classSubjectId), eq(classSubjects.tenantId, tenantId), eq(classSubjects.classId, section.classId))).limit(1);

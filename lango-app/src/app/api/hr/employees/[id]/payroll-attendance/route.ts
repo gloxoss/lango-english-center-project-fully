@@ -5,6 +5,7 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { requireAddon } from '@/libs/api/entitlements';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { db } from '@/libs/DB';
 import { employeeProfiles, workforcePunchEvents } from '@/models/Schema';
 
@@ -31,7 +32,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       : or(eq(employeeProfiles.employeeId, id), eq(employeeProfiles.userId, id));
 
     const [profile] = await db
-      .select({ userId: employeeProfiles.userId })
+      .select({ userId: employeeProfiles.userId, branchId: employeeProfiles.branchId })
       .from(employeeProfiles)
       .where(and(identifierCondition, eq(employeeProfiles.tenantId, tenantId)))
       .limit(1);
@@ -39,6 +40,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     if (!profile) {
       throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable dans cet établissement.');
     }
+    assertBranchScope(ctx, profile.branchId);
 
     if (!profile.userId) {
       return NextResponse.json({ success: true, data: { linked: false, payslips: [], punches: [] } });

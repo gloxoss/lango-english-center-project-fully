@@ -6,6 +6,7 @@ import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
 import { db } from '@/libs/DB';
 import { user } from '@/models/Schema';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { examSeats, examTerms, examHalls } from '@/features/assessment/models/assessment-schema';
 
 export async function GET(request: Request) {
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const examTermId = searchParams.get('examTermId');
 
-    const conditions = [eq(examSeats.tenantId, tenantId)];
+    const conditions = [eq(examSeats.tenantId, tenantId), branchWhere(context, examHalls.branchId)];
     if (examTermId) conditions.push(eq(examSeats.examTermId, examTermId as any));
 
     const rows = await db.select({

@@ -1,6 +1,8 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere } from '@/libs/api/portal-scope';
+import { user as userTable } from '@/models/Schema';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
@@ -22,9 +24,15 @@ export async function GET(request: Request) {
     if (type) conditions.push(eq(issuedDocuments.type, type as any));
     if (status) conditions.push(eq(issuedDocuments.status, status as any));
 
-    const rows = await db.select().from(issuedDocuments)
-      .where(and(...conditions))
-      .orderBy(desc(issuedDocuments.issuedAt));
+    const rows = await db.select({ doc: issuedDocuments })
+      .from(issuedDocuments)
+      .innerJoin(userTable, and(
+        eq(issuedDocuments.subjectId, userTable.id),
+        inArray(issuedDocuments.subjectType, ['student', 'employee']),
+      ))
+      .where(and(...conditions, branchWhere(context, userTable.branchId)))
+      .orderBy(desc(issuedDocuments.issuedAt))
+      .then(joined => joined.map(j => j.doc));
 
     const data = rows.map(row => {
       const doc = {

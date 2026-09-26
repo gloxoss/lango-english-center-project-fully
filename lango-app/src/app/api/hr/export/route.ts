@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertWritableBranch } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireAddon } from '@/libs/api/entitlements';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
@@ -34,8 +35,12 @@ export async function GET(request: Request) {
     const role = url.searchParams.get('role') ?? undefined;
 
     const sensitive = await hasCapability(ctx.userId, tenantId, ctx.role, 'hr.sensitive.read');
+    const effectiveBranchId = ctx.branchId ?? branchId;
+    if (effectiveBranchId) {
+      await assertWritableBranch(ctx, effectiveBranchId);
+    }
     const rows = await listEmployees(tenantId, {
-      search, departmentId, designationId, branchId, employmentStatus, loginStatus, role,
+      search, departmentId, designationId, branchId: effectiveBranchId, employmentStatus, loginStatus, role,
     }, sensitive);
 
     const columns = sensitive ? [...BASE_COLUMNS, ...SENSITIVE_COLUMNS] : BASE_COLUMNS;

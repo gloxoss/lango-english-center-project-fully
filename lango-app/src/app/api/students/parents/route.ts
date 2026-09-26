@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { parsePagination } from '@/libs/api/pagination';
 import { requireCapability } from '@/libs/api/permissions';
@@ -261,9 +262,7 @@ export async function POST(request: Request) {
       if (!st) {
         throw new ApiError(404, 'STUDENT_NOT_FOUND', 'L\'élève spécifié n\'existe pas.');
       }
-      if (context.branchId && st.branchId && st.branchId !== context.branchId) {
-        throw new ApiError(403, 'FORBIDDEN', 'L\'élève n\'appartient pas à votre succursale.');
-      }
+      assertBranchScope(context, st.branchId);
       targetStudent = st;
     }
 

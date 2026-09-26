@@ -10,7 +10,7 @@ export async function POST(r: Request, { params }: { params: Promise<{ id: strin
     // to school_admin — NOT the librarian-held stocktake.manage (W4 fix).
     const { tenantId, context } = await requireLibraryContext(r, 'library.stocktake.approve');
     const { id } = await params;
-    const data = await applyStocktakeAdjustments(tenantId, context.userId, id);
+    const data = await applyStocktakeAdjustments(tenantId, context.userId, id, context);
     recordAudit(context, 'update', 'library_stocktake', id, { action: 'apply_adjustments', applied: data.length });
     return NextResponse.json({ success: true, data });
   } catch (e) { return apiErrorResponse(e); }

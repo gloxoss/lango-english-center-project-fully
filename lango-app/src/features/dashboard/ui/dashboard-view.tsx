@@ -34,29 +34,14 @@ export function DashboardView({ locale, notice }: DashboardViewProps) {
     setLoading(true);
     setError(null);
     try {
-      // Branch context is owned by the shell switcher (header-campus-switcher):
-      // it persists the choice to localStorage and the API reads the pinned /
-      // selected branch server-side. The dashboard never renders its own
-      // selector, so there is exactly one authoritative branch control.
+      // Branch scope comes from the server context (ctx.branchId): the shell
+      // switcher persists the choice server-side, so no branch parameter is
+      // sent — and none would be trusted anyway. The dashboard never renders
+      // its own selector, so there is exactly one authoritative branch control.
       const params = new URLSearchParams({ locale });
-      const storedBranch = typeof window !== 'undefined'
-        ? localStorage.getItem('schoolos_active_branch_id')
-        : null;
-      if (storedBranch) {
-        params.set('branchId', storedBranch);
-      }
-      const url = `/api/dashboard/summary?${params}`;
-
-      const res = await fetch(url);
+      const res = await fetch(`/api/dashboard/summary?${params}`);
       if (!res.ok) {
         const errorJson = await res.json().catch(() => ({}));
-        if (storedBranch && (res.status === 403 || res.status === 404)) {
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('schoolos_active_branch_id');
-            window.dispatchEvent(new CustomEvent('schoolos:branch-changed', { detail: { branchId: null } }));
-          }
-          return await loadSummary();
-        }
         throw new Error(errorJson.error?.message || th('loadError'));
       }
       const json = await res.json();
@@ -71,13 +56,8 @@ export function DashboardView({ locale, notice }: DashboardViewProps) {
 
   useEffect(() => {
     loadSummary();
-
-    const onBranchChanged = () => {
-      // The shell switcher already persisted the new branch; just refetch.
-      loadSummary();
-    };
-    window.addEventListener('schoolos:branch-changed', onBranchChanged);
-    return () => window.removeEventListener('schoolos:branch-changed', onBranchChanged);
+    // A campus switch (header-campus-switcher) persists server-side and
+    // reloads the page, so no client event is needed here.
   }, []);
 
   if (loading && !summary) {

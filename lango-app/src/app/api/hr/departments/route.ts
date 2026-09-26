@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { recordAudit } from '@/libs/api/audit';
 import { z } from 'zod';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertWritableBranch } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireAddon } from '@/libs/api/entitlements';
 import { requireCapability } from '@/libs/api/permissions';
@@ -28,9 +29,14 @@ export async function GET(request: Request) {
     const status = url.searchParams.get('status') as 'active' | 'archived' | null;
     const search = url.searchParams.get('search') ?? '';
 
+    const effectiveBranchId = ctx.branchId ?? null;
+    if (effectiveBranchId) {
+      await assertWritableBranch(ctx, effectiveBranchId);
+    }
     const data = await listDepartments(tenantId, {
       ...(status === 'active' || status === 'archived' ? { status } : {}),
       ...(search ? { search } : {}),
+      branchId: effectiveBranchId,
     });
 
     return NextResponse.json({ success: true, data });

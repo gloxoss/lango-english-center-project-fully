@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { assertStudentBranchScope } from '@/libs/api/portal-scope';
+import { db } from '@/libs/DB';
+import { payments } from '@/models/Schema';
+import { eq } from 'drizzle-orm';
+import { and } from 'drizzle-orm';
+import { apiErrorResponse, ApiError } from '@/libs/api/errors';
 import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
 import { createPaymentReversal } from '@/libs/services/payment-reversal';
@@ -22,6 +27,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     await requireCapability(context, 'finance.manage');
     const { id } = await params;
     const body = await parseJson(request, reverseSchema);
+
+    const [payment] = await db
+      .select({ studentId: payments.studentId })
+      .from(payments)
+      .where(and(eq(payments.id, id), eq(payments.tenantId, tenantId)))
+      .limit(1);
+    if (!payment || !(await assertStudentBranchScope(context, payment.studentId, tenantId)).exists) {
+      throw new ApiError(404, 'NOT_FOUND', 'Paiement introuvable.');
+    }
 
     const canSelfApprove = await hasCapability(context.userId, tenantId, context.role, 'finance.approve');
 

@@ -1,18 +1,30 @@
 import { and, asc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireRequestContext, requireTenant, type RequestContext } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
+import { user } from '@/models/Schema';
 import { apiErrorResponse, ApiError } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { requireAddon } from '@/libs/api/entitlements';
 import { db } from '@/libs/DB';
-import { user } from '@/models/Schema';
 import {
   certificateDefinitions,
   certificateDefinitionVersions,
   certificateEvents,
   issuedCertificates,
 } from '@/features/certificates/models/certificates-schema';
+
 
+/** Campus lock: an issued certificate follows its recipient's campus. */
+async function assertCertificateCampus(context: RequestContext, recipientId: string | null) {
+  if (!recipientId) return;
+  const [recipient] = await db
+    .select({ branchId: user.branchId })
+    .from(user)
+    .where(eq(user.id, recipientId))
+    .limit(1);
+  assertBranchScope(context, recipient?.branchId ?? null);
+}
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
@@ -44,6 +56,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       ))
       .limit(1);
 
+    assertCertificateCampus(context, row?.certificate?.recipientId ?? null);
     if (!row) {
       throw new ApiError(404, 'NOT_FOUND', 'Certificat émis introuvable pour cet établissement.');
     }

@@ -1,9 +1,10 @@
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
-import { apiErrorResponse } from '@/libs/api/errors';
+import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { employeeLeaveBalances, leaveCategories } from '@/models/Schema';
+import { employeeLeaveBalances, employeeProfiles, leaveCategories } from '@/models/Schema';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 
 // GET /api/hr/leave/balances
 // Returns the requesting employee's leave balances for the current year.
@@ -18,6 +19,19 @@ export async function GET(request: Request) {
     const isHrAdmin = ['school_admin', 'accountant'].includes(ctx.role);
     const targetUserId = isHrAdmin ? (url.searchParams.get('userId') ?? ctx.userId) : ctx.userId;
     const year = Number(url.searchParams.get('year') ?? new Date().getFullYear());
+
+    if (targetUserId !== ctx.userId) {
+      // Campus lock on the consulted employee's profile branch.
+      const [profile] = await db
+        .select({ branchId: employeeProfiles.branchId })
+        .from(employeeProfiles)
+        .where(and(eq(employeeProfiles.userId, targetUserId), eq(employeeProfiles.tenantId, tenantId)))
+        .limit(1);
+      if (!profile) {
+        throw new ApiError(404, 'NOT_FOUND', 'Employé introuvable dans cet établissement.');
+      }
+      assertBranchScope(ctx, profile.branchId);
+    }
 
     const balances = await db
       .select({

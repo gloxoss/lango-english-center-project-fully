@@ -31,6 +31,7 @@ export async function GET(request: Request) {
       tenantId,
       userId: isHrAdmin ? undefined : ctx.userId,
       statusFilter: statusFilter ?? undefined,
+      ctx,
     });
 
     return NextResponse.json({ success: true, data: rows });

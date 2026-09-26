@@ -1,10 +1,12 @@
-import { and, eq, gte, inArray } from 'drizzle-orm';
+import { and, eq, gte, inArray, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { calculateMoroccanAverage, percentageToTwenty } from '@/libs/grading/moroccan-grade-engine';
-import { assessmentPlans, assessmentResults, assessments, attendance, classes, classSections, classSubjects, invoices, sections, user } from '@/models/Schema';
+import { calculateMoroccanAverage } from '@/libs/grading/moroccan-grade-engine';
+import { assessmentDefinitions, assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
+import { attendance, classes, classSections, classSubjects, invoices, sections, user } from '@/models/Schema';
 
 // Composite class-360 roster: real attendance rate (last 30 days), real
 // payment balance, and real average grade (across every subject the class
@@ -22,7 +24,7 @@ export async function GET(request: Request) {
     }
 
     const [classRow] = await db
-      .select({ id: classes.id, name: classes.name })
+      .select({ id: classes.id, name: classes.name, branchId: classes.branchId })
       .from(classes)
       .where(and(eq(classes.id, id), eq(classes.tenantId, tenantId)))
       .limit(1);
@@ -30,6 +32,7 @@ export async function GET(request: Request) {
     if (!classRow) {
       return NextResponse.json({ success: false, message: 'Classe introuvable.' }, { status: 404 });
     }
+    assertBranchScope(context, classRow.branchId);
 
     const roster = await db
       .select({ id: user.id, name: user.name, matricule: user.matricule, sectionName: sections.name })
@@ -62,12 +65,21 @@ export async function GET(request: Request) {
             .where(and(eq(invoices.tenantId, tenantId), inArray(invoices.studentId, studentIds)))
         : Promise.resolve([]),
       db
-        .select({ studentId: assessmentResults.studentId, title: assessments.title, finalPercentage: assessmentResults.finalPercentage })
-        .from(assessmentResults)
-        .innerJoin(assessments, eq(assessmentResults.assessmentId, assessments.id))
-        .innerJoin(assessmentPlans, eq(assessments.assessmentPlanId, assessmentPlans.id))
-        .innerJoin(classSubjects, eq(assessmentPlans.classSubjectId, classSubjects.id))
-        .where(and(eq(assessmentResults.tenantId, tenantId), inArray(assessmentResults.studentId, studentIds), eq(classSubjects.classId, id))),
+        .select({
+          studentId: assessmentOutcomes.studentId,
+          title: assessmentDefinitions.title,
+          score20: assessmentOutcomes.normalizedScore,
+        })
+        .from(assessmentOutcomes)
+        .innerJoin(assessmentDefinitions, eq(assessmentOutcomes.assessmentDefinitionId, assessmentDefinitions.id))
+        .innerJoin(classSubjects, eq(assessmentDefinitions.classSubjectId, classSubjects.id))
+        .where(and(
+          eq(assessmentOutcomes.tenantId, tenantId),
+          inArray(assessmentOutcomes.studentId, studentIds),
+          eq(classSubjects.classId, id),
+          eq(assessmentOutcomes.status, 'graded'),
+          sql`${assessmentOutcomes.normalizedScore} is not null`,
+        )),
     ]);
 
     const attendanceByStudent = new Map<string, { attended: number; total: number }>();
@@ -92,12 +104,11 @@ export async function GET(request: Request) {
 
     const gradesByStudent = new Map<string, { title: string; grade: number }[]>();
     for (const row of gradeRows) {
-      if (row.finalPercentage === null) {
+      if (row.score20 === null) {
         continue;
       }
       const list = gradesByStudent.get(row.studentId) ?? [];
-      // final_percentage is 0-100; the Moroccan engine below expects /20.
-      list.push({ title: row.title, grade: percentageToTwenty(Number(row.finalPercentage)) });
+      list.push({ title: row.title, grade: Number(row.score20) });
       gradesByStudent.set(row.studentId, list);
     }
 

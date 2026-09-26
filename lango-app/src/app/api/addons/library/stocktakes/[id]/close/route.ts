@@ -8,7 +8,7 @@ export async function POST(r: Request, { params }: { params: Promise<{ id: strin
   try {
     const { tenantId, context } = await requireLibraryContext(r, 'library.stocktake.manage');
     const { id } = await params;
-    const data = await closeStocktake(tenantId, context.userId, id);
+    const data = await closeStocktake(tenantId, context.userId, id, context);
     recordAudit(context, 'update', 'library_stocktake', data.id, { action: 'close', adjustmentsCreated: data.adjustmentsCreated, uncounted: data.uncounted });
     return NextResponse.json({ success: true, data });
   } catch (e) { return apiErrorResponse(e); }

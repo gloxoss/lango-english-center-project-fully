@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope, assertWritableBranch, branchWhere } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
       .from(feeStructureAssignments)
       .innerJoin(feeStructures, eq(feeStructureAssignments.feeStructureId, feeStructures.id))
       .innerJoin(classes, eq(feeStructureAssignments.classId, classes.id))
-      .where(eq(feeStructureAssignments.tenantId, tenantId));
+      .where(and(eq(feeStructureAssignments.tenantId, tenantId), branchWhere(context, classes.branchId)));
 
     return NextResponse.json({ success: true, data: rows, total: rows.length });
   } catch (error) {
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
     const [feeStructure] = await db
       .select({ id: feeStructures.id })
       .from(feeStructures)
-      .where(and(eq(feeStructures.id, body.feeStructureId), eq(feeStructures.tenantId, tenantId)))
+      .where(and(eq(feeStructures.id, body.feeStructureId), eq(feeStructures.tenantId, tenantId), branchWhere(context, feeStructures.branchId)))
       .limit(1);
     if (!feeStructure) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'La structure tarifaire indiquée n\'existe pas pour cet établissement.');
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
     const [classRow] = await db
       .select({ id: classes.id })
       .from(classes)
-      .where(and(eq(classes.id, body.classId), eq(classes.tenantId, tenantId)))
+      .where(and(eq(classes.id, body.classId), eq(classes.tenantId, tenantId), branchWhere(context, classes.branchId)))
       .limit(1);
     if (!classRow) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'La classe indiquée n\'existe pas pour cet établissement.');
@@ -97,6 +98,17 @@ export async function DELETE(request: Request) {
     if (!id) {
       return NextResponse.json({ success: false, message: 'ID non fourni' }, { status: 400 });
     }
+
+    const [existing] = await db
+      .select({ branchId: classes.branchId })
+      .from(feeStructureAssignments)
+      .innerJoin(classes, eq(feeStructureAssignments.classId, classes.id))
+      .where(and(eq(feeStructureAssignments.id, id), eq(feeStructureAssignments.tenantId, tenantId)))
+      .limit(1);
+    if (!existing) {
+      return NextResponse.json({ success: false, message: 'Assignation introuvable.' }, { status: 404 });
+    }
+    assertBranchScope(context, existing.branchId);
 
     await db.delete(feeStructureAssignments).where(and(eq(feeStructureAssignments.id, id), eq(feeStructureAssignments.tenantId, tenantId)));
     recordAudit(context, 'delete', 'fee_structure_assignment', id);

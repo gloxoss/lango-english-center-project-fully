@@ -1,5 +1,7 @@
 import { and, asc, desc, eq, gte, isNull, lte, or, sql } from 'drizzle-orm';
 import { ApiError } from '@/libs/api/errors';
+import type { RequestContext } from '@/libs/api/context';
+import { assertBranchScope, assertWritableBranch, branchWhere } from '@/libs/api/portal-scope';
 import { db } from '@/libs/DB';
 import {
   branches, libraryBibliographicRecords, libraryChargeAdjustments, libraryCharges,
@@ -25,20 +27,22 @@ function assertUniqueViolation(error: unknown, code: string, message: string): v
   if (pgErrorCode(error) === '23505') throw new ApiError(409, code, message);
 }
 
-export async function listHolds(tenantId: string) {
+export async function listHolds(tenantId: string, ctx?: RequestContext) {
   return db.select({ id: libraryHolds.id, state: libraryHolds.state, placedAt: libraryHolds.placedAt, expiresAt: libraryHolds.expiresAt, copyId: libraryCopies.id, accessionNumber: libraryCopies.accessionNumber, memberId: libraryMembers.id, memberNumber: libraryMembers.memberNumber, memberName: user.name })
     .from(libraryHolds).innerJoin(libraryCopies, eq(libraryHolds.copyId, libraryCopies.id)).innerJoin(libraryMembers, eq(libraryHolds.memberId, libraryMembers.id)).innerJoin(user, eq(libraryMembers.userId, user.id))
-    .where(and(eq(libraryHolds.tenantId, tenantId), eq(libraryCopies.tenantId, tenantId), eq(libraryMembers.tenantId, tenantId))).orderBy(asc(libraryHolds.placedAt));
+    .where(and(eq(libraryHolds.tenantId, tenantId), eq(libraryCopies.tenantId, tenantId), eq(libraryMembers.tenantId, tenantId), branchWhere(ctx, libraryCopies.branchId))).orderBy(asc(libraryHolds.placedAt));
 }
 
-export async function placeHold(tenantId: string, actorId: string, copyId: string, memberId: string) {
+export async function placeHold(tenantId: string, actorId: string, copyId: string, memberId: string, ctx?: RequestContext) {
   return db.transaction(async tx => {
-    const [copy] = await tx.select({ id: libraryCopies.id, state: libraryCopies.state }).from(libraryCopies)
+    const [copy] = await tx.select({ id: libraryCopies.id, state: libraryCopies.state, branchId: libraryCopies.branchId }).from(libraryCopies)
       .where(and(eq(libraryCopies.id, copyId), eq(libraryCopies.tenantId, tenantId))).for('update').limit(1);
     const [member] = await tx.select({ id: libraryMembers.id, state: libraryMembers.state, branchId: libraryMembers.branchId, role: user.role })
       .from(libraryMembers).innerJoin(user, eq(libraryMembers.userId, user.id))
       .where(and(eq(libraryMembers.id, memberId), eq(libraryMembers.tenantId, tenantId), eq(user.tenantId, tenantId))).limit(1);
     if (!copy || !member) throw new ApiError(422, 'INVALID_REFERENCE', 'Exemplaire ou adhérent introuvable.');
+    assertBranchScope(ctx, copy.branchId);
+    assertBranchScope(ctx, member.branchId);
     if (member.state !== 'active') throw new ApiError(409, 'MEMBER_BLOCKED', 'Adhérent bloqué.');
     // A withdrawn/lost/missing copy is not reservable; checked-out copies are.
     if (copy.state === 'lost' || copy.state === 'withdrawn' || copy.state === 'missing' || copy.state === 'repair') {
@@ -63,8 +67,13 @@ export async function placeHold(tenantId: string, actorId: string, copyId: strin
   });
 }
 
-export async function cancelHold(tenantId: string, actorId: string, holdId: string, reason: string) {
+export async function cancelHold(tenantId: string, actorId: string, holdId: string, reason: string, ctx?: RequestContext) {
   return db.transaction(async tx => {
+    // Campus lock: the hold's campus is the copy's branch.
+    const [target] = await tx.select({ branchId: libraryCopies.branchId }).from(libraryHolds)
+      .innerJoin(libraryCopies, eq(libraryHolds.copyId, libraryCopies.id))
+      .where(and(eq(libraryHolds.id, holdId), eq(libraryHolds.tenantId, tenantId))).limit(1);
+    assertBranchScope(ctx, target?.branchId ?? null);
     const [hold] = await tx.update(libraryHolds).set({ state: 'cancelled', cancelledAt: new Date().toISOString(), cancelReason: reason })
       .where(and(eq(libraryHolds.id, holdId), eq(libraryHolds.tenantId, tenantId), eq(libraryHolds.state, 'waiting'))).returning();
     if (!hold) throw new ApiError(409, 'HOLD_NOT_ACTIVE', 'Réservation non active.');
@@ -72,7 +81,10 @@ export async function cancelHold(tenantId: string, actorId: string, holdId: stri
   });
 }
 
-export async function listPolicies(tenantId: string) { return db.select().from(libraryLoanPolicies).where(eq(libraryLoanPolicies.tenantId, tenantId)); }
+export async function listPolicies(tenantId: string, ctx?: RequestContext) {
+  return db.select().from(libraryLoanPolicies)
+    .where(and(eq(libraryLoanPolicies.tenantId, tenantId), branchWhere(ctx, libraryLoanPolicies.branchId)));
+}
 
 // Policy CRUD — one policy per (tenant, category, branch) and one generic per
 // (tenant, category). Duplicate prevention is a pre-check + the DB partial-unique
@@ -81,11 +93,12 @@ export async function createLoanPolicy(tenantId: string, input: {
   name: string; patronCategory: string; branchId?: string | null;
   maxLoans?: number; loanDurationDays?: number; renewalLimit?: number; renewalDurationDays?: number;
   finePerDay?: string; gracePeriodDays?: number; maxHolds?: number;
-}) {
+}, ctx?: RequestContext) {
   if (input.branchId) {
     const [branch] = await db.select({ id: branches.id }).from(branches)
       .where(and(eq(branches.id, input.branchId), eq(branches.tenantId, tenantId))).limit(1);
     if (!branch) throw new ApiError(422, 'INVALID_REFERENCE', 'Succursale introuvable.');
+    await assertWritableBranch(ctx, input.branchId);
   }
   try {
     const [row] = await db.insert(libraryLoanPolicies).values({ tenantId, ...input }).returning();
@@ -100,11 +113,15 @@ export async function updateLoanPolicy(tenantId: string, id: string, input: {
   name?: string; branchId?: string | null;
   maxLoans?: number; loanDurationDays?: number; renewalLimit?: number; renewalDurationDays?: number;
   finePerDay?: string; gracePeriodDays?: number; maxHolds?: number;
-}) {
+}, ctx?: RequestContext) {
+  const [existing] = await db.select({ branchId: libraryLoanPolicies.branchId }).from(libraryLoanPolicies)
+    .where(and(eq(libraryLoanPolicies.id, id), eq(libraryLoanPolicies.tenantId, tenantId))).limit(1);
+  assertBranchScope(ctx, existing?.branchId ?? null);
   if (input.branchId) {
     const [branch] = await db.select({ id: branches.id }).from(branches)
       .where(and(eq(branches.id, input.branchId), eq(branches.tenantId, tenantId))).limit(1);
     if (!branch) throw new ApiError(422, 'INVALID_REFERENCE', 'Succursale introuvable.');
+    await assertWritableBranch(ctx, input.branchId);
   }
   try {
     const [row] = await db.update(libraryLoanPolicies).set({ ...input, updatedAt: new Date().toISOString() })
@@ -117,7 +134,10 @@ export async function updateLoanPolicy(tenantId: string, id: string, input: {
   }
 }
 
-export async function deleteLoanPolicy(tenantId: string, id: string) {
+export async function deleteLoanPolicy(tenantId: string, id: string, ctx?: RequestContext) {
+  const [existing] = await db.select({ branchId: libraryLoanPolicies.branchId }).from(libraryLoanPolicies)
+    .where(and(eq(libraryLoanPolicies.id, id), eq(libraryLoanPolicies.tenantId, tenantId))).limit(1);
+  assertBranchScope(ctx, existing?.branchId ?? null);
   const [row] = await db.delete(libraryLoanPolicies)
     .where(and(eq(libraryLoanPolicies.id, id), eq(libraryLoanPolicies.tenantId, tenantId))).returning();
   if (!row) throw new ApiError(404, 'NOT_FOUND', 'Politique introuvable.');
@@ -134,11 +154,12 @@ export async function listClosureDays(tenantId: string, input: { branchId?: stri
   return db.select().from(libraryClosureDays).where(and(...where)).orderBy(desc(libraryClosureDays.closedOn));
 }
 
-export async function createClosureDay(tenantId: string, input: { closedOn: string; branchId?: string | null; reason?: string | null }) {
+export async function createClosureDay(tenantId: string, input: { closedOn: string; branchId?: string | null; reason?: string | null }, ctx?: RequestContext) {
   if (input.branchId) {
     const [branch] = await db.select({ id: branches.id }).from(branches)
       .where(and(eq(branches.id, input.branchId), eq(branches.tenantId, tenantId))).limit(1);
     if (!branch) throw new ApiError(422, 'INVALID_REFERENCE', 'Succursale introuvable.');
+    await assertWritableBranch(ctx, input.branchId);
   }
   try {
     const [row] = await db.insert(libraryClosureDays).values({ tenantId, ...input }).returning();
@@ -156,10 +177,20 @@ export async function deleteClosureDay(tenantId: string, id: string) {
   return row;
 }
 
-export async function listCharges(tenantId: string) { return db.select().from(libraryCharges).where(eq(libraryCharges.tenantId, tenantId)).orderBy(desc(libraryCharges.createdAt)); }
+export async function listCharges(tenantId: string, ctx?: RequestContext) {
+  return db.select().from(libraryCharges)
+    .innerJoin(libraryMembers, eq(libraryCharges.memberId, libraryMembers.id))
+    .where(and(eq(libraryCharges.tenantId, tenantId), branchWhere(ctx, libraryMembers.branchId)))
+    .orderBy(desc(libraryCharges.createdAt)).then(rows => rows.map(r => r.library_charges));
+}
 
-export async function waiveCharge(tenantId: string, actorId: string, chargeId: string, reason: string) {
+export async function waiveCharge(tenantId: string, actorId: string, chargeId: string, reason: string, ctx?: RequestContext) {
   return db.transaction(async tx => {
+    // Campus lock: the charge's campus is its member's branch.
+    const [target] = await tx.select({ branchId: libraryMembers.branchId }).from(libraryCharges)
+      .innerJoin(libraryMembers, eq(libraryCharges.memberId, libraryMembers.id))
+      .where(and(eq(libraryCharges.id, chargeId), eq(libraryCharges.tenantId, tenantId))).limit(1);
+    assertBranchScope(ctx, target?.branchId ?? null);
     const [charge] = await tx.update(libraryCharges).set({ state: 'waived', waivedById: actorId, waivedAt: new Date().toISOString(), waiverReason: reason, updatedAt: new Date().toISOString() })
       .where(and(eq(libraryCharges.id, chargeId), eq(libraryCharges.tenantId, tenantId), eq(libraryCharges.state, 'open'))).returning();
     if (!charge) throw new ApiError(409, 'CHARGE_NOT_OPEN', 'Frais non ouvert.');
@@ -167,13 +198,23 @@ export async function waiveCharge(tenantId: string, actorId: string, chargeId: s
   });
 }
 
-export async function listTransfers(tenantId: string) { return db.select().from(libraryTransfers).where(eq(libraryTransfers.tenantId, tenantId)).orderBy(desc(libraryTransfers.createdAt)); }
+export async function listTransfers(tenantId: string, ctx?: RequestContext) {
+  return db.select().from(libraryTransfers)
+    .where(and(
+      eq(libraryTransfers.tenantId, tenantId),
+      ctx?.branchId ? or(eq(libraryTransfers.fromBranchId, ctx.branchId), eq(libraryTransfers.toBranchId, ctx.branchId)) : undefined,
+    ))
+    .orderBy(desc(libraryTransfers.createdAt));
+}
 
-export async function createTransfer(tenantId: string, actorId: string, input: { copyId: string; toBranchId: string; note?: string | null }) {
+export async function createTransfer(tenantId: string, actorId: string, input: { copyId: string; toBranchId: string; note?: string | null }, ctx?: RequestContext) {
   return db.transaction(async tx => {
     const [copy] = await tx.select().from(libraryCopies).where(and(eq(libraryCopies.id, input.copyId), eq(libraryCopies.tenantId, tenantId))).for('update').limit(1);
     const [target] = await tx.select({ id: branches.id }).from(branches).where(and(eq(branches.id, input.toBranchId), eq(branches.tenantId, tenantId))).limit(1);
     if (!copy || !target) throw new ApiError(422, 'INVALID_REFERENCE', 'Exemplaire ou succursale introuvable.');
+    // The dispatching campus must be the caller's when locked.
+    assertBranchScope(ctx, copy.branchId);
+    await assertWritableBranch(ctx, input.toBranchId);
     if (copy.branchId === input.toBranchId) throw new ApiError(422, 'SAME_BRANCH', 'Les succursales doivent être différentes.');
     if (copy.state !== 'available') throw new ApiError(409, 'COPY_UNAVAILABLE', 'Exemplaire non transférable.');
     const [transfer] = await tx.insert(libraryTransfers).values({ tenantId, copyId: copy.id, fromBranchId: copy.branchId, toBranchId: input.toBranchId, requestedById: actorId, note: input.note ?? null }).returning();
@@ -181,10 +222,14 @@ export async function createTransfer(tenantId: string, actorId: string, input: {
   });
 }
 
-export async function transitionTransfer(tenantId: string, actorId: string, transferId: string, action: 'dispatch' | 'receive' | 'cancel' | 'report_discrepancy') {
+export async function transitionTransfer(tenantId: string, actorId: string, transferId: string, action: 'dispatch' | 'receive' | 'cancel' | 'report_discrepancy', ctx?: RequestContext) {
   return db.transaction(async tx => {
     const [row] = await tx.select().from(libraryTransfers).where(and(eq(libraryTransfers.id, transferId), eq(libraryTransfers.tenantId, tenantId))).for('update').limit(1);
     if (!row) throw new ApiError(404, 'NOT_FOUND', 'Transfert introuvable.');
+    // A locked campus may act on a transfer only when one of its endpoints is theirs.
+    if (ctx?.branchId && row.fromBranchId !== ctx.branchId && row.toBranchId !== ctx.branchId) {
+      throw new ApiError(403, 'FORBIDDEN', 'Accès refusé : filiale différente.');
+    }
     const now = new Date().toISOString();
     if (action === 'dispatch' && row.state === 'requested') {
       const [updated] = await tx.update(libraryTransfers).set({ state: 'dispatched', dispatchedAt: now, dispatchedById: actorId, updatedAt: now }).where(eq(libraryTransfers.id, row.id)).returning();
@@ -210,11 +255,16 @@ export async function transitionTransfer(tenantId: string, actorId: string, tran
   });
 }
 
-export async function listStocktakes(tenantId: string) { return db.select().from(libraryStocktakes).where(eq(libraryStocktakes.tenantId, tenantId)).orderBy(desc(libraryStocktakes.startedAt)); }
-export async function startStocktake(tenantId: string, actorId: string, branchId: string) { const [branch] = await db.select({ id: branches.id }).from(branches).where(and(eq(branches.id, branchId), eq(branches.tenantId, tenantId))).limit(1); if (!branch) throw new ApiError(422, 'INVALID_REFERENCE', 'Succursale introuvable.'); const [row] = await db.insert(libraryStocktakes).values({ tenantId, branchId, startedById: actorId }).returning(); return row!; }
-export async function observeCopy(tenantId: string, actorId: string, stocktakeId: string, copyId: string, found: boolean, note?: string | null) {
+export async function listStocktakes(tenantId: string, ctx?: RequestContext) {
+  return db.select().from(libraryStocktakes)
+    .where(and(eq(libraryStocktakes.tenantId, tenantId), branchWhere(ctx, libraryStocktakes.branchId)))
+    .orderBy(desc(libraryStocktakes.startedAt));
+}
+export async function startStocktake(tenantId: string, actorId: string, branchId: string, ctx?: RequestContext) { const [branch] = await db.select({ id: branches.id }).from(branches).where(and(eq(branches.id, branchId), eq(branches.tenantId, tenantId))).limit(1); if (!branch) throw new ApiError(422, 'INVALID_REFERENCE', 'Succursale introuvable.'); await assertWritableBranch(ctx, branchId); const [row] = await db.insert(libraryStocktakes).values({ tenantId, branchId, startedById: actorId }).returning(); return row!; }
+export async function observeCopy(tenantId: string, actorId: string, stocktakeId: string, copyId: string, found: boolean, note?: string | null, ctx?: RequestContext) {
   const [stocktake] = await db.select().from(libraryStocktakes).where(and(eq(libraryStocktakes.id, stocktakeId), eq(libraryStocktakes.tenantId, tenantId), eq(libraryStocktakes.state, 'open'))).limit(1);
   if (!stocktake) throw new ApiError(409, 'STOCKTAKE_NOT_OPEN', 'Inventaire non ouvert.');
+  assertBranchScope(ctx, stocktake.branchId);
   const [copy] = await db.select().from(libraryCopies).where(and(eq(libraryCopies.id, copyId), eq(libraryCopies.tenantId, tenantId))).limit(1);
   if (!copy || copy.branchId !== stocktake.branchId) throw new ApiError(422, 'INVALID_REFERENCE', 'Exemplaire invalide pour cet inventaire.');
   // Idempotent: one observation per copy per stocktake (unique stocktake_id+copy_id).
@@ -223,10 +273,11 @@ export async function observeCopy(tenantId: string, actorId: string, stocktakeId
   return row!;
 }
 
-export async function closeStocktake(tenantId: string, actorId: string, id: string) {
+export async function closeStocktake(tenantId: string, actorId: string, id: string, ctx?: RequestContext) {
   return db.transaction(async tx => {
     const [stocktake] = await tx.select().from(libraryStocktakes).where(and(eq(libraryStocktakes.id, id), eq(libraryStocktakes.tenantId, tenantId), eq(libraryStocktakes.state, 'open'))).for('update').limit(1);
     if (!stocktake) throw new ApiError(409, 'STOCKTAKE_NOT_OPEN', 'Inventaire non ouvert.');
+    assertBranchScope(ctx, stocktake.branchId);
     const [branchCopies, observations] = await Promise.all([
       tx.select().from(libraryCopies).where(and(eq(libraryCopies.tenantId, tenantId), eq(libraryCopies.branchId, stocktake.branchId))),
       tx.select().from(libraryStocktakeObservations).where(and(eq(libraryStocktakeObservations.tenantId, tenantId), eq(libraryStocktakeObservations.stocktakeId, stocktake.id))),
@@ -252,16 +303,20 @@ export async function closeStocktake(tenantId: string, actorId: string, id: stri
   });
 }
 
-export async function listStocktakeAdjustments(tenantId: string, stocktakeId: string) {
+export async function listStocktakeAdjustments(tenantId: string, stocktakeId: string, ctx?: RequestContext) {
+  const [stocktake] = await db.select({ branchId: libraryStocktakes.branchId }).from(libraryStocktakes)
+    .where(and(eq(libraryStocktakes.id, stocktakeId), eq(libraryStocktakes.tenantId, tenantId))).limit(1);
+  assertBranchScope(ctx, stocktake?.branchId ?? null);
   return db.select().from(libraryStocktakeAdjustments).where(and(eq(libraryStocktakeAdjustments.tenantId, tenantId), eq(libraryStocktakeAdjustments.stocktakeId, stocktakeId)));
 }
 
-export async function applyStocktakeAdjustments(tenantId: string, actorId: string, stocktakeId: string) {
+export async function applyStocktakeAdjustments(tenantId: string, actorId: string, stocktakeId: string, ctx?: RequestContext) {
   return db.transaction(async tx => {
     // Unknown (or other-tenant) stocktake ids must 404, never a silent 200.
-    const [stocktake] = await tx.select({ id: libraryStocktakes.id }).from(libraryStocktakes)
+    const [stocktake] = await tx.select({ id: libraryStocktakes.id, branchId: libraryStocktakes.branchId }).from(libraryStocktakes)
       .where(and(eq(libraryStocktakes.id, stocktakeId), eq(libraryStocktakes.tenantId, tenantId))).limit(1);
     if (!stocktake) throw new ApiError(404, 'NOT_FOUND', 'Inventaire introuvable.');
+    assertBranchScope(ctx, stocktake.branchId);
     const pending = await tx.select().from(libraryStocktakeAdjustments)
       .where(and(eq(libraryStocktakeAdjustments.tenantId, tenantId), eq(libraryStocktakeAdjustments.stocktakeId, stocktakeId), isNull(libraryStocktakeAdjustments.appliedAt))).for('update');
     const now = new Date().toISOString();
@@ -273,7 +328,7 @@ export async function applyStocktakeAdjustments(tenantId: string, actorId: strin
   });
 }
 
-export async function overdueReport(tenantId: string) { const today = casablancaTodayIso(); return db.select({ loanId: libraryLoans.id, dueDate: libraryLoans.dueDate, memberNumber: libraryMembers.memberNumber, memberName: user.name, accessionNumber: libraryCopies.accessionNumber, title: libraryBibliographicRecords.title }).from(libraryLoans).innerJoin(libraryMembers, eq(libraryLoans.memberId, libraryMembers.id)).innerJoin(user, eq(libraryMembers.userId, user.id)).innerJoin(libraryCopies, eq(libraryLoans.copyId, libraryCopies.id)).innerJoin(libraryEditions, eq(libraryCopies.editionId, libraryEditions.id)).innerJoin(libraryBibliographicRecords, eq(libraryEditions.recordId, libraryBibliographicRecords.id)).where(and(eq(libraryLoans.tenantId, tenantId), isNull(libraryLoans.returnedAt), sql`${libraryLoans.dueDate} < ${today}`)).orderBy(asc(libraryLoans.dueDate)); }
+export async function overdueReport(tenantId: string, ctx?: RequestContext) { const today = casablancaTodayIso(); return db.select({ loanId: libraryLoans.id, dueDate: libraryLoans.dueDate, memberNumber: libraryMembers.memberNumber, memberName: user.name, accessionNumber: libraryCopies.accessionNumber, title: libraryBibliographicRecords.title }).from(libraryLoans).innerJoin(libraryMembers, eq(libraryLoans.memberId, libraryMembers.id)).innerJoin(user, eq(libraryMembers.userId, user.id)).innerJoin(libraryCopies, eq(libraryLoans.copyId, libraryCopies.id)).innerJoin(libraryEditions, eq(libraryCopies.editionId, libraryEditions.id)).innerJoin(libraryBibliographicRecords, eq(libraryEditions.recordId, libraryBibliographicRecords.id)).where(and(eq(libraryLoans.tenantId, tenantId), isNull(libraryLoans.returnedAt), sql`${libraryLoans.dueDate} < ${today}`, branchWhere(ctx, libraryCopies.branchId))).orderBy(asc(libraryLoans.dueDate)); }
 
 const COPY_STATE_KEYS = ['available', 'on_hold_shelf', 'checked_out', 'in_transit', 'repair', 'lost', 'missing', 'withdrawn'] as const;
 

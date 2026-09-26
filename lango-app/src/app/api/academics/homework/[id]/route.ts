@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
-import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { requireRequestContext, requireTenant , type RequestContext } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
+import { assessmentDefinitions } from '@/features/assessment/models/assessment-schema';
+import { classes, classSubjects } from '@/models/Schema';
+import { eq } from 'drizzle-orm';
+import { and } from 'drizzle-orm';
+import { db } from '@/libs/DB';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -28,6 +34,18 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
+/** Campus lock: homework lives on the campus of the class behind its subject. */
+async function assertHomeworkCampus(context: RequestContext, tenantId: string, homeworkId: string) {
+  const [campus] = await db
+    .select({ branchId: classes.branchId })
+    .from(assessmentDefinitions)
+    .leftJoin(classSubjects, eq(assessmentDefinitions.classSubjectId, classSubjects.id))
+    .leftJoin(classes, eq(classSubjects.classId, classes.id))
+    .where(and(eq(assessmentDefinitions.id, homeworkId), eq(assessmentDefinitions.tenantId, tenantId)))
+    .limit(1);
+  assertBranchScope(context, campus?.branchId ?? null);
+}
+
 export async function GET(req: NextRequest, { params }: RouteContext) {
   try {
     const { id } = await params;
@@ -46,6 +64,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       }
     }
 
+    await assertHomeworkCampus(context, tenantId, id);
     const homework = await HomeworkService.getHomeworkById(tenantId, id);
     if (!homework) {
       return NextResponse.json(

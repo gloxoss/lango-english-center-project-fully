@@ -248,7 +248,7 @@ export class HomeworkService {
    * hard-isolated to the tenant (the caller already ran requireRequestContext
    * + requireTenant).
    */
-  static async listHomeworkForTeacher(tenantId: string) {
+  static async listHomeworkForTeacher(tenantId: string, branchId: string | null = null) {
     const rows = await db
       .select({
         id: assessmentDefinitions.id,
@@ -275,6 +275,8 @@ export class HomeworkService {
         and(
           eq(assessmentDefinitions.tenantId, tenantId),
           eq(assessmentDefinitions.type, 'homework'),
+          // Campus of the homework = campus of its class (student/own via class).
+          branchId ? eq(classes.branchId, branchId) : undefined,
         ),
       )
       .orderBy(desc(assessmentDefinitions.createdAt));

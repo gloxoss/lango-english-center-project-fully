@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { parseJson } from '@/libs/api/validation';
@@ -60,9 +61,7 @@ export async function POST(request: Request) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'L\'élève indiqué n\'existe pas.');
     }
 
-    if (context.branchId && studentRow.branchId && studentRow.branchId !== context.branchId) {
-      throw new ApiError(403, 'FORBIDDEN', 'Accès non autorisé pour cette succursale.');
-    }
+    assertBranchScope(context, studentRow.branchId);
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -195,9 +194,7 @@ export async function PATCH(request: Request) {
       throw new ApiError(422, 'INVALID_REFERENCE', 'L\'élève indiqué n\'existe pas.');
     }
 
-    if (context.branchId && studentRow.branchId && studentRow.branchId !== context.branchId) {
-      throw new ApiError(403, 'FORBIDDEN', 'Accès non autorisé pour cette succursale.');
-    }
+    assertBranchScope(context, studentRow.branchId);
 
     const [link] = await db
       .select()

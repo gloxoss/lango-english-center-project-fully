@@ -31,14 +31,17 @@ export async function GET(request: Request) {
       .where(eq(branches.tenantId, tenantId))
       .orderBy(branches.name);
 
-    // Scope is server-derived: a branch-pinned principal cannot pick another
-    // campus (or "all"), so the switcher renders a static indicator for them.
+    // Scope is server-derived: a branch-LOCKED principal (user.branchId set)
+    // cannot pick another campus (or "all"), so the switcher renders a static
+    // indicator for them. A whole-school staff principal stays 'all' whether
+    // or not they currently have a campus selected in their session.
     return NextResponse.json({
       success: true,
       data: branchList,
       meta: {
-        branchScope: ctx.branchId ? ('pinned' as const) : ('all' as const),
-        pinnedBranchId: ctx.branchId ?? null,
+        branchScope: ctx.branchLocked ? ('pinned' as const) : ('all' as const),
+        pinnedBranchId: ctx.branchLocked ? (ctx.branchId ?? null) : null,
+        activeBranchId: ctx.branchId ?? null,
       },
     });
   } catch (err) {

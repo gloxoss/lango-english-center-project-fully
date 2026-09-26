@@ -23,16 +23,30 @@ import { APP_ROLES, type AppRole } from '@/libs/api/context';
 export type ResolvedActiveContext = {
   activeRole: AppRole;
   activeBranchId: string | null;
+  /** True when the principal is hard-locked to their assigned branch
+   *  (user.branchId set) and this context's role is a staff role. A locked
+   *  principal can never widen their scope; a whole-school staff principal
+   *  (branchLocked=false) may store any active branch of their tenant. */
+  branchLocked: boolean;
 };
 
 export type BasePrincipal = {
   id: string;
   tenantId: string | null;
   baseRole: AppRole;
-  /** Authoritative branch assignment (user.branchId) — the only branch a stored
-   *  context may legitimately reference until a multi-assignment table exists. */
+  /** Authoritative branch assignment (user.branchId). For a locked staff
+   *  principal this is the only branch their context may reference; a
+   *  whole-school staff principal may reference any active branch of the
+   *  tenant; a patron principal (parent/student/alumni) references none. */
   branchId: string | null;
 };
+
+/** Roles whose data access follows relationships/self-ownership, never a
+ *  campus: their context branch is always null, even when user.branchId is
+ *  set (a stray assignment must not silently filter a parent's view). */
+export function isPatronRole(role: AppRole): boolean {
+  return role === 'parent' || role === 'student' || role === 'alumni';
+}
 
 function isAppRole(value: string): value is AppRole {
   return (APP_ROLES as readonly string[]).includes(value);
@@ -136,22 +150,29 @@ export async function resolveActiveContext(
     return null;
   }
 
-  // Revalidate the stored branch against authoritative assignments. Until a
-  // multi-assignment table exists, user.branchId is the only branch this
-  // principal may reference, and the branch must still belong to the tenant.
-  // A stale branch is cleared, never silently kept.
-  let activeBranchId = row.activeBranchId;
+  // Revalidate the stored branch against authoritative assignments. A locked
+  // staff principal (user.branchId set) may only reference their own branch;
+  // a whole-school staff principal may reference any ACTIVE branch of their
+  // tenant (the campus switcher's stored choice); a patron context references
+  // no branch at all. A stale/forgotten branch is cleared, never silently
+  // kept — the clear is persisted below so the next read is cheap.
+  let activeBranchId = isPatronRole(row.activeRole) ? null : row.activeBranchId;
   if (activeBranchId) {
-    if (principal.branchId && activeBranchId === principal.branchId) {
-      const [branch] = await db
-        .select({ id: branches.id })
-        .from(branches)
-        .where(and(eq(branches.id, activeBranchId), eq(branches.tenantId, tenantId)))
-        .limit(1);
-      if (!branch) {
-        activeBranchId = null;
-      }
-    } else {
+    const ownBranch = principal.branchId !== null && activeBranchId === principal.branchId;
+    const [branch] = await db
+      .select({ id: branches.id })
+      .from(branches)
+      .where(
+        and(
+          eq(branches.id, activeBranchId),
+          eq(branches.tenantId, tenantId),
+          eq(branches.isActive, true),
+        ),
+      )
+      .limit(1);
+    if (!branch || (!ownBranch && principal.branchId !== null)) {
+      // Not an active branch of this tenant, or this principal is locked to a
+      // different branch — drop the stored value either way.
       activeBranchId = null;
     }
   }
@@ -176,6 +197,7 @@ export async function resolveActiveContext(
   return {
     activeRole: row.activeRole,
     activeBranchId,
+    branchLocked: principal.branchId !== null && !isPatronRole(row.activeRole),
   };
 }
 

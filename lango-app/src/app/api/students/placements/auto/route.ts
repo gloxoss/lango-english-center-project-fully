@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { createHash } from 'node:crypto';
-import { and, avg, count, eq, inArray } from 'drizzle-orm';
+import { and, avg, count, eq, inArray, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
@@ -11,8 +11,8 @@ import { parseJson } from '@/libs/api/validation';
 import { db } from '@/libs/DB';
 import { evaluateCapacity, exceedsCapacity } from '@/libs/services/section-capacity';
 import { recordStudentPlacement } from '@/libs/services/student-placement';
+import { assessmentOutcomes } from '@/features/assessment/models/assessment-schema';
 import {
-  assessmentResults,
   attendance,
   branches,
   classes,
@@ -774,7 +774,7 @@ export async function POST(req: NextRequest) {
       if (movedInIds.length > 0) {
         const [attRows, gradeRows] = await Promise.all([
           db.select({ studentId: attendance.studentId }).from(attendance).where(and(eq(attendance.tenantId, tenantId), inArray(attendance.studentId, movedInIds))).limit(500),
-          db.select({ studentId: assessmentResults.studentId }).from(assessmentResults).where(and(eq(assessmentResults.tenantId, tenantId), inArray(assessmentResults.studentId, movedInIds))).limit(500),
+          db.select({ studentId: assessmentOutcomes.studentId }).from(assessmentOutcomes).where(and(eq(assessmentOutcomes.tenantId, tenantId), inArray(assessmentOutcomes.studentId, movedInIds))).limit(500),
         ]);
         attRows.forEach(r => historySet.add(r.studentId));
         gradeRows.forEach(r => historySet.add(r.studentId));
@@ -1010,9 +1010,9 @@ export async function POST(req: NextRequest) {
           .from(attendance)
           .where(and(eq(attendance.tenantId, tenantId), inArray(attendance.studentId, assignedStudentIds)))
           .limit(500),
-        db.select({ studentId: assessmentResults.studentId })
-          .from(assessmentResults)
-          .where(and(eq(assessmentResults.tenantId, tenantId), inArray(assessmentResults.studentId, assignedStudentIds)))
+        db.select({ studentId: assessmentOutcomes.studentId })
+          .from(assessmentOutcomes)
+          .where(and(eq(assessmentOutcomes.tenantId, tenantId), inArray(assessmentOutcomes.studentId, assignedStudentIds)))
           .limit(500),
       ]);
       attRows.forEach(r => studentHistorySet.add(r.studentId));
@@ -1024,15 +1024,17 @@ export async function POST(req: NextRequest) {
       const studentIds = eligibleStudents.map(s => s.id);
       const gradeRows = await db
         .select({
-          studentId: assessmentResults.studentId,
-          avgPct: avg(assessmentResults.finalPercentage),
+          studentId: assessmentOutcomes.studentId,
+          avgPct: avg(sql`${assessmentOutcomes.normalizedScore} * 5`),
         })
-        .from(assessmentResults)
+        .from(assessmentOutcomes)
         .where(and(
-          eq(assessmentResults.tenantId, tenantId),
-          inArray(assessmentResults.studentId, studentIds),
+          eq(assessmentOutcomes.tenantId, tenantId),
+          inArray(assessmentOutcomes.studentId, studentIds),
+          eq(assessmentOutcomes.status, 'graded'),
+          sql`${assessmentOutcomes.normalizedScore} is not null`,
         ))
-        .groupBy(assessmentResults.studentId);
+        .groupBy(assessmentOutcomes.studentId);
 
       gradeMap = new Map(gradeRows.map(r => [r.studentId, r.avgPct ? Number(r.avgPct) : 50]));
     }

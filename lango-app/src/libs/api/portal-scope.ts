@@ -1,8 +1,9 @@
 import { and, eq } from 'drizzle-orm';
+import type { AnyColumn, SQL } from 'drizzle-orm';
 import type { RequestContext } from '@/libs/api/context';
 import { ApiError } from '@/libs/api/errors';
 import { db } from '@/libs/DB';
-import { guardians, guardianStudents } from '@/models/Schema';
+import { branches, guardians, guardianStudents, user } from '@/models/Schema';
 
 // ---------------------------------------------------------------------------
 // Portal authorization primitives — deny by default.
@@ -32,10 +33,82 @@ export function assertSelf(ctx: RequestContext, resourceUserId: string): void {
  * active on the context, branch-agnostic access is allowed (the tenant is the
  * boundary); when a branch IS active, cross-branch access is denied.
  */
-export function assertBranchScope(ctx: RequestContext, resourceBranchId: string | null): void {
-  if (ctx.branchId && resourceBranchId !== null && ctx.branchId !== resourceBranchId) {
+export function assertBranchScope(ctx: RequestContext | null | undefined, resourceBranchId: string | null): void {
+  if (ctx?.branchId && resourceBranchId !== null && ctx.branchId !== resourceBranchId) {
     throw new ApiError(403, 'FORBIDDEN', 'Accès refusé : filiale différente.');
   }
+}
+
+/**
+ * Branch filter for scoped lists/counts/exports, next to the tenant filter:
+ * `and(eq(t.tenantId, tenantId), branchWhere(ctx, t.branchId))`. Returns
+ * `undefined` when no branch is active on the context (drizzle's `and()`
+ * ignores undefined), so "Tous les sites" means no branch predicate at all.
+ * The ONLY way a route may turn ctx.branchId into a WHERE term.
+ */
+export function branchWhere(ctx: RequestContext | null | undefined, column: AnyColumn): SQL | undefined {
+  return ctx?.branchId ? eq(column, ctx.branchId) : undefined;
+}
+
+/**
+ * Branch validation for writes (creates, moves, updates that set a branch).
+ * The branch must be an active branch of the caller's tenant, and a
+ * branch-locked principal may never write into another one (a null branchId
+ * is also refused for them: locked staff always write into their own campus).
+ * Returns nothing; throws 403 otherwise. DB4 (an explicit campus is required
+ * when "Tous les sites" is selected) stays the caller's decision.
+ */
+export async function assertWritableBranch(
+  ctx: RequestContext | null | undefined,
+  branchId: string | null | undefined,
+): Promise<void> {
+  if (!ctx) {
+    return;
+  }
+  if (ctx.branchLocked && branchId !== ctx.branchId) {
+    throw new ApiError(403, 'FORBIDDEN', 'Accès refusé : campus imposé pour ce compte.');
+  }
+  if (!branchId) {
+    return;
+  }
+  const [branch] = await db
+    .select({ id: branches.id })
+    .from(branches)
+    .where(
+      and(
+        eq(branches.id, branchId),
+        eq(branches.tenantId, requireTenantId(ctx)),
+        eq(branches.isActive, true),
+      ),
+    )
+    .limit(1);
+  if (!branch) {
+    throw new ApiError(403, 'FORBIDDEN', 'Accès refusé : campus invalide ou non autorisé.');
+  }
+}
+
+/**
+ * Detail-read/write gate for student-owned rows (documents, excuses, flags,
+ * transfers, cards...): loads the student's campus inside the tenant and
+ * applies the branch lock to it. Returns `{ exists: false }` when the student
+ * does not exist — a missing row is the caller's 404, a branch lock never
+ * invents one. A branchless student is `exists: true, branchId: null`.
+ */
+export async function assertStudentBranchScope(
+  ctx: RequestContext,
+  studentId: string,
+  tenantId: string,
+): Promise<{ exists: boolean; branchId: string | null }> {
+  const [row] = await db
+    .select({ branchId: user.branchId })
+    .from(user)
+    .where(and(eq(user.id, studentId), eq(user.tenantId, tenantId), eq(user.role, 'student')))
+    .limit(1);
+  if (!row) {
+    return { exists: false, branchId: null };
+  }
+  assertBranchScope(ctx, row.branchId);
+  return { exists: true, branchId: row.branchId };
 }
 
 /**

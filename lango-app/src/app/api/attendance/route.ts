@@ -10,6 +10,7 @@ import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { resolveInstructionalDay } from '@/libs/api/school-day';
 import { getTeacherClassSectionIds } from '@/libs/api/teacher-scope';
 import { parseJson } from '@/libs/api/validation';
@@ -93,8 +94,9 @@ export async function GET(request: Request) {
 
     // BRANCH SCOPE (P0): a branch-limited caller only sees marks of students
     // belonging to their own campus. Whole-school callers are unaffected.
-    if (context.branchId) {
-      conditions.push(eq(user.branchId, context.branchId));
+    const branchCondition = branchWhere(context, user.branchId);
+    if (branchCondition) {
+      conditions.push(branchCondition);
     }
 
     const rows = await db

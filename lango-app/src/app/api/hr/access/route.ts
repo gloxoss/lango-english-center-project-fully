@@ -5,6 +5,7 @@ import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { apiErrorResponse } from '@/libs/api/errors';
 import { requireAddon } from '@/libs/api/entitlements';
 import { requireCapability } from '@/libs/api/permissions';
+import { branchWhere } from '@/libs/api/portal-scope';
 import { employeeProfiles, user } from '@/models/Schema';
 import { listEmployees } from '@/features/hr/services/employees-service';
 
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
     await requireCapability(ctx, 'hr.access.manage');
 
     const [employees, candidates] = await Promise.all([
-      listEmployees(tenantId, {}, false),
+      listEmployees(tenantId, { branchId: ctx.branchId ?? undefined }, false),
       db.select({
         id: user.id,
         name: user.name,
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
         .where(and(
           eq(user.tenantId, tenantId),
           ne(user.role, 'student'),
+          branchWhere(ctx, user.branchId),
           notExists(db.select({ one: employeeProfiles.id }).from(employeeProfiles)
             .where(and(eq(employeeProfiles.userId, user.id), eq(employeeProfiles.tenantId, tenantId)))),
         ))

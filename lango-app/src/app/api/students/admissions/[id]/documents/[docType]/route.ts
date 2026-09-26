@@ -3,6 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import { contentTypeFor, resolveTenantPath } from '@/libs/api/uploads';
@@ -32,9 +33,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       throw new ApiError(404, 'ADMISSION_NOT_FOUND', 'Demande d\'admission introuvable.');
     }
 
-    if (context.branchId && applicant.branchId && applicant.branchId !== context.branchId) {
-      throw new ApiError(403, 'BRANCH_ACCESS_DENIED', 'Accès interdit à cette succursale.');
-    }
+    assertBranchScope(context, applicant.branchId);
 
     // 2. Fetch Document record
     const [doc] = await db

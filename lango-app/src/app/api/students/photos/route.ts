@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
+import { branchWhere, assertBranchScope } from '@/libs/api/portal-scope';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
 import { requireCapability } from '@/libs/api/permissions';
 import {
@@ -126,9 +127,7 @@ export async function GET(request: Request) {
         throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Élève introuvable pour cet établissement.');
       }
 
-      if (context.branchId && student.branchId && student.branchId !== context.branchId) {
-        throw new ApiError(403, 'BRANCH_ACCESS_DENIED', 'Accès interdit aux élèves d\'une autre succursale.');
-      }
+      assertBranchScope(context, student.branchId);
 
       const photos = await db
         .select()
@@ -312,9 +311,9 @@ export async function POST(request: Request) {
         eq(user.tenantId, tenantId),
         eq(user.role, 'student'),
       ];
-      if (context.branchId) {
-        studentQueryConditions.push(eq(user.branchId, context.branchId));
-      }
+      const branchCondition = branchWhere(context, user.branchId);
+
+      if (branchCondition) studentQueryConditions.push(branchCondition);
 
       const allStudents = await db
         .select({
@@ -768,9 +767,7 @@ export async function DELETE(request: Request) {
       throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Élève introuvable pour cet établissement.');
     }
 
-    if (context.branchId && student.branchId && student.branchId !== context.branchId) {
-      throw new ApiError(403, 'BRANCH_ACCESS_DENIED', 'Accès interdit aux élèves d\'une autre succursale.');
-    }
+    assertBranchScope(context, student.branchId);
 
     const previousPhotoUrl = student.photoUrl;
 
