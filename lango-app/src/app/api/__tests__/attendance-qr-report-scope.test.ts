@@ -35,6 +35,7 @@ vi.mock('@/libs/api/context', () => ({
 
 vi.mock('@/libs/api/permissions', () => ({
   requireCapability: vi.fn(async () => undefined),
+  hasCapability: vi.fn(async () => true),
 }));
 
 const dbReachable = Boolean(process.env.DATABASE_URL);

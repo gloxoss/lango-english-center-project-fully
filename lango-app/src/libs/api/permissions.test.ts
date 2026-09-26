@@ -62,6 +62,10 @@ describe('Permissions system', () => {
       'guard.pickup.release',
       'guard.incidents.manage',
       'guard.evidence.read',
+      // The gate terminal is a guard's job too. attendance.scan reaches ONLY the
+      // QR scan routes, which now allowlist guard explicitly, so unlike
+      // attendance.read it is not inert.
+      'attendance.scan',
       'payroll.self.read',
       'events.checkin',
       'transport.read',
@@ -73,6 +77,9 @@ describe('Permissions system', () => {
     expect(guardPerms).not.toContain('students.read');
     expect(guardPerms).not.toContain('attendance.read');
     expect(guardPerms).not.toContain('events.read');
+    // Scanning must never drag the registers, justifications and alert
+    // management in with it: that is what attendance.manage would do.
+    expect(guardPerms).not.toContain('attendance.manage');
   });
 
   it('accountant can read and manage finance', () => {

@@ -77,3 +77,34 @@ Phase 1, because it unblocks 0.5's remaining clause and is the foundation for
 phases 2, 6 and 7: introduce the session-occurrence model (a register referencing
 `classScheduleSlot` × date), migrate legacy rows additively, and re-key the
 missing-register rule on it.
+
+---
+
+## CORRECTION — what is deployed versus what existed only on a branch
+
+An earlier version of this report said "all ten phases complete". That was true of
+the campaign branch and **not** true of the deployed product. Corrected here.
+
+The integration merged the campaign into `student-directory-hardening` and stopped
+at commit `6c5b25ae`. Everything after it stayed branch-only:
+
+| | |
+|---|---|
+| **Merged and deployed to the VPS** | Phases 0, 0.5, 1, 2, 3, 4a–4e, 5 (atomic replacement + wording), 6 |
+| **Branch-only at the time of the first closeout** | Phase 5 consolidation, Phase 7 (all of it), Phase 8, Phase 9, the navigation consolidation, the mobile fix |
+
+Concretely absent from the deployed tree: `libs/attendance/device-auth.ts`,
+`api/attendance/kiosk/current-session`, `api/attendance/history`, and the
+consolidated `features/cards/ui/badge-management-view.tsx`.
+
+**Migration renumbering.** The integration renumbered the campaign's migrations:
+`0158` → `0162`, `0159` → `0163`, `0161` → `0164`. That is why the scanner device
+identity migration is now **`0166`** on the deploy line: `0162` was taken by the
+renumbered session-occurrence migration, and `0165` by an untracked
+branch-backfill file in the main tree.
+
+**Current state.** The 16 unmerged commits were transplanted onto the deploy line
+as `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01-mainline` (base `54d386a4`,
+HEAD `b4643251`), with the migration renumbered to 0166. All gates pass there;
+563 tests across 72 files. The deploy line is now the line to build on, not the
+original campaign branch.

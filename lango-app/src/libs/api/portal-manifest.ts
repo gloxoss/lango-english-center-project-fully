@@ -228,6 +228,7 @@ export const FULL_NAVIGATION: NavItem[] = [
       { id: 'reception-visitors', label: 'Visiteurs', icon: 'Users', href: '/dashboard/receptionist/visitors', permission: 'reception.visitor.manage' },
       { id: 'reception-pickups', label: 'Retraits', icon: 'LogOut', href: '/dashboard/receptionist/pickups', permission: 'reception.portal.use' },
       { id: 'reception-handoffs', label: 'Transferts & tâches', icon: 'ListTodo', href: '/dashboard/receptionist/handoffs', permission: 'reception.handoff.manage' },
+      { id: 'reception-scanner', label: 'Scanner Kiosque QR', icon: 'QrCode', href: '/dashboard/attendance/scanner', permission: 'attendance.scan' },
     ],
   },
   {

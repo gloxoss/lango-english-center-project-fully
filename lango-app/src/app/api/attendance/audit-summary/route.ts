@@ -140,16 +140,22 @@ export async function POST(request: Request) {
 
     recordAudit(context, 'create', 'sms_message', result.id, { reason: 'missing_attendance_register_reminder', teacherId: slot.teacherId });
 
-    const message = result.delivery === 'simulated'
-      ? `Rappel enregistré pour ${slot.teacherName} (mode simulation, aucun SMS réel envoyé).`
+    const code = result.delivery === 'simulated'
+      ? 'REMINDER_SIMULATED'
       : result.delivery === 'failed'
-        ? `Échec de l'envoi du rappel à ${slot.teacherName}${result.failureReason ? ` (${result.failureReason})` : ''}.`
-        : `Rappel envoyé à ${slot.teacherName}.`;
+        ? 'REMINDER_FAILED'
+        : 'REMINDER_SENT';
 
     return NextResponse.json({
       success: true,
-      data: { id: result.id, delivery: result.delivery, simulated: result.delivery === 'simulated' },
-      message,
+      data: {
+        id: result.id,
+        delivery: result.delivery,
+        simulated: result.delivery === 'simulated',
+        code,
+        teacherName: slot.teacherName,
+        failureReason: result.failureReason || null,
+      },
     });
   } catch (error) {
     return apiErrorResponse(error);

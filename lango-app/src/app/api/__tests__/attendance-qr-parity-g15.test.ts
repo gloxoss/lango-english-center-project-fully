@@ -12,19 +12,27 @@ import {
   attendanceSummary,
   branches,
   classes,
+  classScheduleSlots,
   classSections,
+  classSubjects,
   identityBadgeCredentials,
   mediums,
+  scannerSessions,
   sections,
   sessionYears,
+  subjects,
   tenants,
+  timetableVersions,
   user,
 } from '@/models/Schema';
 
-// G15 QR ATTENDANCE PARITY — DB-backed: QR writes must go through the same
-// canonical validation/mutation rules as POST /api/attendance (tenant, campus,
-// section, session, instructional day, register lock, active-mark uniqueness,
-// audit, summary/flag side effects) — no weaker parallel path.
+// G15 QR ATTENDANCE PARITY — DB-backed: a QR scan must go through the same
+// canonical validation as POST /api/attendance (tenant, campus, section,
+// academic session, instructional day, register lock) — no weaker parallel path.
+//
+// It no longer WRITES a mark (fix-plan-02): the accepted scan event is the whole
+// output and the teacher's submission is what marks the register. So parity here
+// reads "the same gates were enforced, and no attendance row appeared".
 
 vi.mock('@/libs/env/server', () => ({
   serverEnv: {
@@ -120,6 +128,40 @@ async function provision(name: string, opts: { session?: 'current' | 'old' | 'no
     { tenantId, userId: studentB, tokenHash: computeHmacHash(tokenB), status: 'active' },
   ]);
 
+  // A timetable for both sections, so a scan made inside a running lesson has
+  // one to resolve. It starts at the frozen clock (07:30 Casablanca) so the
+  // parity cases assert an on-time stage without depending on lateness maths,
+  // and so the register-lock case has a period to lock.
+  if (sessionYearId) {
+    const [subject] = await db.insert(subjects).values({ tenantId, name: `M-${suffix}`, mediumId: medium!.id, type: 'theory' }).returning();
+    const [classSubject] = await db.insert(classSubjects).values({ tenantId, classId: cls!.id, subjectId: subject!.id, type: 'compulsory' }).returning();
+    const [version] = await db.insert(timetableVersions).values({
+      tenantId,
+      sessionYearId,
+      status: 'published',
+      versionNumber: 1,
+      // A version that does not cover today (the 'old' session) resolves to no
+      // occurrence at all, which is the point of that fixture.
+      effectiveFrom: opts.session === 'old' ? '2025-09-01' : '2026-09-01',
+      effectiveTo: opts.session === 'old' ? '2026-06-30' : '2027-06-30',
+      createdBy: adminId,
+    }).returning();
+
+    // Section A only: one teacher cannot hold two overlapping lessons, and the
+    // parity cases scan section A. A scan for section B finds no lesson and is
+    // an arrival only, which is the entrance behaviour either way.
+    await db.insert(classScheduleSlots).values({
+      tenantId,
+      classSectionId: csRows[0]!.id,
+      classSubjectId: classSubject!.id,
+      teacherId: adminId,
+      dayOfWeek: 'tuesday' as const,
+      startTime: '07:30',
+      endTime: '08:25',
+      versionId: version!.id,
+    });
+  }
+
   return { tenantId, adminId, sectionId: csRows[0]!.id, otherSectionId: csRows[1]!.id, sessionYearId, studentA, studentB, tokenA, tokenB };
 }
 
@@ -141,16 +183,41 @@ function scan(body: unknown): Promise<Response> {
   }));
 }
 
-async function activeMarksFor(p: Provisioned, studentId: string) {
+async function acceptedEventsFor(p: Provisioned, studentId: string) {
   return db
     .select()
-    .from(attendance)
+    .from(attendanceScanEvents)
     .where(and(
-      eq(attendance.tenantId, p.tenantId),
-      eq(attendance.studentId, studentId),
-      eq(attendance.date, TODAY),
-      eq(attendance.isVoided, false),
+      eq(attendanceScanEvents.tenantId, p.tenantId),
+      eq(attendanceScanEvents.studentId, studentId),
+      eq(attendanceScanEvents.resultStatus, 'accepted'),
     ));
+}
+
+/** Every mark of the tenant, voided or not: a scan writes none of them. */
+async function attendanceRowsFor(p: Provisioned) {
+  return db.select().from(attendance).where(eq(attendance.tenantId, p.tenantId));
+}
+
+async function removeTenant(p: Provisioned) {
+  await db.delete(attendanceScanEvents).where(eq(attendanceScanEvents.tenantId, p.tenantId));
+  await db.delete(scannerSessions).where(eq(scannerSessions.tenantId, p.tenantId));
+  await db.delete(attendanceSummary).where(eq(attendanceSummary.tenantId, p.tenantId));
+  await db.delete(attendance).where(eq(attendance.tenantId, p.tenantId));
+  await db.delete(attendanceRegisters).where(eq(attendanceRegisters.tenantId, p.tenantId));
+  await db.delete(identityBadgeCredentials).where(eq(identityBadgeCredentials.tenantId, p.tenantId));
+  await db.delete(classScheduleSlots).where(eq(classScheduleSlots.tenantId, p.tenantId));
+  await db.delete(timetableVersions).where(eq(timetableVersions.tenantId, p.tenantId));
+  await db.delete(classSubjects).where(eq(classSubjects.tenantId, p.tenantId));
+  await db.delete(subjects).where(eq(subjects.tenantId, p.tenantId));
+  await db.delete(sessionYears).where(eq(sessionYears.tenantId, p.tenantId));
+  await db.delete(user).where(eq(user.tenantId, p.tenantId));
+  await db.delete(classSections).where(eq(classSections.tenantId, p.tenantId));
+  await db.delete(classes).where(eq(classes.tenantId, p.tenantId));
+  await db.delete(sections).where(eq(sections.tenantId, p.tenantId));
+  await db.delete(mediums).where(eq(mediums.tenantId, p.tenantId));
+  await db.delete(branches).where(eq(branches.tenantId, p.tenantId));
+  await db.delete(tenants).where(eq(tenants.id, p.tenantId));
 }
 
 describe.skipIf(!dbReachable)('G15 QR attendance parity — DB-backed', () => {
@@ -158,6 +225,10 @@ describe.skipIf(!dbReachable)('G15 QR attendance parity — DB-backed', () => {
   let wrongTenant: Provisioned;
   let oldSession: Provisioned;
   let noSession: Provisioned;
+  // One duplicate rule survives: inside a scanner session, one accepted scan per
+  // credential. Nothing outside a session can be duplicated any more, because
+  // there is no mark to duplicate.
+  let mainEntranceSessionId = '';
 
   beforeAll(async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
@@ -166,101 +237,105 @@ describe.skipIf(!dbReachable)('G15 QR attendance parity — DB-backed', () => {
     wrongTenant = await provision('qr-wrong', { session: 'current' });
     oldSession = await provision('qr-old', { session: 'old' });
     noSession = await provision('qr-none', { session: 'none' });
+
+    const [entrance] = await db.insert(scannerSessions).values({
+      tenantId: main.tenantId,
+      operatorId: main.adminId,
+      classSectionId: null,
+      classScheduleSlotId: null,
+      date: TODAY,
+      status: 'active',
+    }).returning();
+
+    mainEntranceSessionId = entrance!.id;
   });
 
   afterAll(async () => {
     vi.useRealTimers();
-    const ids = [main, wrongTenant, oldSession, noSession].filter(Boolean);
-    for (const p of ids) {
-      await db.delete(attendanceScanEvents).where(eq(attendanceScanEvents.tenantId, p.tenantId));
-      await db.delete(attendanceSummary).where(eq(attendanceSummary.tenantId, p.tenantId));
-      await db.delete(attendance).where(eq(attendance.tenantId, p.tenantId));
-      await db.delete(attendanceRegisters).where(eq(attendanceRegisters.tenantId, p.tenantId));
-      await db.delete(identityBadgeCredentials).where(eq(identityBadgeCredentials.tenantId, p.tenantId));
-      await db.delete(sessionYears).where(eq(sessionYears.tenantId, p.tenantId));
-      await db.delete(user).where(eq(user.tenantId, p.tenantId));
-      await db.delete(classSections).where(eq(classSections.tenantId, p.tenantId));
-      await db.delete(classes).where(eq(classes.tenantId, p.tenantId));
-      await db.delete(sections).where(eq(sections.tenantId, p.tenantId));
-      await db.delete(mediums).where(eq(mediums.tenantId, p.tenantId));
-      await db.delete(branches).where(eq(branches.tenantId, p.tenantId));
-      await db.delete(tenants).where(eq(tenants.id, p.tenantId));
+    for (const p of [main, wrongTenant, oldSession, noSession].filter(Boolean)) {
+      await removeTenant(p);
     }
   });
 
-  it('G15.1: a valid QR scan writes one canonical mark (session + section + period)', async () => {
+  it('G15.1: a valid QR scan stages one scan event and writes no mark', async () => {
     await asTenant(main);
-    const res = await scan({ rawToken: main.tokenA, classSectionId: main.sectionId, period: 1 });
+    const res = await scan({ rawToken: main.tokenA, classSectionId: main.sectionId });
 
     expect(res.status).toBe(200);
 
     const json = await res.json() as any;
 
     expect(json.data.resultStatus).toBe('accepted');
-    expect(json.data.stagedStatus).toBe('present'); // 07:30 < 08:00 + grace
+    // 07:30 is the lesson's own start, so with 15 min grace it is on time.
+    expect(json.data.stagedStatus).toBe('present');
+    expect(json.data.mode).toBe('entrance');
+    expect(json.data.arrivalOnly).toBe(false); // the 07:30 lesson is running
 
-    const marks = await activeMarksFor(main, main.studentA);
+    const events = await acceptedEventsFor(main, main.studentA);
 
-    expect(marks).toHaveLength(1);
-    expect(marks[0]!.status).toBe('present');
-    expect(marks[0]!.academicYearId).toBe(main.sessionYearId);
-    expect(marks[0]!.classSectionId).toBe(main.sectionId);
-    expect(marks[0]!.period).toBe(1);
-    expect(marks[0]!.scanEventId).not.toBeNull();
+    expect(events).toHaveLength(1);
+    expect(events[0]!.classSectionId).toBe(main.sectionId);
+    expect(events[0]!.stagedStatus).toBe('present');
+    // NULL is how "staged, not yet validated" is represented.
+    expect(events[0]!.attendanceRecordId).toBeNull();
+
+    expect(await attendanceRowsFor(main)).toHaveLength(0);
   });
 
-  it('G15.2: duplicate scan does not duplicate the active mark', async () => {
+  it('G15.2: the same badge in the same session is already_scanned, not a second acceptance', async () => {
     await asTenant(main);
-    const res = await scan({ rawToken: main.tokenA, classSectionId: main.sectionId, period: 1 });
+    const first = await scan({ rawToken: main.tokenA, classSectionId: main.sectionId, sessionId: mainEntranceSessionId });
 
-    expect(res.status).toBe(200);
+    expect(first.status).toBe(200);
+    expect((await first.json() as any).data.resultStatus).toBe('accepted');
 
-    const json = await res.json() as any;
+    const second = await scan({ rawToken: main.tokenA, classSectionId: main.sectionId, sessionId: mainEntranceSessionId });
+
+    expect(second.status).toBe(200);
+
+    const json = await second.json() as any;
 
     expect(json.data.resultStatus).toBe('already_scanned');
-
-    const marks = await activeMarksFor(main, main.studentA);
-
-    expect(marks).toHaveLength(1); // still exactly one active mark
 
     const events = await db
       .select({ resultStatus: attendanceScanEvents.resultStatus })
       .from(attendanceScanEvents)
-      .where(and(eq(attendanceScanEvents.tenantId, main.tenantId), eq(attendanceScanEvents.studentId, main.studentA)));
+      .where(and(
+        eq(attendanceScanEvents.tenantId, main.tenantId),
+        eq(attendanceScanEvents.sessionId, mainEntranceSessionId),
+      ));
 
     expect(events.filter(e => e.resultStatus === 'accepted')).toHaveLength(1);
     expect(events.filter(e => e.resultStatus === 'already_scanned')).toHaveLength(1);
+    expect(await attendanceRowsFor(main)).toHaveLength(0);
   });
 
   it('G15.3: a badge from another tenant is rejected (no cross-tenant write)', async () => {
     await asTenant(main);
-    const res = await scan({ rawToken: wrongTenant.tokenA, classSectionId: main.sectionId, period: 1 });
+    const res = await scan({ rawToken: wrongTenant.tokenA, classSectionId: main.sectionId });
 
     expect(res.status).toBe(404);
 
-    const marks = await activeMarksFor(main, wrongTenant.studentA);
-
-    expect(marks).toHaveLength(0);
+    expect(await attendanceRowsFor(wrongTenant)).toHaveLength(0);
+    expect(await attendanceRowsFor(main)).toHaveLength(0);
   });
 
-  it('G15.4: a student from another section is rejected', async () => {
+  it('G15.4: an entrance scan accepts a student from another section', async () => {
+    // The roster check is a CLASSROOM rule now (fix-plan-02): a portique has no
+    // lesson for the student to belong to. WrongClass is covered where it still
+    // means something, in attendance-qr-scan-modes.test.ts.
     await asTenant(main);
-    const res = await scan({ rawToken: main.tokenB, classSectionId: main.sectionId, period: 1 });
+    const res = await scan({ rawToken: main.tokenB, classSectionId: main.sectionId });
 
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(200);
+    expect((await res.json() as any).data.resultStatus).toBe('accepted');
 
-    const json = await res.json() as any;
-
-    expect(json.error.code).toBe('WRONG_CLASS');
-
-    const marks = await activeMarksFor(main, main.studentB);
-
-    expect(marks).toHaveLength(0);
+    expect(await attendanceRowsFor(main)).toHaveLength(0);
   });
 
   it('G15.5: a date outside every academic session is rejected (old session only)', async () => {
     await asTenant(oldSession);
-    const res = await scan({ rawToken: oldSession.tokenA, classSectionId: oldSession.sectionId, period: 1 });
+    const res = await scan({ rawToken: oldSession.tokenA, classSectionId: oldSession.sectionId });
 
     expect(res.status).toBe(422);
 
@@ -268,14 +343,12 @@ describe.skipIf(!dbReachable)('G15 QR attendance parity — DB-backed', () => {
 
     expect(json.error.code).toBe('DATE_OUTSIDE_SESSION');
 
-    const marks = await activeMarksFor(oldSession, oldSession.studentA);
-
-    expect(marks).toHaveLength(0);
+    expect(await attendanceRowsFor(oldSession)).toHaveLength(0);
   });
 
   it('G15.6: missing canonical session context fails closed (no session configured)', async () => {
     await asTenant(noSession);
-    const res = await scan({ rawToken: noSession.tokenA, classSectionId: noSession.sectionId, period: 1 });
+    const res = await scan({ rawToken: noSession.tokenA, classSectionId: noSession.sectionId });
 
     expect(res.status).toBe(422);
 
@@ -283,64 +356,52 @@ describe.skipIf(!dbReachable)('G15 QR attendance parity — DB-backed', () => {
 
     expect(json.error.code).toBe('DATE_OUTSIDE_SESSION');
 
-    const marks = await activeMarksFor(noSession, noSession.studentA);
-
-    expect(marks).toHaveLength(0);
+    expect(await attendanceRowsFor(noSession)).toHaveLength(0);
   });
 
   it('G15.7: a locked register rejects the scan', async () => {
     await asTenant(main);
+    // The scan resolves the 07:30 lesson, which is period 1 of the day.
     await db.insert(attendanceRegisters).values({
       tenantId: main.tenantId,
       classId: (await db.select({ classId: classSections.classId }).from(classSections).where(eq(classSections.id, main.sectionId)).limit(1))[0]!.classId,
       classSectionId: main.sectionId,
       sessionYearId: main.sessionYearId,
       date: TODAY,
-      period: 2,
-      reference: `REG-G15-${suffix}-P2`,
+      period: 1,
+      reference: `REG-G15-${suffix}-P1`,
       status: 'LOCKED',
       submittedAt: new Date().toISOString(),
       submittedById: main.adminId,
     });
-    const res = await scan({ rawToken: main.tokenA, classSectionId: main.sectionId, period: 2 });
 
-    expect(res.status).toBe(409);
+    try {
+      const res = await scan({ rawToken: main.tokenA, classSectionId: main.sectionId });
 
-    const marks = await db
-      .select()
-      .from(attendance)
-      .where(and(
-        eq(attendance.tenantId, main.tenantId),
-        eq(attendance.studentId, main.studentA),
-        eq(attendance.period, 2),
-      ));
-
-    expect(marks).toHaveLength(0);
+      expect(res.status).toBe(409);
+      expect((await res.json() as any).error.code).toBe('REGISTER_LOCKED');
+      expect(await attendanceRowsFor(main)).toHaveLength(0);
+    } finally {
+      // The lock is this case's, not the rest of the file's.
+      await db.delete(attendanceRegisters).where(eq(attendanceRegisters.tenantId, main.tenantId));
+    }
   });
 
   it('G15.8: a caller without attendance.manage is rejected', async () => {
     await asTenant(main);
     permissionState.allowed = false;
     try {
-      const res = await scan({ rawToken: main.tokenA, classSectionId: main.sectionId, period: 4 });
+      const res = await scan({ rawToken: main.tokenA, classSectionId: main.sectionId });
 
       expect(res.status).toBe(403);
     } finally {
       permissionState.allowed = true;
     }
-    const marks = await db
-      .select()
-      .from(attendance)
-      .where(and(
-        eq(attendance.tenantId, main.tenantId),
-        eq(attendance.studentId, main.studentA),
-        eq(attendance.period, 4),
-      ));
 
-    expect(marks).toHaveLength(0);
+    expect(await attendanceRowsFor(main)).toHaveLength(0);
   });
 
-  it('G15.9: a scan over an existing manual mark is an in-place correction with audit', async () => {
+  it('G15.9: a scan leaves an existing manual mark exactly as the teacher wrote it', async () => {
     await asTenant(main);
     const [manual] = await db.insert(attendance).values({
       tenantId: main.tenantId,
@@ -355,7 +416,7 @@ describe.skipIf(!dbReachable)('G15 QR attendance parity — DB-backed', () => {
       isVoided: false,
     }).returning();
 
-    const res = await scan({ rawToken: main.tokenA, classSectionId: main.sectionId, period: 3 });
+    const res = await scan({ rawToken: main.tokenA, classSectionId: main.sectionId });
 
     expect(res.status).toBe(200);
 
@@ -368,19 +429,19 @@ describe.skipIf(!dbReachable)('G15 QR attendance parity — DB-backed', () => {
         eq(attendance.period, 3),
       ));
 
-    expect(rows).toHaveLength(1); // same mark, updated in place — nothing duplicated
+    // Untouched: a scan stages, it never corrects the register.
+    expect(rows).toHaveLength(1);
     expect(rows[0]!.id).toBe(manual!.id);
-    expect(rows[0]!.status).toBe('present');
-    expect(rows[0]!.scanEventId).not.toBeNull();
+    expect(rows[0]!.status).toBe('absent');
+    expect(rows[0]!.scanEventId).toBeNull();
 
-    // recordAudit(context, 'update', 'attendance', id, payload)
-    const correction = auditCalls.find(call => call[1] === 'update' && call[2] === 'attendance' && call[3] === manual!.id);
+    // And nothing audited an attendance write, because none happened.
+    const attendanceAudit = auditCalls.find(call => call[2] === 'attendance');
 
-    expect(correction).toBeTruthy();
-    expect((correction![4] as any).reason).toBe('qr_scan_correction');
+    expect(attendanceAudit).toBeUndefined();
   });
 
-  it('G15.10: QR marks appear identically in the canonical aggregate and summary cache', async () => {
+  it('G15.10: a scan leaves the canonical aggregate and the summary cache alone', async () => {
     await asTenant(main);
     const aggregate = await getAttendanceAggregate({
       tenantId: main.tenantId,
@@ -389,20 +450,19 @@ describe.skipIf(!dbReachable)('G15 QR attendance parity — DB-backed', () => {
       classSectionId: main.sectionId,
     });
 
-    // Periods 1 and 3 are present (period 3 corrected by scan).
-    expect(aggregate.presentCount).toBe(2);
-    expect(aggregate.recordedTotal).toBe(2);
-    expect(aggregate.presenceRate).toBe(100);
+    // The only mark in this tenant is the manual 'absent' one from G15.9; every
+    // scan staged and contributed nothing.
+    expect(aggregate.presentCount).toBe(0);
+    expect(aggregate.absentCount).toBe(1);
+    expect(aggregate.recordedTotal).toBe(1);
 
-    const [cache] = await db
+    const cache = await db
       .select()
       .from(attendanceSummary)
       .where(and(eq(attendanceSummary.tenantId, main.tenantId), eq(attendanceSummary.studentId, main.studentA)));
 
-    expect(cache).toBeTruthy();
-    expect(cache!.totalPresent).toBe(aggregate.presentCount);
-    expect(cache!.totalSessions).toBe(aggregate.recordedTotal);
-    expect(Number(cache!.attendanceRate)).toBe(aggregate.presenceRate);
+    // The summary cache is written by a submission, never by a scan.
+    expect(cache).toHaveLength(0);
   });
 });
 
@@ -420,19 +480,9 @@ describe.skipIf(!dbReachable)('G15 badge expiry — DB-backed', () => {
 
   afterAll(async () => {
     vi.useRealTimers();
-    await db.delete(attendanceScanEvents).where(eq(attendanceScanEvents.tenantId, p.tenantId));
-    await db.delete(attendanceSummary).where(eq(attendanceSummary.tenantId, p.tenantId));
-    await db.delete(attendance).where(eq(attendance.tenantId, p.tenantId));
-    await db.delete(attendanceRegisters).where(eq(attendanceRegisters.tenantId, p.tenantId));
-    await db.delete(identityBadgeCredentials).where(eq(identityBadgeCredentials.tenantId, p.tenantId));
-    await db.delete(sessionYears).where(eq(sessionYears.tenantId, p.tenantId));
-    await db.delete(user).where(eq(user.tenantId, p.tenantId));
-    await db.delete(classSections).where(eq(classSections.tenantId, p.tenantId));
-    await db.delete(classes).where(eq(classes.tenantId, p.tenantId));
-    await db.delete(sections).where(eq(sections.tenantId, p.tenantId));
-    await db.delete(mediums).where(eq(mediums.tenantId, p.tenantId));
-    await db.delete(branches).where(eq(branches.tenantId, p.tenantId));
-    await db.delete(tenants).where(eq(tenants.id, p.tenantId));
+    if (p) {
+      await removeTenant(p);
+    }
   });
 
   async function setExpiry(studentId: string, expiresAt: string | null) {
@@ -449,14 +499,14 @@ describe.skipIf(!dbReachable)('G15 badge expiry — DB-backed', () => {
     await asTenant(p);
     await setExpiry(p.studentA, '2026-10-05T00:00:00.000Z'); // one day before FROZEN_NOW
 
-    const res = await scan({ rawToken: p.tokenA, classSectionId: p.sectionId, period: 1 });
+    const res = await scan({ rawToken: p.tokenA, classSectionId: p.sectionId });
 
     expect(res.status).toBe(422);
 
     const json = await res.json() as any;
 
     expect(json.error.code).toBe('BADGE_EXPIRED');
-    expect(await activeMarksFor(p, p.studentA)).toHaveLength(0);
+    expect(await attendanceRowsFor(p)).toHaveLength(0);
   });
 
   it('G15.12: the expiry refusal is recorded as a rejected scan event', async () => {
@@ -477,26 +527,28 @@ describe.skipIf(!dbReachable)('G15 badge expiry — DB-backed', () => {
     await asTenant(p);
     await setExpiry(p.studentA, '2026-11-01T00:00:00.000Z');
 
-    const res = await scan({ rawToken: p.tokenA, classSectionId: p.sectionId, period: 1 });
+    const res = await scan({ rawToken: p.tokenA, classSectionId: p.sectionId });
 
     expect(res.status).toBe(200);
 
     const json = await res.json() as any;
 
     expect(json.data.resultStatus).toBe('accepted');
-    expect(await activeMarksFor(p, p.studentA)).toHaveLength(1);
+    expect(await acceptedEventsFor(p, p.studentA)).toHaveLength(1);
+    expect(await attendanceRowsFor(p)).toHaveLength(0);
   });
 
   it('G15.14: a badge with no expiry recorded is accepted', async () => {
     await asTenant(p);
     await setExpiry(p.studentB, null);
 
-    const res = await scan({ rawToken: p.tokenB, classSectionId: p.otherSectionId, period: 1 });
+    const res = await scan({ rawToken: p.tokenB, classSectionId: p.otherSectionId });
 
     expect(res.status).toBe(200);
 
     const json = await res.json() as any;
 
     expect(json.data.resultStatus).toBe('accepted');
+    expect(await attendanceRowsFor(p)).toHaveLength(0);
   });
 });

@@ -16,6 +16,7 @@ export default async function AttendancePage({
   // Without one the page is the day overview, which is the normal entry point.
   const slotId = typeof query.slot === 'string' ? query.slot : undefined;
   const date = typeof query.date === 'string' ? query.date : undefined;
+  const mode = query.mode === 'scan' || query.mode === 'manual' ? query.mode : undefined;
 
-  return <AttendanceView locale={locale} slotId={slotId} date={date} />;
+  return <AttendanceView locale={locale} slotId={slotId} date={date} mode={mode} />;
 }

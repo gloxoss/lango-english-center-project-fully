@@ -15,6 +15,7 @@ import {
   timetableVersions,
   user,
 } from '@/models/Schema';
+import { minutesOf, registerWindow } from './register-window';
 
 // The substitute is a different user row from the slot's own teacher, so the
 // second join needs its own alias.
@@ -401,48 +402,16 @@ export function missingOccurrences(
   });
 }
 
-/**
- * THE APPROVED ATTENDANCE WINDOW.
- *
- * A register opens 5 minutes before the lesson starts, stays open through it,
- * and closes 15 minutes after it ends. Outside that the teacher is read-only and
- * a change has to go through an admin correction — so a register cannot be
- * quietly written hours later, and a teacher is not blocked for arriving early.
- */
-export const REGISTER_OPENS_BEFORE_MINUTES = 5;
-export const REGISTER_CLOSES_AFTER_MINUTES = 15;
-
-export type RegisterWindow = 'BEFORE' | 'OPEN' | 'CLOSED';
-
-function minutesOf(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
-  return (hours ?? 0) * 60 + (minutes ?? 0);
-}
-
-export function registerWindow(
-  occurrence: Pick<SessionOccurrence, 'startTime' | 'endTime'>,
-  selectedDate: string,
-  now: Date = new Date(),
-): RegisterWindow {
-  const businessDate = casablancaTodayIso(now);
-
-  // Only today is ever operable; a past lesson is closed, a future one unopened.
-  if (selectedDate < businessDate) {
-    return 'CLOSED';
-  }
-  if (selectedDate > businessDate) {
-    return 'BEFORE';
-  }
-
-  const hm = minutesOf(casablancaTimeHm(now));
-  const opens = minutesOf(occurrence.startTime) - REGISTER_OPENS_BEFORE_MINUTES;
-  const closes = minutesOf(occurrence.endTime) + REGISTER_CLOSES_AFTER_MINUTES;
-
-  if (hm < opens) {
-    return 'BEFORE';
-  }
-  return hm > closes ? 'CLOSED' : 'OPEN';
-}
+// THE APPROVED ATTENDANCE WINDOW lives in ./register-window: the teacher's
+// register runs in the browser and has to ask the same question, and this file
+// reads the database at module scope. Re-exported here so every existing caller
+// keeps one import path, and so there is still exactly one implementation.
+export {
+  REGISTER_CLOSES_AFTER_MINUTES,
+  REGISTER_OPENS_BEFORE_MINUTES,
+  registerWindow,
+} from './register-window';
+export type { RegisterWindow } from './register-window';
 
 /**
  * The lesson the teacher is teaching right now, i.e. the one whose window is

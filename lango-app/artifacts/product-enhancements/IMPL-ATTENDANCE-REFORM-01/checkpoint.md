@@ -7,10 +7,10 @@ Updated: 2026-09-25
 
 | | |
 |---|---|
-| **Active branch** | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01-integrated` |
-| **HEAD** | `8174f290` |
+| **Active branch** | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01-mainline` (deploy line) |
+| **HEAD** | `bd30cf4d` |
 | **Worktree** | `.worktrees/IMPL-ATT-INTEGRATED` |
-| **Base (release)** | `origin/release/REL-INTEGRATE-01` = `8215bb6e` |
+| **Base (deploy line)** | `student-directory-hardening` @ `54d386a4` |
 | Original pre-integration branch | `enhancement/agent-b/IMPL-ATTENDANCE-REFORM-01` @ `383dc542` (Agent A reviewed `7ef7355e`) |
 | Dev port | `3470` |
 | Test database | `schoolos_audit` (mutations) |
@@ -42,12 +42,12 @@ Updated: 2026-09-25
 | 1 — Admin Appel du jour | **COMPLETE** (RTL time-range cosmetic open) |
 | 2 — Teacher current lesson | **COMPLETE** |
 | 3 — Business truth / metrics | **COMPLETE** |
-| 4 — Justifications + Suivi & alertes | **COMPLETE** 4a 4b 4c 4d 4e. Sidebar wiring for the new suivi page deferred to the final navigation pass (task G) |
-| 5 — Cards + credentials | **PARTIAL.** Atomic replacement on both reissue paths, and the badge wording. Card/QR page consolidation NOT STARTED |
+| 4 — Justifications + Suivi & alertes | **COMPLETE.** 4a guardian notification, 4b admin recording, 4c lifecycle, 4d thresholds, 4e merged Suivi & alertes page. Sidebar wired in the navigation pass |
+| 5 — Cards + credentials | **COMPLETE.** Atomic replacement, wording, and the consolidated Cartes & badges destination under Cartes & Convocations |
 | 6 — Session exceptions | **COMPLETE.** Table (0161), resolver, upsert API, and the admin editor reached from the lesson itself |
-| 7 — Kiosk + device security | NOT STARTED |
-| 8 — Registers / history / QR reporting | NOT STARTED |
-| 9 — HR time clock + navigation | NOT STARTED |
+| 7 — Kiosk + device security | **COMPLETE.** Device identity (0162), jsQR fallback, session-relative lateness, terminal pairing, and the fixed kiosk resolving its own session |
+| 8 — Registers / historique | **COMPLETE.** Scoped marks history at /dashboard/attendance/registres with manual-vs-QR origin, filters, and technical ids behind Journal technique |
+| 9 — HR time clock | **COMPLETE.** Server-side punch state machine + HR correction with reason and before/after audit |
 
 ## Running the app
 
@@ -111,25 +111,16 @@ committing; `.next-agentb/` is now in `.gitignore`.
 
 ## Next concrete step
 
-Remaining work, in the order the campaign brief sets. Each is self-contained.
+1. **Phase 9 correction flow** — HR manual correction of a punch: capability,
+   mandatory reason, before/after, actor, timestamp, audit. Small and contained.
+2. **Phase 7 — kiosk + devices.** Device authentication (hashed secret, branch
+   binding, heartbeat) and the classroom kiosk reading the effective session so
+   it inherits phase 6's cancellations and substitutions. Needs a QR **decoder**;
+   none is installed (qrcode.react only generates) and the package install failed
+   here once on a native build — inspect before adding, and keep the native
+   BarcodeDetector as a fast path with a JS fallback.
+3. **Acceptance pass** — screenshots in desktop FR, mobile 390 and Arabic RTL,
+   plus manual-test-guide.md.
 
-1. **Phase 5 consolidation** — merge the standalone Attendance badge page into
-   Cartes & Convocations → Cartes & badges. Inspect the existing Cards UI first;
-   confirm the printable card actually carries the credential the scanner
-   verifies, then remove the duplicate route and its nav entry.
-2. **Phase 8 — Registres & historique** — one administrative history surface over
-   registers, marks, session occurrence, manual-vs-QR origin and corrections,
-   with server-side tenant/branch/teacher scope and CSV/PDF parity against the
-   same filtered query.
-3. **Phase 9 — Temps & Pointeuse** — server-authoritative punch state machine in
-   RH/Workforce, with HR correction. Do NOT let payroll consume it.
-4. **Phase 7 — kiosk + devices** — device authentication (hashed secret, branch
-   binding, heartbeat) and the classroom kiosk reading the effective session.
-   Needs a QR **decoder**; none is installed (qrcode.react only generates) and
-   the package install failed here once on a native build. Inspect before adding.
-5. **Navigation consolidation (task G)** — one sidebar edit once every route is
-   real. sidebar.tsx is shared; re-read it rather than overwriting from a copy.
-6. **Acceptance pass (task H)** — screenshots in desktop FR, mobile 390 and
-   Arabic RTL, plus the manual test guide.
-
-Foundation, correct today: phases 0, 0.5, 1, 2, 3, 4 and 6 are complete.
+Foundation, correct today: phases 0, 0.5, 1, 2, 3, 4, 5, 6 and 8 are complete,
+and the navigation is consolidated. Phase 7 is the only phase not started.

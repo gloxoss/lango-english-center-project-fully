@@ -17,7 +17,7 @@ import { casablancaTodayIso } from '@/libs/finance/today';
  * explicit, reasoned "Corriger le registre"; future days are a preview.
  */
 
-type SessionState = 'A_VENIR' | 'EN_COURS' | 'A_COMPLETER' | 'POINTAGE_TERMINE' | 'CORRIGE' | 'ANNULE';
+type SessionState = 'A_VENIR' | 'EN_COURS' | 'A_COMPLETER' | 'NON_POINTE' | 'POINTAGE_TERMINE' | 'CORRIGE' | 'ANNULE';
 
 type Register = { id: string; status: string; reference: string } | null;
 
@@ -50,18 +50,27 @@ type DaySession = {
   exception: SessionException | null;
 };
 
+type LegacyRegister = {
+  id: string;
+  classId: string;
+  className: string | null;
+  counts: { present: number; late: number; absent: number; excused: number };
+};
+
 type DayData = {
   date: string;
   businessDate: string;
   mode: 'past' | 'today' | 'future';
   sessions: DaySession[];
-  counts: { total: number; toComplete: number; done: number };
+  legacyRegisters?: LegacyRegister[];
+  counts: { total: number; toComplete: number; nonPointe?: number; done: number };
 };
 
 const STATE_STYLES: Record<SessionState, string> = {
   A_VENIR: 'bg-slate-100 text-slate-700 border-slate-200',
   EN_COURS: 'bg-sky-50 text-sky-800 border-sky-200',
   A_COMPLETER: 'bg-amber-50 text-amber-800 border-amber-200',
+  NON_POINTE: 'bg-slate-50 text-slate-500 border-slate-200',
   POINTAGE_TERMINE: 'bg-emerald-50 text-emerald-800 border-emerald-200',
   CORRIGE: 'bg-violet-50 text-violet-800 border-violet-200',
   ANNULE: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -71,6 +80,7 @@ const STATE_KEYS: Record<SessionState, string> = {
   A_VENIR: 'stateUpcoming',
   EN_COURS: 'stateOngoing',
   A_COMPLETER: 'stateToComplete',
+  NON_POINTE: 'stateNonPointeParCours',
   POINTAGE_TERMINE: 'stateDone',
   CORRIGE: 'stateCorrected',
   ANNULE: 'stateCancelled',
@@ -87,6 +97,11 @@ export function AppelDuJourView() {
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Late completion for past sessions without registers
+  const [lateCompleting, setLateCompleting] = useState<DaySession | null>(null);
+  const [lateReason, setLateReason] = useState('');
+  const [lateSaving, setLateSaving] = useState(false);
 
   // One-day exception editor.
   const [exceptionFor, setExceptionFor] = useState<DaySession | null>(null);
@@ -142,6 +157,33 @@ export function AppelDuJourView() {
       setNotice(t('correctionFailed'));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function submitLateComplete() {
+    if (!lateCompleting || lateReason.trim().length < 3) {
+      return;
+    }
+    setLateSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch('/api/attendance/registers/late-complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ slotId: lateCompleting.slotId, date, reason: lateReason.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json?.error?.message ?? 'failed');
+      }
+      setNotice(t('completeLateSuccess'));
+      setLateCompleting(null);
+      setLateReason('');
+      await load(date);
+    } catch (e: any) {
+      setNotice(e?.message ?? t('completeLateFailed'));
+    } finally {
+      setLateSaving(false);
     }
   }
 
@@ -288,9 +330,44 @@ export function AppelDuJourView() {
           <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-amber-800">
             {data.counts.toComplete} {t('toCompleteLabel')}
           </span>
+          {typeof data.counts.nonPointe === 'number' && data.counts.nonPointe > 0 && (
+            <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-1 text-slate-600">
+              {data.counts.nonPointe} {t('stateNonPointeParCours')}
+            </span>
+          )}
           <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-800">
             {data.counts.done} {t('doneLabel')}
           </span>
+        </div>
+      )}
+
+      {mode === 'past' && data?.legacyRegisters && data.legacyRegisters.length > 0 && (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900">{t('legacyRegisterTitle')}</h2>
+            <p className="text-xs text-slate-500 mt-0.5">{t('legacyRegisterHint')}</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {data.legacyRegisters.map((reg) => (
+              <div key={reg.id} className="rounded-xl border border-slate-200 bg-white p-3 text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900">{reg.className ?? t('scanUnknownClass')}</span>
+                  <Link
+                    href={`/${locale}/dashboard/attendance/registres?date=${encodeURIComponent(date)}&classId=${encodeURIComponent(reg.classId)}`}
+                    className="text-[#2487B8] hover:underline font-semibold"
+                  >
+                    {t('viewInRegisters')} &rarr;
+                  </Link>
+                </div>
+                <div className="flex gap-3 text-slate-600 font-mono text-[11px]">
+                  <span className="text-emerald-700">{reg.counts.present} P</span>
+                  <span className="text-amber-700">{reg.counts.late} R</span>
+                  <span className="text-rose-700">{reg.counts.absent} A</span>
+                  <span className="text-blue-700">{reg.counts.excused} E</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -394,6 +471,17 @@ export function AppelDuJourView() {
                       <Link href={rollCallHref(session.slotId)}>{t('markAttendance')}</Link>
                     </Button>
                   )}
+                  {mode === 'past' && (session.state === 'A_COMPLETER' || session.state === 'NON_POINTE') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 rounded-lg border-amber-300 bg-white text-amber-800 hover:bg-amber-50"
+                      onClick={() => { setLateCompleting(session); setLateReason(''); setNotice(null); }}
+                    >
+                      <Clock className="me-1 h-3.5 w-3.5" aria-hidden />
+                      {t('completeLateBtn')}
+                    </Button>
+                  )}
                   {session.state === 'POINTAGE_TERMINE' && session.register && mode === 'past' && (
                     <Button
                       variant="outline"
@@ -454,6 +542,49 @@ export function AppelDuJourView() {
                 onClick={() => void submitCorrection()}
               >
                 {saving && <Loader2 className="me-1 h-3.5 w-3.5 animate-spin" aria-hidden />}
+                {t('correctionSubmit')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {lateCompleting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('completeLateTitle')}
+            className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5"
+          >
+            <h2 className="text-base font-semibold text-slate-900">{t('completeLateTitle')}</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {lateCompleting.subjectName} · {[lateCompleting.className, lateCompleting.sectionName].filter(Boolean).join(' · ')} · {lateCompleting.startTime}–{lateCompleting.endTime}
+            </p>
+
+            <label className="mt-4 block text-sm font-medium text-slate-700" htmlFor="late-reason">
+              {t('completeLateReasonLabel')}
+            </label>
+            <textarea
+              id="late-reason"
+              value={lateReason}
+              onChange={e => setLateReason(e.target.value)}
+              placeholder={t('completeLateReasonPlaceholder')}
+              rows={3}
+              className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-sm text-slate-700"
+            />
+
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" size="sm" className="h-8 rounded-lg" onClick={() => setLateCompleting(null)}>
+                {t('correctionCancel')}
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 rounded-lg bg-[#2487B8] hover:bg-[#1B6C93] text-white"
+                disabled={lateSaving || lateReason.trim().length < 3}
+                onClick={() => void submitLateComplete()}
+              >
+                {lateSaving && <Loader2 className="me-1 h-3.5 w-3.5 animate-spin" aria-hidden />}
                 {t('correctionSubmit')}
               </Button>
             </div>

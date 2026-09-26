@@ -1,5 +1,7 @@
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  date,
   foreignKey,
   index,
   integer,
@@ -9,6 +11,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -63,7 +66,16 @@ export const scannerDevices = pgTable('scanner_devices', {
   pairedAt: timestamp('paired_at', { mode: 'string' }).defaultNow().notNull(),
   lastSeenAt: timestamp('last_seen_at', { mode: 'string' }),
   isDisabled: boolean('is_disabled').default(false).notNull(),
+  // Superseded by secret_hash (migration 0162). Kept so a mid-deploy read does
+  // not break; never written or verified again.
   secretKey: text('secret_key'),
+  // DEVICE IDENTITY (migration 0162). Only the hash is stored — the raw pairing
+  // secret exists solely in the response that created it, exactly like a badge
+  // token. A device with no hash cannot authenticate and must be re-paired.
+  secretHash: text('secret_hash'),
+  secretPrefix: varchar('secret_prefix', { length: 12 }),
+  roomLabel: varchar('room_label', { length: 100 }),
+  status: varchar('status', { length: 20 }).default('active').notNull(),
 }, table => [
   foreignKey({
     columns: [table.tenantId],
@@ -78,10 +90,26 @@ export const scannerSessions = pgTable('scanner_sessions', {
   deviceId: uuid('device_id'),
   operatorId: text('operator_id').notNull(),
   classSectionId: uuid('class_section_id'),
+  // LESSON IDENTITY (migration 0168). Set on a CLASSROOM session, which is bound
+  // to one occurrence (slot x date) and only accepts that lesson's section. Null
+  // on an ENTRANCE (portique) session, which accepts any student of the tenant
+  // and records a campus arrival only. This column is what tells the two apart.
+  //
+  // No Drizzle foreignKey() here on purpose: `classScheduleSlots` is declared in
+  // models/Schema.ts, which re-exports this file, so referencing it would close
+  // an import cycle. The constraint exists in the migration and in the database.
+  classScheduleSlotId: uuid('class_schedule_slot_id'),
+  date: date('date'),
   startedAt: timestamp('started_at', { mode: 'string' }).defaultNow().notNull(),
   endedAt: timestamp('ended_at', { mode: 'string' }),
   status: varchar({ length: 50 }).default('active').notNull(),
 }, table => [
+  index('scanner_sessions_slot_date_idx').on(table.tenantId, table.classScheduleSlotId, table.date),
+  // One OPEN classroom session per occurrence. Partial, so entrance sessions
+  // (null slot) and closed sessions stay unconstrained.
+  uniqueIndex('scanner_sessions_occurrence_open_unique')
+    .on(table.tenantId, table.classScheduleSlotId, table.date)
+    .where(sql`${table.classScheduleSlotId} IS NOT NULL AND ${table.status} = 'active'`),
   foreignKey({
     columns: [table.tenantId],
     foreignColumns: [tenants.id],

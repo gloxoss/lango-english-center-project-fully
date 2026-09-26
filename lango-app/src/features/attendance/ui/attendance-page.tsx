@@ -15,9 +15,10 @@ export async function AttendancePage({
   locale,
   slotId,
   date,
-}: { locale?: string; slotId?: string; date?: string } = {}) {
+  mode,
+}: { locale?: string; slotId?: string; date?: string; mode?: 'scan' | 'manual' } = {}) {
   if (slotId && date) {
-    return <AttendanceClient locale={locale} session={{ slotId, date }} />;
+    return <AttendanceClient locale={locale} session={{ slotId, date }} initialMode={mode} />;
   }
   return <AppelDuJourView />;
 }

@@ -2,7 +2,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
 import { ApiError, apiErrorResponse } from '@/libs/api/errors';
-import { requireCapability } from '@/libs/api/permissions';
+import { hasCapability, requireCapability } from '@/libs/api/permissions';
 import { db } from '@/libs/DB';
 import { attendanceScanEvents, scannerSessions, user } from '@/models/Schema';
 
@@ -12,9 +12,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const context = await requireRequestContext(request, ['school_admin', 'teacher']);
+    const context = await requireRequestContext(request, ['school_admin', 'super_admin', 'teacher', 'receptionist', 'guard']);
     const tenantId = requireTenant(context);
-    await requireCapability(context, 'attendance.manage');
+    const allowed = context.role === 'super_admin'
+      || (await hasCapability(context.userId, tenantId, context.role, 'attendance.manage'))
+      || (await hasCapability(context.userId, tenantId, context.role, 'attendance.scan'))
+      || (await hasCapability(context.userId, tenantId, context.role, 'attendance.read'));
+    if (!allowed) {
+      throw new ApiError(403, 'PERMISSION_DENIED', 'Droit attendance.scan ou attendance.manage requis.');
+    }
 
     const [session] = await db
       .select({ id: scannerSessions.id })

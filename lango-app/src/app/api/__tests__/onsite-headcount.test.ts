@@ -13,7 +13,10 @@ vi.mock('@/libs/api/context', () => ({
   requireRequestContext: async () => ({ tenantId: requestContext.tenantId, role: 'school_admin' }),
   requireTenant: (ctx: { tenantId: string }) => ctx.tenantId,
 }));
-vi.mock('@/libs/api/permissions', () => ({ requireCapability: async () => undefined }));
+vi.mock('@/libs/api/permissions', () => ({
+  requireCapability: async () => undefined,
+  hasCapability: async () => true,
+}));
 
 async function databaseAvailable() {
   try {

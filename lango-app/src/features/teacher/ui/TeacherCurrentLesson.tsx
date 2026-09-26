@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarClock, Clock, DoorOpen, Loader2, Users } from 'lucide-react';
+import { CalendarClock, CheckSquare, Clock, DoorOpen, Loader2, QrCode, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
@@ -87,8 +87,8 @@ export function TeacherCurrentLesson() {
   const next = data?.nextLesson ?? null;
   const schedule = data?.schedule ?? [];
 
-  const rollCallHref = (slotId: string) =>
-    `/${locale}/dashboard/attendance?slot=${encodeURIComponent(slotId)}&date=${encodeURIComponent(data?.date ?? '')}`;
+  const rollCallHref = (slotId: string, mode?: 'scan' | 'manual') =>
+    `/${locale}/dashboard/attendance?slot=${encodeURIComponent(slotId)}&date=${encodeURIComponent(data?.date ?? '')}${mode ? `&mode=${mode}` : ''}`;
 
   if (current) {
     const windowMessage = current.window === 'OPEN'
@@ -115,11 +115,22 @@ export function TeacherCurrentLesson() {
           {windowMessage}
         </p>
 
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap items-center gap-2.5">
           {current.window === 'OPEN' ? (
-            <Button asChild size="sm" className="h-9 w-full rounded-lg sm:w-auto">
-              <Link href={rollCallHref(current.slotId)}>{t('takeRegister')}</Link>
-            </Button>
+            <>
+              <Button asChild size="sm" className="h-9 gap-1.5 rounded-lg bg-[#0B6FA4] text-white hover:bg-[#095783]">
+                <Link href={rollCallHref(current.slotId, 'scan')}>
+                  <QrCode className="h-4 w-4" aria-hidden />
+                  {t('scanBadgesButton')}
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="outline" className="h-9 gap-1.5 rounded-lg border-slate-300 text-slate-700 hover:bg-slate-50">
+                <Link href={rollCallHref(current.slotId, 'manual')}>
+                  <CheckSquare className="h-4 w-4" aria-hidden />
+                  {t('manualRollCallButton')}
+                </Link>
+              </Button>
+            </>
           ) : (
             <Button size="sm" className="h-9 w-full rounded-lg sm:w-auto" disabled>
               {t('takeRegister')}
