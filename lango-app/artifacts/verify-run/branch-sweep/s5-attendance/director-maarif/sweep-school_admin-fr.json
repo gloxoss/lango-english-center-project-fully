@@ -1,0 +1,128 @@
+[
+  {
+    "route": "/dashboard/attendance",
+    "finalPath": "/fr/dashboard/attendance",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 502,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-attendance.png"
+  },
+  {
+    "route": "/dashboard/attendance/audit",
+    "finalPath": "/fr/dashboard/attendance/audit",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 36,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-attendance__audit.png"
+  },
+  {
+    "route": "/dashboard/attendance/badges",
+    "finalPath": "/fr/dashboard/attendance/badges",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 36,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-attendance__badges.png"
+  },
+  {
+    "route": "/dashboard/attendance/excuses",
+    "finalPath": "/fr/dashboard/attendance/excuses",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 556,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-attendance__excuses.png"
+  },
+  {
+    "route": "/dashboard/attendance/flags",
+    "finalPath": "/fr/dashboard/attendance/flags",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 36,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-attendance__flags.png"
+  },
+  {
+    "route": "/dashboard/attendance/qr-reports",
+    "finalPath": "/fr/dashboard/attendance/qr-reports",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 1240,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-attendance__qr-reports.png"
+  },
+  {
+    "route": "/dashboard/attendance/scanner",
+    "finalPath": "/fr/dashboard/attendance/scanner",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 614,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-attendance__scanner.png"
+  },
+  {
+    "route": "/dashboard/attendance/suivi",
+    "finalPath": "/fr/dashboard/attendance/suivi",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 568,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-attendance__suivi.png"
+  },
+  {
+    "route": "/dashboard/parent/attendance",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 445,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-parent__attendance.png"
+  },
+  {
+    "route": "/dashboard/settings/attendance",
+    "finalPath": "/fr/dashboard/settings/attendance",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 548,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__attendance.png"
+  },
+  {
+    "route": "/dashboard/workforce/timeclock",
+    "finalPath": "/fr/dashboard/workforce/timeclock",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 628,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-workforce__timeclock.png"
+  }
+]

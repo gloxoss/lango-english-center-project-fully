@@ -1,0 +1,1252 @@
+[
+  {
+    "route": "/dashboard/academics",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-academics.png"
+  },
+  {
+    "route": "/dashboard/academics/assessment/marksheet",
+    "finalPath": "/fr/dashboard/academics/assessment/marksheet",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 41,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.attendance-appel` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotif",
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.attendance-registres` in messages for locale `fr`.\n    at getFallbackFromErrorAndN",
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.cards-badges` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.workforce-timeclock` in messages for locale `fr`.\n    at getFallbackFromErrorAndNo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-academics__assessment__marksheet.png"
+  },
+  {
+    "route": "/dashboard/academics/calendar",
+    "finalPath": "/fr/dashboard/academics/assessment/marksheet",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 0,
+    "failures": [],
+    "textDefects": [],
+    "file": "school_admin-fr-academics__calendar.png"
+  },
+  {
+    "route": "/dashboard/academics/evaluations",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-academics__evaluations.png"
+  },
+  {
+    "route": "/dashboard/academics/grading/policies",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-academics__grading__policies.png"
+  },
+  {
+    "route": "/dashboard/academics/live-class/new",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-academics__live-class__new.png"
+  },
+  {
+    "route": "/dashboard/academics/promotions",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-academics__promotions.png"
+  },
+  {
+    "route": "/dashboard/academics/results",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-academics__results.png"
+  },
+  {
+    "route": "/dashboard/academics/sections",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-academics__sections.png"
+  },
+  {
+    "route": "/dashboard/academics/shifts",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-academics__shifts.png"
+  },
+  {
+    "route": "/dashboard/academics/syllabus",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-academics__syllabus.png"
+  },
+  {
+    "route": "/dashboard/access-denied",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-access-denied.png"
+  },
+  {
+    "route": "/dashboard/attendance",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-attendance.png"
+  },
+  {
+    "route": "/dashboard/attendance/excuses",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-attendance__excuses.png"
+  },
+  {
+    "route": "/dashboard/attendance/scanner",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-attendance__scanner.png"
+  },
+  {
+    "route": "/dashboard/broadcast/automations",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-broadcast__automations.png"
+  },
+  {
+    "route": "/dashboard/broadcast/reports",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-broadcast__reports.png"
+  },
+  {
+    "route": "/dashboard/cards",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-cards.png"
+  },
+  {
+    "route": "/dashboard/cards/issued",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-cards__issued.png"
+  },
+  {
+    "route": "/dashboard/cards/templates",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-cards__templates.png"
+  },
+  {
+    "route": "/dashboard/certificates/issue/employees",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-certificates__issue__employees.png"
+  },
+  {
+    "route": "/dashboard/certificates/jobs",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-certificates__jobs.png"
+  },
+  {
+    "route": "/dashboard/certificates/templates",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-certificates__templates.png"
+  },
+  {
+    "route": "/dashboard/communication/campaign-composer",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-communication__campaign-composer.png"
+  },
+  {
+    "route": "/dashboard/communication/events",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-communication__events.png"
+  },
+  {
+    "route": "/dashboard/content/library",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-content__library.png"
+  },
+  {
+    "route": "/dashboard/events",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-events.png"
+  },
+  {
+    "route": "/dashboard/finance/accounting/deposits/new",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__accounting__deposits__new.png"
+  },
+  {
+    "route": "/dashboard/finance/accounting/statements",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__accounting__statements.png"
+  },
+  {
+    "route": "/dashboard/finance/accounting/voucher-types",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__accounting__voucher-types.png"
+  },
+  {
+    "route": "/dashboard/finance/approvals",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__approvals.png"
+  },
+  {
+    "route": "/dashboard/finance/chart-of-accounts",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__chart-of-accounts.png"
+  },
+  {
+    "route": "/dashboard/finance/expenses",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__expenses.png"
+  },
+  {
+    "route": "/dashboard/finance/fee-structures",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__fee-structures.png"
+  },
+  {
+    "route": "/dashboard/finance/invoices",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__invoices.png"
+  },
+  {
+    "route": "/dashboard/finance/online-payments",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__online-payments.png"
+  },
+  {
+    "route": "/dashboard/finance/receipts",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__receipts.png"
+  },
+  {
+    "route": "/dashboard/finance/refunds",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__refunds.png"
+  },
+  {
+    "route": "/dashboard/finance/statements",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-finance__statements.png"
+  },
+  {
+    "route": "/dashboard/hostel/allocations",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__allocations.png"
+  },
+  {
+    "route": "/dashboard/hostel/categories",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__categories.png"
+  },
+  {
+    "route": "/dashboard/hostel/leave-passes",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__leave-passes.png"
+  },
+  {
+    "route": "/dashboard/hostel/reports",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__reports.png"
+  },
+  {
+    "route": "/dashboard/hostel/zones",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-hostel__zones.png"
+  },
+  {
+    "route": "/dashboard/hr/advances",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-hr__advances.png"
+  },
+  {
+    "route": "/dashboard/hr/designations",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-hr__designations.png"
+  },
+  {
+    "route": "/dashboard/hr/leave",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-hr__leave.png"
+  },
+  {
+    "route": "/dashboard/hr/salary-advances",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-hr__salary-advances.png"
+  },
+  {
+    "route": "/dashboard/inventory/adjustments",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__adjustments.png"
+  },
+  {
+    "route": "/dashboard/inventory/overview",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__overview.png"
+  },
+  {
+    "route": "/dashboard/inventory/sales",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__sales.png"
+  },
+  {
+    "route": "/dashboard/inventory/suppliers",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-inventory__suppliers.png"
+  },
+  {
+    "route": "/dashboard/library",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-library.png"
+  },
+  {
+    "route": "/dashboard/library/me",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-library__me.png"
+  },
+  {
+    "route": "/dashboard/parent/communication",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-parent__communication.png"
+  },
+  {
+    "route": "/dashboard/parent/live-classes",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-parent__live-classes.png"
+  },
+  {
+    "route": "/dashboard/portals/guard",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__guard.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/incidents",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__guard__incidents.png"
+  },
+  {
+    "route": "/dashboard/portals/guard/visitors",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__guard__visitors.png"
+  },
+  {
+    "route": "/dashboard/portals/leadership/approvals",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__leadership__approvals.png"
+  },
+  {
+    "route": "/dashboard/portals/librarian/charges",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__librarian__charges.png"
+  },
+  {
+    "route": "/dashboard/portals/librarian/holds",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "console: IntlError: MISSING_MESSAGE: Could not resolve `Navigation.parentGrades` in messages for locale `fr`.\n    at getFallbackFromErrorAndNotify (h",
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__librarian__holds.png"
+  },
+  {
+    "route": "/dashboard/portals/librarian/reports",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-portals__librarian__reports.png"
+  },
+  {
+    "route": "/dashboard/receptionist",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-receptionist.png"
+  },
+  {
+    "route": "/dashboard/receptionist/inquiries",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-receptionist__inquiries.png"
+  },
+  {
+    "route": "/dashboard/reports",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-reports.png"
+  },
+  {
+    "route": "/dashboard/reports/schedules",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-reports__schedules.png"
+  },
+  {
+    "route": "/dashboard/settings/accounting-defaults",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 666,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__accounting-defaults.png"
+  },
+  {
+    "route": "/dashboard/settings/branches",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__branches.png"
+  },
+  {
+    "route": "/dashboard/settings/documents",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__documents.png"
+  },
+  {
+    "route": "/dashboard/settings/entitlements",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__entitlements.png"
+  },
+  {
+    "route": "/dashboard/settings/live-classrooms",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__live-classrooms.png"
+  },
+  {
+    "route": "/dashboard/settings/numbering",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__numbering.png"
+  },
+  {
+    "route": "/dashboard/settings/permissions",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__permissions.png"
+  },
+  {
+    "route": "/dashboard/settings/scanner-devices",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__scanner-devices.png"
+  },
+  {
+    "route": "/dashboard/settings/security/2fa",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__security__2fa.png"
+  },
+  {
+    "route": "/dashboard/settings/subscription",
+    "finalPath": "/fr/dashboard/settings/subscription",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 372,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__subscription.png"
+  },
+  {
+    "route": "/dashboard/settings/values",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__values.png"
+  },
+  {
+    "route": "/dashboard/settings/website/news",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-settings__website__news.png"
+  },
+  {
+    "route": "/dashboard/student/live-classes",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-student__live-classes.png"
+  },
+  {
+    "route": "/dashboard/students/admissions",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-students__admissions.png"
+  },
+  {
+    "route": "/dashboard/students/alumni-transition",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-students__alumni-transition.png"
+  },
+  {
+    "route": "/dashboard/students/import",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 664,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-students__import.png"
+  },
+  {
+    "route": "/dashboard/students/photos",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-students__photos.png"
+  },
+  {
+    "route": "/dashboard/super-admin",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin.png"
+  },
+  {
+    "route": "/dashboard/super-admin/schools",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__schools.png"
+  },
+  {
+    "route": "/dashboard/super-admin/sms",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__sms.png"
+  },
+  {
+    "route": "/dashboard/super-admin/support",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-super-admin__support.png"
+  },
+  {
+    "route": "/dashboard/teacher",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-teacher.png"
+  },
+  {
+    "route": "/dashboard/teachers/manage",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 665,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-teachers__manage.png"
+  },
+  {
+    "route": "/dashboard/transport/boarding",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__boarding.png"
+  },
+  {
+    "route": "/dashboard/transport/incidents",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__incidents.png"
+  },
+  {
+    "route": "/dashboard/transport/routes",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__routes.png"
+  },
+  {
+    "route": "/dashboard/transport/trips",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-transport__trips.png"
+  },
+  {
+    "route": "/dashboard/workforce/advances",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-workforce__advances.png"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/adjustments",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-workforce__payroll__adjustments.png"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/payments",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-workforce__payroll__payments.png"
+  },
+  {
+    "route": "/dashboard/workforce/payroll/runs",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-workforce__payroll__runs.png"
+  },
+  {
+    "route": "/dashboard/workforce/timeclock",
+    "finalPath": "/fr/dashboard/settings/onboarding",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 663,
+    "failures": [
+      "404 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "school_admin-fr-workforce__timeclock.png"
+  }
+]

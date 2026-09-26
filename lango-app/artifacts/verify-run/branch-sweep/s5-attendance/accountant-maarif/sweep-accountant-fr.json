@@ -1,0 +1,129 @@
+[
+  {
+    "route": "/dashboard/attendance",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 175,
+    "failures": [
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-attendance.png"
+  },
+  {
+    "route": "/dashboard/attendance/audit",
+    "finalPath": "/fr/dashboard/attendance/audit",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 36,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-attendance__audit.png"
+  },
+  {
+    "route": "/dashboard/attendance/badges",
+    "finalPath": "/fr/dashboard/attendance/badges",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 36,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-attendance__badges.png"
+  },
+  {
+    "route": "/dashboard/attendance/excuses",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 175,
+    "failures": [
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-attendance__excuses.png"
+  },
+  {
+    "route": "/dashboard/attendance/flags",
+    "finalPath": "/fr/dashboard/attendance/flags",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 36,
+    "failures": [],
+    "textDefects": [],
+    "file": "accountant-fr-attendance__flags.png"
+  },
+  {
+    "route": "/dashboard/attendance/qr-reports",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 175,
+    "failures": [
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-attendance__qr-reports.png"
+  },
+  {
+    "route": "/dashboard/attendance/scanner",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 175,
+    "failures": [
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-attendance__scanner.png"
+  },
+  {
+    "route": "/dashboard/attendance/suivi",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 175,
+    "failures": [
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-attendance__suivi.png"
+  },
+  {
+    "route": "/dashboard/parent/attendance",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 175,
+    "failures": [
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-parent__attendance.png"
+  },
+  {
+    "route": "/dashboard/settings/attendance",
+    "finalPath": "/fr/dashboard/access-denied",
+    "redirected": true,
+    "hScroll": false,
+    "nodes": 175,
+    "failures": [
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-settings__attendance.png"
+  },
+  {
+    "route": "/dashboard/workforce/timeclock",
+    "finalPath": "/fr/dashboard/workforce/timeclock",
+    "redirected": false,
+    "hScroll": false,
+    "nodes": 206,
+    "failures": [
+      "403 /api/workforce/punches",
+      "403 /api/settings/logo"
+    ],
+    "textDefects": [],
+    "file": "accountant-fr-workforce__timeclock.png"
+  }
+]
