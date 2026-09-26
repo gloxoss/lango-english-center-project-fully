@@ -5100,7 +5100,10 @@
     "legacyRegisterTitle": "السجل اليومي (الصيغة السابقة)",
     "legacyRegisterHint": "تم تسجيل الحضور على مستوى القسم لهذا اليوم دون توزيع حسب الحصص الزمنية.",
     "viewInRegisters": "الاطلاع في السجلات والأرشيف",
-    "stateNonPointeParCours": "غير مسجل حسب الحصة"
+    "stateNonPointeParCours": "غير مسجل حسب الحصة",
+    "smsExceptionCancelled": "إشعار: تم إلغاء حصة {subject} المقررة بتاريخ {date}.",
+    "smsExceptionRescheduled": "إشعار: تم تعديل توقيت حصة {subject} بتاريخ {date} إلى {start}–{end}.",
+    "smsExceptionReinstated": "إشعار: تم استئناف حصة {subject} بتاريخ {date} وفق جدولها المعتاد."
   },
   "Grading": {
     "calendarTabTitle": "التقويم والمراقبون",

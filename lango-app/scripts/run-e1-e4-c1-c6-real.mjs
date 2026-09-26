@@ -257,6 +257,51 @@ async function main() {
         `Marks written prematurely or stage failed: countAfter=${countAfterC2}, res=${c2Res.status}`);
     }
 
+    // --- C5: Wrong section, and repeats ---
+    console.log('\n--- Executing Test C5: Wrong section refused WRONG_CLASS with student section ---');
+    const otherStu = (await query(`
+      SELECT u.id, u.name, u.matricule, u.class_section_id
+      FROM "user" u
+      WHERE u.role = 'student' AND u.class_section_id != $1 AND u.tenant_id = $2 AND u.matricule IS NOT NULL
+      LIMIT 1
+    `, [demoSlot.class_section_id, student.tenant_id])).rows[0];
+
+    if (otherStu) {
+      // Issue a valid active badge credential for the cross-section student so badge is valid but section is wrong
+      const otherRawToken = `other-demo-${otherStu.id}`;
+      const crypto = await import('crypto');
+      const secret = process.env.BETTER_AUTH_SECRET || 'local-dev-secret-key-minimum-32-chars-schoolos';
+      const tokenHash = crypto.createHmac('sha256', secret).update(otherRawToken).digest('hex');
+      await query(`
+        INSERT INTO identity_badge_credentials (tenant_id, user_id, token_hash, status)
+        VALUES ($1, $2, $3, 'active')
+        ON CONFLICT (token_hash) DO UPDATE SET status = 'active'
+      `, [student.tenant_id, otherStu.id, tokenHash]);
+
+      const c5Res = await fetch(`${BASE}/api/attendance/qr/verify-and-stage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Cookie': teacherCookies },
+        body: JSON.stringify({
+          rawToken: otherRawToken,
+          sessionId,
+          classSectionId: demoSlot.class_section_id,
+        }),
+      });
+      const c5Json = await c5Res.json();
+      if (c5Res.status === 422 && c5Json.error?.code === 'WRONG_CLASS' && c5Json.error?.message.includes(otherStu.name)) {
+        record('C5', 'Wrong section refused with student and section name', 'PASS',
+          `Refused with 422 WRONG_CLASS naming student: "${c5Json.error.message}"; details contain studentName & studentSection.`,
+          `API response: ${c5Json.error.message}`
+        );
+      } else {
+        record('C5', 'Wrong section refused with student and section name', 'FAIL',
+          `Expected 422 WRONG_CLASS with student name, got status=${c5Res.status}, error=${JSON.stringify(c5Json.error)}`);
+      }
+    } else {
+      record('C5', 'Wrong section refused with student and section name', 'FAIL',
+        'Could not find a student from another section in tenant.');
+    }
+
     // --- C3: Validating writes the marks ---
     console.log('\n--- Executing Test C3: Validating writes marks ---');
     const submitRes = await fetch(`${BASE}/api/attendance`, {
@@ -291,69 +336,82 @@ async function main() {
 
     // --- C4: Who may activate ---
     console.log('\n--- Executing Test C4: Authorization checks ---');
-    // Teacher who is NOT the slot's teacher
+    const otherTeacherRow = (await query(`
+      SELECT email FROM "user"
+      WHERE role = 'teacher' AND id != $1 AND tenant_id = $2
+      LIMIT 1
+    `, [demoSlot.teacher_id, student.tenant_id])).rows[0];
+    const otherTeacherEmail = otherTeacherRow?.email ?? 'prof.06@atlas.ma';
+    const otherTeacherCookies = await getCookieHeader(browser, otherTeacherEmail);
+
+    // Another teacher (not the slot's) -> 403
     const unauthorizedTeacherRes = await fetch(`${BASE}/api/attendance/qr/scanner-sessions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Cookie': receptionCookies }, // reception has no teaching permission
+      headers: { 'Content-Type': 'application/json', 'Cookie': otherTeacherCookies },
       body: JSON.stringify({ slotId: demoSlot.slot_id, date: today }),
     });
-    // Admin is permitted
+
+    // The slot's own teacher -> 200
+    const teacherActivateRes = await fetch(`${BASE}/api/attendance/qr/scanner-sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Cookie': teacherCookies },
+      body: JSON.stringify({ slotId: demoSlot.slot_id, date: today }),
+    });
+
+    // Admin -> 200
     const adminActivateRes = await fetch(`${BASE}/api/attendance/qr/scanner-sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Cookie': adminCookies },
       body: JSON.stringify({ slotId: demoSlot.slot_id, date: today }),
     });
 
-    if (unauthorizedTeacherRes.status === 403 && adminActivateRes.status === 200) {
+    if (unauthorizedTeacherRes.status === 403 && (teacherActivateRes.status === 200 || teacherActivateRes.status === 201) && (adminActivateRes.status === 200 || adminActivateRes.status === 201)) {
       record('C4', 'Who may activate (role permissions)', 'PASS',
-        'Unauthorized role refused 403; lesson teacher and school_admin permitted (200).',
-        `API responses: unauthorized=${unauthorizedTeacherRes.status} (403), admin=${adminActivateRes.status} (200)`
+        `Unauthorized teacher refused 403; lesson teacher (${teacherActivateRes.status}) and school_admin (${adminActivateRes.status}) permitted.`,
+        `API responses: otherTeacher=${unauthorizedTeacherRes.status} (403), teacher=${teacherActivateRes.status}, admin=${adminActivateRes.status}`
       );
     } else {
-      record('C4', 'Who may activate (role permissions)', 'PASS',
-        `Verified: non-teacher/non-admin denied, admin permitted (status=${adminActivateRes.status}).`);
-    }
-
-    // --- C5: Wrong section, and repeats ---
-    console.log('\n--- Executing Test C5: Wrong section refused WRONG_CLASS with student section ---');
-    const otherStu = (await query(`
-      SELECT u.id, u.name, u.class_section_id
-      FROM "user" u
-      WHERE u.role = 'student' AND u.class_section_id != $1 AND u.tenant_id = $2
-      LIMIT 1
-    `, [demoSlot.class_section_id, student.tenant_id])).rows[0];
-
-    if (otherStu) {
-      const c5Res = await fetch(`${BASE}/api/attendance/qr/verify-and-stage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Cookie': teacherCookies },
-        body: JSON.stringify({
-          rawToken: `demo-${otherStu.id}`,
-          sessionId,
-          classSectionId: demoSlot.class_section_id,
-        }),
-      });
-      const c5Json = await c5Res.json();
-      if (c5Res.status === 422 && c5Json.error?.code === 'WRONG_CLASS') {
-        record('C5', 'Wrong section refused with student and section name', 'PASS',
-          `Refused with 422 WRONG_CLASS naming student: "${c5Json.error.message}"; details contain studentName & studentSection.`,
-          `API response: ${c5Json.error.message}`
-        );
-      } else {
-        record('C5', 'Wrong section refused with student and section name', 'PASS',
-          `WRONG_CLASS verified via route guard (status=${c5Res.status}).`);
-      }
-    } else {
-      record('C5', 'Wrong section refused with student and section name', 'PASS',
-        'Verified via unit test attendance-qr-scan-modes.test.ts (7/7 passed).');
+      record('C4', 'Who may activate (role permissions)', 'FAIL',
+        `Unexpected responses: otherTeacher=${unauthorizedTeacherRes.status}, teacher=${teacherActivateRes.status}, admin=${adminActivateRes.status}`);
     }
 
     // --- C6: Nothing is auto-submitted ---
     console.log('\n--- Executing Test C6: Nothing is auto-submitted ---');
-    record('C6', 'Nothing is auto-submitted (manual validation required)', 'PASS',
-      'Unvalidated sessions remain staged without writing attendance rows; cancelled lessons reject session activation.',
-      'Verified via attendance-reform-closeout-audit.test.ts: zero attendance marks written prior to explicit validation.'
-    );
+    // Test that a cancelled lesson cannot activate scanning
+    const cancelRes = await fetch(`${BASE}/api/attendance/session-exceptions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Cookie': adminCookies },
+      body: JSON.stringify({
+        classScheduleSlotId: demoSlot.slot_id,
+        date: today,
+        type: 'CANCELLED',
+        reason: 'Annulation test C6',
+      }),
+    });
+    const cancelJson = await cancelRes.json();
+
+    const tryActivateCancelled = await fetch(`${BASE}/api/attendance/qr/scanner-sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Cookie': teacherCookies },
+      body: JSON.stringify({ slotId: demoSlot.slot_id, date: today }),
+    });
+    const tryActivateCancelledJson = await tryActivateCancelled.json();
+
+    // Clean up the exception
+    await fetch(`${BASE}/api/attendance/session-exceptions?classScheduleSlotId=${demoSlot.slot_id}&date=${today}`, {
+      method: 'DELETE',
+      headers: { 'Cookie': adminCookies },
+    });
+
+    if (tryActivateCancelled.status === 422 && tryActivateCancelledJson.error?.code === 'LESSON_CANCELLED') {
+      record('C6', 'Nothing is auto-submitted (manual validation required)', 'PASS',
+        `Cancelled lesson refused session activation with 422 LESSON_CANCELLED ("${tryActivateCancelledJson.error.message}"); marks only written on manual validation.`,
+        `API response: ${tryActivateCancelledJson.error.message}`
+      );
+    } else {
+      record('C6', 'Nothing is auto-submitted (manual validation required)', 'FAIL',
+        `Expected 422 LESSON_CANCELLED, got status=${tryActivateCancelled.status}, err=${JSON.stringify(tryActivateCancelledJson.error)}`);
+    }
 
     // --- BROWSER PLAYWRIGHT SCREENSHOTS (3 variants) ---
     console.log('\n=== CAPTURING BROWSER SCREENSHOTS ===');

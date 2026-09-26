@@ -5100,7 +5100,10 @@
     "legacyRegisterTitle": "Registre journalier (ancien format)",
     "legacyRegisterHint": "Des présences ont été saisies au niveau de la classe pour cette journée, sans découpage par créneau horaire.",
     "viewInRegisters": "Consulter dans Registres & historique",
-    "stateNonPointeParCours": "Non pointé par cours"
+    "stateNonPointeParCours": "Non pointé par cours",
+    "smsExceptionCancelled": "Avis: Le cours de {subject} du {date} est annulé.",
+    "smsExceptionRescheduled": "Avis: Le cours de {subject} du {date} est déplacé à {start}–{end}.",
+    "smsExceptionReinstated": "Avis: Le cours de {subject} du {date} est rétabli selon l'horaire habituel."
   },
   "Grading": {
     "calendarTabTitle": "Calendrier & surveillants",

@@ -9,6 +9,7 @@ import { parseJson } from '@/libs/api/validation';
 import { isCancelled, listSessionOccurrences } from '@/libs/attendance/session-occurrence';
 import { db } from '@/libs/DB';
 import { casablancaTodayIso } from '@/libs/finance/today';
+import { getEffectiveValueWithLegacyFallback } from '@/libs/settings/registry';
 import { attendanceRegisters, classes, classScheduleSlots, classSections, sessionYears } from '@/models/Schema';
 
 const lateCompleteSchema = z.object({
@@ -29,11 +30,14 @@ export async function POST(request: Request) {
       throw new ApiError(422, 'NOT_PAST_DATE', 'La complétion en retard est réservée aux jours passés.');
     }
 
-    // Teacher window limit (7 days maximum)
+    // Configurable teacher window limit (default 7 days)
+    const daysEff = await getEffectiveValueWithLegacyFallback(tenantId, null, 'attendance.lateCompletionDays');
+    const allowedDays = typeof daysEff.value === 'number' ? daysEff.value : 7;
+
     const diffMs = new Date(businessDate).getTime() - new Date(body.date).getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    if (context.role === 'teacher' && diffDays > 7) {
-      throw new ApiError(403, 'WINDOW_EXPIRED', 'Le délai de complétion en retard pour les enseignants est dépassé (7 jours max).');
+    if (context.role === 'teacher' && diffDays > allowedDays) {
+      throw new ApiError(403, 'WINDOW_EXPIRED', `Le délai de complétion en retard pour les enseignants est dépassé (${allowedDays} jours max).`);
     }
 
     const occurrences = await listSessionOccurrences({
@@ -46,6 +50,11 @@ export async function POST(request: Request) {
     const occurrence = occurrences.find(o => o.slotId === body.slotId);
     if (!occurrence) {
       throw new ApiError(404, 'LESSON_NOT_FOUND', 'Séance introuvable pour cette date.');
+    }
+
+    // Branch scope check for campus-limited admins
+    if (context.branchId && occurrence.branchId && occurrence.branchId !== context.branchId) {
+      throw new ApiError(403, 'FORBIDDEN', 'Cette séance appartient à un autre campus.');
     }
 
     if (isCancelled(occurrence)) {
@@ -104,7 +113,8 @@ export async function POST(request: Request) {
         status: 'REOPENED',
         reopenedAt: new Date().toISOString(),
         reopenedById: context.userId,
-        reopenReason: `[Complétion en retard] ${body.reason}`,
+        reopenReason: body.reason,
+        correctionNote: 'LATE_COMPLETION',
         submittedById: context.userId,
       })
       .returning();

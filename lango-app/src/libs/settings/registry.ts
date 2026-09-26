@@ -259,6 +259,17 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     requiredPermission: 'settings.attendance.manage',
     legacyField: 'attendancePeriodStartTime',
   },
+  {
+    key: 'attendance.lateCompletionDays',
+    label: 'Délai de complétion en retard (jours)',
+    description: 'Nombre de jours pendant lesquels un enseignant peut compléter un registre non pointé.',
+    namespace: 'attendance',
+    valueSchema: z.number().int().min(1).max(60),
+    defaultValue: 7,
+    scope: 'tenant',
+    sensitivity: 'internal',
+    requiredPermission: 'settings.attendance.manage',
+  },
 
   // -- Academic policies --
   {

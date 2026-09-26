@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull, or } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { checkConsent } from '@/features/broadcast/services/consent-service';
 import { sendSmsMessage } from '@/features/broadcast/services/sms-delivery';
 import { recordAudit } from '@/libs/api/audit';
 import { requireRequestContext, requireTenant } from '@/libs/api/context';
@@ -52,6 +53,25 @@ function minutesOf(time: string): number {
   return (h ?? 0) * 60 + (m ?? 0);
 }
 
+const EXCEPTION_SMS_TEMPLATES = {
+  ar: {
+    CANCELLED: (p: { subject: string; date: string }) =>
+      `إشعار: تم إلغاء حصة ${p.subject} المقررة بتاريخ ${p.date}.`,
+    RESCHEDULE: (p: { subject: string; date: string; start?: string | null; end?: string | null }) =>
+      `إشعار: تم تعديل توقيت حصة ${p.subject} بتاريخ ${p.date} إلى ${p.start ?? ''}-${p.end ?? ''}.`,
+    REINSTATED: (p: { subject: string; date: string }) =>
+      `إشعار: تم استئناف حصة ${p.subject} بتاريخ ${p.date} وفق جدولها المعتاد.`,
+  },
+  fr: {
+    CANCELLED: (p: { subject: string; date: string }) =>
+      `Avis: Le cours de ${p.subject} du ${p.date} est annulé.`,
+    RESCHEDULE: (p: { subject: string; date: string; start?: string | null; end?: string | null }) =>
+      `Avis: Le cours de ${p.subject} du ${p.date} est déplacé à ${p.start ?? ''}-${p.end ?? ''}.`,
+    REINSTATED: (p: { subject: string; date: string }) =>
+      `Avis: Le cours de ${p.subject} du ${p.date} est rétabli selon l'horaire habituel.`,
+  },
+} as const;
+
 export async function POST(request: Request) {
   try {
     const context = await requireRequestContext(request, ['school_admin']);
@@ -97,6 +117,31 @@ export async function POST(request: Request) {
       throw new ApiError(404, 'NOT_FOUND', 'Créneau introuvable');
     }
 
+    // Idempotency: check if an exception already exists with the same configuration
+    const [existingException] = await db
+      .select({
+        id: classSessionExceptions.id,
+        type: classSessionExceptions.type,
+        startTime: classSessionExceptions.startTime,
+        endTime: classSessionExceptions.endTime,
+        substituteTeacherId: classSessionExceptions.substituteTeacherId,
+        roomLabel: classSessionExceptions.roomLabel,
+      })
+      .from(classSessionExceptions)
+      .where(and(
+        eq(classSessionExceptions.tenantId, tenantId),
+        eq(classSessionExceptions.classScheduleSlotId, body.classScheduleSlotId),
+        eq(classSessionExceptions.date, body.date),
+      ))
+      .limit(1);
+
+    const isNewOrChanged = !existingException
+      || existingException.type !== body.type
+      || existingException.startTime !== (body.startTime ?? null)
+      || existingException.endTime !== (body.endTime ?? null)
+      || existingException.substituteTeacherId !== (body.substituteTeacherId ?? null)
+      || existingException.roomLabel !== (body.roomLabel ?? null);
+
     // Only the field the type is about is stored, so a room change cannot carry
     // a stale substitute forward.
     const values = {
@@ -138,16 +183,18 @@ export async function POST(request: Request) {
       reason: body.reason,
     });
 
-    // Notify teacher, students, guardians, and admins for today or future dates
+    // Notify teacher, students, guardians, and admins only if new or changed, and date >= today
     const today = casablancaTodayIso();
     const isTodayOrFuture = body.date >= today;
     let smsStatus: 'sent' | 'simulated' | 'skipped' = 'skipped';
     let teachersCount = 0;
     let studentsCount = 0;
     let guardiansCount = 0;
+    let noAccountCount = 0;
+    let skippedNoConsentCount = 0;
     let adminsCount = 0;
 
-    if (isTodayOrFuture) {
+    if (isTodayOrFuture && isNewOrChanged) {
       const teacherIds = Array.from(new Set([slot.teacherId, body.substituteTeacherId].filter(Boolean) as string[]));
       teachersCount = teacherIds.length;
       for (const tId of teacherIds) {
@@ -189,35 +236,62 @@ export async function POST(request: Request) {
         const guardianRows = await db
           .select({
             guardianId: guardianStudents.guardianId,
+            userId: guardians.userId,
             phone: guardians.phone,
+            smsOptIn: guardians.smsOptIn,
+            preferredLanguage: guardians.preferredLanguage,
           })
           .from(guardianStudents)
           .innerJoin(guardians, eq(guardianStudents.guardianId, guardians.id))
           .where(and(eq(guardianStudents.tenantId, tenantId), inArray(guardianStudents.studentId, studentIds)));
 
-        const uniqueGuardians = new Map<string, string | null>();
+        const uniqueGuardians = new Map<string, typeof guardianRows[number]>();
         for (const g of guardianRows) {
-          uniqueGuardians.set(g.guardianId, g.phone);
+          if (!uniqueGuardians.has(g.guardianId)) {
+            uniqueGuardians.set(g.guardianId, g);
+          }
         }
-        guardiansCount = uniqueGuardians.size;
 
-        for (const [gId, phone] of uniqueGuardians.entries()) {
-          await db.insert(notifications).values({
-            tenantId,
-            recipientId: gId,
-            channel: 'in_app',
-            template: `attendance_exception_${body.type.toLowerCase()}`,
-            data: { slotId: slot.id, date: body.date, type: body.type, reason: body.reason, subject: slot.subjectName },
-            status: 'sent',
-            sentAt: new Date().toISOString(),
-          });
+        for (const g of uniqueGuardians.values()) {
+          // In-app notification routes to guardians.userId so the bell icon displays it
+          if (g.userId) {
+            await db.insert(notifications).values({
+              tenantId,
+              recipientId: g.userId,
+              channel: 'in_app',
+              template: `attendance_exception_${body.type.toLowerCase()}`,
+              data: { slotId: slot.id, date: body.date, type: body.type, reason: body.reason, subject: slot.subjectName },
+              status: 'sent',
+              sentAt: new Date().toISOString(),
+            });
+            guardiansCount++;
+          } else {
+            noAccountCount++;
+          }
 
-          if (phone && (body.type === 'CANCELLED' || body.type === 'RESCHEDULE')) {
-            const smsText = body.type === 'CANCELLED'
-              ? `Avis: Le cours de ${slot.subjectName ?? 'cours'} du ${body.date} est annulé (${body.reason}).`
-              : `Avis: Le cours de ${slot.subjectName ?? 'cours'} du ${body.date} est déplacé à ${body.startTime}-${body.endTime}.`;
+          // SMS dispatch with Law 09-08 consent and suppression checks
+          if (body.type === 'CANCELLED' || body.type === 'RESCHEDULE') {
+            if (!g.phone || !g.smsOptIn) {
+              skippedNoConsentCount++;
+              continue;
+            }
+            const consentDecision = await checkConsent(tenantId, 'guardian', g.guardianId, 'sms');
+            if (!consentDecision.allowed) {
+              skippedNoConsentCount++;
+              continue;
+            }
+
+            const lang = g.preferredLanguage === 'ar' ? 'ar' : 'fr';
+            const templateFn = EXCEPTION_SMS_TEMPLATES[lang][body.type];
+            const smsText = templateFn({
+              subject: slot.subjectName ?? 'cours',
+              date: body.date,
+              start: body.startTime,
+              end: body.endTime,
+            });
+
             const smsRes = await sendSmsMessage(tenantId, {
-              to: phone,
+              to: g.phone,
               body: smsText,
               createdById: context.userId,
             });
@@ -259,8 +333,10 @@ export async function POST(request: Request) {
         teachers: teachersCount,
         students: studentsCount,
         guardians: guardiansCount,
+        noAccount: noAccountCount,
         admins: adminsCount,
         sms: smsStatus,
+        skippedNoConsent: skippedNoConsentCount,
       },
       message: 'Exception enregistrée.',
     });
@@ -306,7 +382,7 @@ export async function DELETE(request: Request) {
         eq(classSessionExceptions.classScheduleSlotId, slotId),
         eq(classSessionExceptions.date, date),
       ))
-      .returning({ id: classSessionExceptions.id });
+      .returning({ id: classSessionExceptions.id, type: classSessionExceptions.type });
 
     if (deleted.length === 0) {
       throw new ApiError(404, 'NOT_FOUND', 'Aucune exception à retirer pour cette séance.');
@@ -314,11 +390,15 @@ export async function DELETE(request: Request) {
 
     recordAudit(context, 'delete', 'class_session_exception', deleted[0]!.id, { date, slotId });
 
+    const shouldSendReinstatementSms = deleted[0]!.type === 'CANCELLED' || deleted[0]!.type === 'RESCHEDULE';
     const today = casablancaTodayIso();
     const isTodayOrFuture = date >= today;
+    let smsStatus: 'sent' | 'simulated' | 'skipped' = 'skipped';
     let teachersCount = 0;
     let studentsCount = 0;
     let guardiansCount = 0;
+    let noAccountCount = 0;
+    let skippedNoConsentCount = 0;
     let adminsCount = 0;
 
     if (isTodayOrFuture && slot) {
@@ -361,21 +441,68 @@ export async function DELETE(request: Request) {
       const studentIds = studentRows.map(s => s.id);
       if (studentIds.length > 0) {
         const guardianRows = await db
-          .select({ guardianId: guardianStudents.guardianId })
+          .select({
+            guardianId: guardianStudents.guardianId,
+            userId: guardians.userId,
+            phone: guardians.phone,
+            smsOptIn: guardians.smsOptIn,
+            preferredLanguage: guardians.preferredLanguage,
+          })
           .from(guardianStudents)
+          .innerJoin(guardians, eq(guardianStudents.guardianId, guardians.id))
           .where(and(eq(guardianStudents.tenantId, tenantId), inArray(guardianStudents.studentId, studentIds)));
-        const uniqueGuardianIds = Array.from(new Set(guardianRows.map(g => g.guardianId)));
-        guardiansCount = uniqueGuardianIds.length;
-        for (const gId of uniqueGuardianIds) {
-          await db.insert(notifications).values({
-            tenantId,
-            recipientId: gId,
-            channel: 'in_app',
-            template: 'attendance_exception_reinstated',
-            data: { slotId: slot.id, date, subject: slot.subjectName },
-            status: 'sent',
-            sentAt: new Date().toISOString(),
-          });
+
+        const uniqueGuardians = new Map<string, typeof guardianRows[number]>();
+        for (const g of guardianRows) {
+          if (!uniqueGuardians.has(g.guardianId)) {
+            uniqueGuardians.set(g.guardianId, g);
+          }
+        }
+
+        for (const g of uniqueGuardians.values()) {
+          if (g.userId) {
+            await db.insert(notifications).values({
+              tenantId,
+              recipientId: g.userId,
+              channel: 'in_app',
+              template: 'attendance_exception_reinstated',
+              data: { slotId: slot.id, date, subject: slot.subjectName },
+              status: 'sent',
+              sentAt: new Date().toISOString(),
+            });
+            guardiansCount++;
+          } else {
+            noAccountCount++;
+          }
+
+          if (shouldSendReinstatementSms) {
+            if (!g.phone || !g.smsOptIn) {
+              skippedNoConsentCount++;
+              continue;
+            }
+            const consentDecision = await checkConsent(tenantId, 'guardian', g.guardianId, 'sms');
+            if (!consentDecision.allowed) {
+              skippedNoConsentCount++;
+              continue;
+            }
+
+            const lang = g.preferredLanguage === 'ar' ? 'ar' : 'fr';
+            const smsText = EXCEPTION_SMS_TEMPLATES[lang].REINSTATED({
+              subject: slot.subjectName ?? 'cours',
+              date,
+            });
+
+            const smsRes = await sendSmsMessage(tenantId, {
+              to: g.phone,
+              body: smsText,
+              createdById: context.userId,
+            });
+            if (smsRes.delivery === 'sent') {
+              smsStatus = 'sent';
+            } else if (smsStatus !== 'sent' && smsRes.delivery === 'simulated') {
+              smsStatus = 'simulated';
+            }
+          }
         }
       }
 
@@ -407,7 +534,10 @@ export async function DELETE(request: Request) {
         teachers: teachersCount,
         students: studentsCount,
         guardians: guardiansCount,
+        noAccount: noAccountCount,
         admins: adminsCount,
+        sms: smsStatus,
+        skippedNoConsent: skippedNoConsentCount,
       },
       message: 'Exception retirée : la séance reprend l’emploi du temps.',
     });

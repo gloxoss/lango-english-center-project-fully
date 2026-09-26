@@ -5100,7 +5100,10 @@
     "legacyRegisterTitle": "Daily register (legacy format)",
     "legacyRegisterHint": "Attendance was recorded at the class level for this day, without timetable slot breakdown.",
     "viewInRegisters": "View in Registers & history",
-    "stateNonPointeParCours": "Not marked by lesson"
+    "stateNonPointeParCours": "Not marked by lesson",
+    "smsExceptionCancelled": "Notice: The {subject} lesson on {date} is cancelled.",
+    "smsExceptionRescheduled": "Notice: The {subject} lesson on {date} has been moved to {start}–{end}.",
+    "smsExceptionReinstated": "Notice: The {subject} lesson on {date} has been reinstated to its regular schedule."
   },
   "Grading": {
     "calendarTabTitle": "Calendar & supervisors",

@@ -1,5 +1,5 @@
 {
-  "executedAt": "2026-09-26T11:32:55.788Z",
+  "executedAt": "2026-09-26T12:07:15.038Z",
   "database": "schoolos_audit",
   "casablancaDate": "2026-09-26",
   "summary": {
@@ -38,15 +38,15 @@
       "id": "E4",
       "title": "Counters agreement & reception access",
       "status": "PASS",
-      "note": "Campus headcount (0) and QR report aggregates (6 scans, 1 accepted) agree; accessible without 403.",
+      "note": "Campus headcount (0) and QR report aggregates (9 scans, 1 accepted) agree; accessible without 403.",
       "dbProof": "API onsite: confirmedArrivals=0, manualUnverified=0"
     },
     {
       "id": "C1",
       "title": "Activating binds session to lesson occurrence",
       "status": "PASS",
-      "note": "Session db110183-c943-494e-a2cc-28f25f90fa9a created bound to slot 3da00217-73de-4fab-b29e-d24a6e99086b; re-fetching returns same session without duplicating.",
-      "dbProof": "DB query: select id, class_schedule_slot_id, status from scanner_sessions where id='db110183-c943-494e-a2cc-28f25f90fa9a' -> status='active', slot_id matches"
+      "note": "Session e60c7d48-f5d0-40f4-a5f2-185f30a8449a created bound to slot 3da00217-73de-4fab-b29e-d24a6e99086b; re-fetching returns same session without duplicating.",
+      "dbProof": "DB query: select id, class_schedule_slot_id, status from scanner_sessions where id='e60c7d48-f5d0-40f4-a5f2-185f30a8449a' -> status='active', slot_id matches"
     },
     {
       "id": "C2",
@@ -54,6 +54,13 @@
       "status": "PASS",
       "note": "Scan staged with status 'late'; attendanceRecordId is NULL; zero attendance marks written.",
       "dbProof": "DB query: select count(*) from attendance where student_id='STU-0004' -> 0; attendance_scan_events has attendance_record_id=null"
+    },
+    {
+      "id": "C5",
+      "title": "Wrong section refused with student and section name",
+      "status": "PASS",
+      "note": "Refused with 422 WRONG_CLASS naming student: \"Sabrine Jbilou — 3ème A n'appartient pas à ce cours.\"; details contain studentName & studentSection.",
+      "dbProof": "API response: Sabrine Jbilou — 3ème A n'appartient pas à ce cours."
     },
     {
       "id": "C3",
@@ -66,22 +73,15 @@
       "id": "C4",
       "title": "Who may activate (role permissions)",
       "status": "PASS",
-      "note": "Verified: non-teacher/non-admin denied, admin permitted (status=201).",
-      "dbProof": null
-    },
-    {
-      "id": "C5",
-      "title": "Wrong section refused with student and section name",
-      "status": "PASS",
-      "note": "WRONG_CLASS verified via route guard (status=404).",
-      "dbProof": null
+      "note": "Unauthorized teacher refused 403; lesson teacher (201) and school_admin (200) permitted.",
+      "dbProof": "API responses: otherTeacher=403 (403), teacher=201, admin=200"
     },
     {
       "id": "C6",
       "title": "Nothing is auto-submitted (manual validation required)",
       "status": "PASS",
-      "note": "Unvalidated sessions remain staged without writing attendance rows; cancelled lessons reject session activation.",
-      "dbProof": "Verified via attendance-reform-closeout-audit.test.ts: zero attendance marks written prior to explicit validation."
+      "note": "Cancelled lesson refused session activation with 422 LESSON_CANCELLED (\"Ce cours est annulé, le scan ne peut pas être activé.\"); marks only written on manual validation.",
+      "dbProof": "API response: Ce cours est annulé, le scan ne peut pas être activé."
     }
   ]
 }
