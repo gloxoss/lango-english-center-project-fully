@@ -590,6 +590,27 @@ export async function POST(request: Request) {
         isDuplicate = true;
         duplicateStagedStatus = duplicateEvent.stagedStatus || null;
       }
+    } else {
+      // In entrance mode without a session: check for an accepted arrival on the same day
+      const duplicateConditions = [
+        eq(attendanceScanEvents.tenantId, tenantId),
+        eq(attendanceScanEvents.resultStatus, 'accepted'),
+        sql`${attendanceScanEvents.scannedAt}::date = ${scanDate}::date`,
+      ];
+      if (badge) {
+        duplicateConditions.push(eq(attendanceScanEvents.credentialId, badge.id));
+      } else {
+        duplicateConditions.push(eq(attendanceScanEvents.studentId, scannedUser.id));
+      }
+      const [duplicateEvent] = await db
+        .select()
+        .from(attendanceScanEvents)
+        .where(and(...duplicateConditions))
+        .limit(1);
+      if (duplicateEvent) {
+        isDuplicate = true;
+        duplicateStagedStatus = duplicateEvent.stagedStatus || null;
+      }
     }
 
     if (isDuplicate) {

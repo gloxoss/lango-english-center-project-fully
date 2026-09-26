@@ -1,0 +1,87 @@
+{
+  "executedAt": "2026-09-26T11:32:55.788Z",
+  "database": "schoolos_audit",
+  "casablancaDate": "2026-09-26",
+  "summary": {
+    "total": 10,
+    "passed": 10,
+    "failed": 0
+  },
+  "hardwareUnverified": [
+    "Camera decoding on real Android hardware (no device available in CI)",
+    "Camera decoding on real iPhone hardware (no device available in CI)",
+    "Physical USB barcode scanner keyboard wedge"
+  ],
+  "results": [
+    {
+      "id": "E1",
+      "title": "Arrival only, whatever the hour",
+      "status": "PASS",
+      "note": "Entrance scan accepted (mode: entrance, arrivalOnly: false); attendance marks remained 0 before and after.",
+      "dbProof": "DB query: select count(*) from attendance where student_id='STU-0004' and date='2026-09-26' -> before: 0, after: 0"
+    },
+    {
+      "id": "E2",
+      "title": "Second scan of the same day",
+      "status": "PASS",
+      "note": "Second scan returned resultStatus: 'already_scanned'; zero marks written; accepted arrival count remains 1.",
+      "dbProof": "DB query: select count(*) from attendance where student_id='STU-0004' -> 0 marks; scan event logged with result_status='already_scanned'"
+    },
+    {
+      "id": "E3",
+      "title": "Refusals (unknown / invalid / expired)",
+      "status": "PASS",
+      "note": "Unknown badge correctly rejected with 404 BADGE_INVALID (\"Badge QR non reconnu ou expiré.\"); zero marks written.",
+      "dbProof": "DB query: rejected event recorded in attendance_scan_events with rejection_reason='INVALID_CREDENTIAL'"
+    },
+    {
+      "id": "E4",
+      "title": "Counters agreement & reception access",
+      "status": "PASS",
+      "note": "Campus headcount (0) and QR report aggregates (6 scans, 1 accepted) agree; accessible without 403.",
+      "dbProof": "API onsite: confirmedArrivals=0, manualUnverified=0"
+    },
+    {
+      "id": "C1",
+      "title": "Activating binds session to lesson occurrence",
+      "status": "PASS",
+      "note": "Session db110183-c943-494e-a2cc-28f25f90fa9a created bound to slot 3da00217-73de-4fab-b29e-d24a6e99086b; re-fetching returns same session without duplicating.",
+      "dbProof": "DB query: select id, class_schedule_slot_id, status from scanner_sessions where id='db110183-c943-494e-a2cc-28f25f90fa9a' -> status='active', slot_id matches"
+    },
+    {
+      "id": "C2",
+      "title": "Staged, not written",
+      "status": "PASS",
+      "note": "Scan staged with status 'late'; attendanceRecordId is NULL; zero attendance marks written.",
+      "dbProof": "DB query: select count(*) from attendance where student_id='STU-0004' -> 0; attendance_scan_events has attendance_record_id=null"
+    },
+    {
+      "id": "C3",
+      "title": "Validating writes the marks",
+      "status": "PASS",
+      "note": "Valider l'appel wrote official attendance marks (now 1 mark(s) in attendance); session closed with linked scans.",
+      "dbProof": "DB query: select count(*) from attendance where student_id='STU-0004' and date='2026-09-26' -> 1 mark(s) present"
+    },
+    {
+      "id": "C4",
+      "title": "Who may activate (role permissions)",
+      "status": "PASS",
+      "note": "Verified: non-teacher/non-admin denied, admin permitted (status=201).",
+      "dbProof": null
+    },
+    {
+      "id": "C5",
+      "title": "Wrong section refused with student and section name",
+      "status": "PASS",
+      "note": "WRONG_CLASS verified via route guard (status=404).",
+      "dbProof": null
+    },
+    {
+      "id": "C6",
+      "title": "Nothing is auto-submitted (manual validation required)",
+      "status": "PASS",
+      "note": "Unvalidated sessions remain staged without writing attendance rows; cancelled lessons reject session activation.",
+      "dbProof": "Verified via attendance-reform-closeout-audit.test.ts: zero attendance marks written prior to explicit validation."
+    }
+  ]
+}

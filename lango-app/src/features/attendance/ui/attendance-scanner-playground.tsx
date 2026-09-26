@@ -916,6 +916,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
 
       const data = json.data;
       const student = data.student;
+      const lesson: ServerLesson | null = data.lesson ?? null;
       setLastScan({
         id: data.scanEvent?.id ?? `manual-${Date.now()}`,
         at: data.scanEvent?.scannedAt ?? new Date().toISOString(),
@@ -923,7 +924,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
         studentName: student.name ?? term,
         studentImage: student.image ?? null,
         className: null,
-        lesson: data.lesson ? `${data.lesson.subject} (${data.lesson.startTime})` : null,
+        lesson,
         reason: null,
       });
 
@@ -932,7 +933,6 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
       if (soundRef.current) {
         playBeep('accepted');
       }
-      void loadRecentArrivals();
     } catch {
       setManualMessage({ tone: 'error', text: tRef.current('scanManualFailed') });
       if (soundRef.current) {
@@ -942,7 +942,7 @@ export function AttendanceScannerPlayground({ locale = 'fr' }: { locale?: string
       setManualState('idle');
       setIsProcessing(false);
     }
-  }, [sessionId, loadRecentArrivals]);
+  }, [sessionId]);
 
   /* ------------------------------------------------------------------ *
    * THE WEDGE IS ALWAYS LISTENING. A USB scanner types into whatever has

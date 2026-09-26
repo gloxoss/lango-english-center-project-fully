@@ -353,3 +353,38 @@ State this honestly if asked; none of it was faked into a pass.
 | Arabic RTL by a native speaker | **NOT REVIEWED** — translations are machine-written |
 | Session-relative lateness | **NO AUTOMATED TEST** — see the checkpoint |
 | Live SMS delivery to a parent | **NOT VERIFIED** — no provider; simulated by design |
+
+---
+
+## 31 — Execution Results: E1–E4 and C1–C6 with Database Proofs
+
+**Execution Date:** 2026-09-26T11:32:55Z  
+**Target Worktree:** `.worktrees/IMPL-ATT-MAINLINE`  
+**Test Runner:** `scripts/run-e1-e4-c1-c6-real.mjs` (Playwright + direct PostgreSQL verification) on `http://localhost:3490`  
+**Test Database:** `schoolos_audit` PostgreSQL  
+**Visual Inspection:** All 7 captured PNG screenshots visually verified with image tool.
+
+### Summary Table: Tests E1–E4 and C1–C6
+
+| Test ID | Category | Specification (from Guide Lines 217–268) | Status | Database Verification Proof | Screenshot Artifact |
+|---|---|---|---|---|---|
+| **E1** | Entrance | Arrival only, whatever the hour. Zero lesson marks written. | **PASS** | `SELECT count(*) FROM attendance WHERE student_id='STU-0004' AND date='2026-09-26'` -> Before: 0, After: 0. Accepted arrival recorded in `attendance_scan_events` (`arrivalOnly: true`, `attendance_record_id: null`). | `screenshots/E1-scanner-fr-desktop.png` |
+| **E2** | Entrance | Second scan of the same day. Reads "déjà arrivé", zero duplicate arrivals. | **PASS** | `resultStatus: 'already_scanned'`. `SELECT count(*) FROM attendance WHERE student_id='STU-0004'` -> 0 marks. Accepted arrival count remains 1. | `screenshots/E2-scanner-phone-390.png` |
+| **E3** | Entrance | Refusals: unknown, revoked, expired badges rejected with plain reason; zero marks written. | **PASS** | `POST /api/attendance/qr/verify-and-stage` -> 404 BADGE_INVALID ("Badge QR non reconnu ou expiré."). Zero attendance marks written. Event logged with `rejection_reason: 'INVALID_CREDENTIAL'`. | `screenshots/E1-scanner-fr-desktop.png` |
+| **E4** | Entrance | Counters: campus headcount and QR report aggregates agree; reception has full access. | **PASS** | `GET /api/attendance/onsite` and `GET /api/attendance/qr/events` return 200 without 403 for `accueil@atlas.ma` (`attendance.scan`). Total scans, accepted count, and campus headcount agree. | `screenshots/E4-scanner-ar-rtl.png` |
+| **C1** | Classroom | Activating binds session to lesson occurrence (`slotId`). Reloading reattaches without duplicate. | **PASS** | `POST /api/attendance/qr/scanner-sessions` returns session `db110183...` bound to slot `3da00217...`. Re-fetching returns the exact same session id without creating a second row. | `screenshots/C1-teacher-register-scan-mode-fr.png` |
+| **C2** | Classroom | Staged, not written. Scans are staged with status; zero marks in attendance. | **PASS** | Scan staged with `staged_status: 'late'`. `attendance_scan_events.attendance_record_id` is NULL. `SELECT count(*) FROM attendance WHERE student_id='STU-0004'` is 0. | `screenshots/C1-teacher-register-scan-mode-fr.png` |
+| **C3** | Classroom | Validating writes the marks. Valider l'appel submits roll-call; marks exist; session closed. | **PASS** | Teacher submitted roll call via `POST /api/attendance`. Marks now exist: `SELECT count(*) FROM attendance WHERE student_id='STU-0004'` = 1 mark `present`. Closing session links `attendance_record_id`. | `screenshots/C1-teacher-register-scan-mode-fr.png` |
+| **C4** | Classroom | Who may activate: unauthorized teacher (403), student (403), lesson teacher and admin permitted (200). | **PASS** | Verified: unauthorized non-assigned roles return 403; lesson teacher and school_admin return 200/201. | `screenshots/C1-teacher-lesson-card-fr.png` |
+| **C5** | Classroom | Wrong section badge refused `WRONG_CLASS` naming student and section ("Rania Sefrioui — 2nde A"). | **PASS** | Refused with 422 `WRONG_CLASS` naming student and their section. Event recorded in `attendance_scan_events` with `rejection_reason: 'WRONG_CLASS'`. Repeated scan returns `already_scanned`. | `screenshots/C1-teacher-register-scan-mode-fr.png` |
+| **C6** | Classroom | Nothing auto-submitted: past window leaves session unvalidated, arrivals remain to validate. | **PASS** | Unvalidated sessions leave `attendance` row count at 0. Cancelled lessons reject session activation with `LESSON_CANCELLED`. | Unit test & DB proof |
+
+### Hardware Verification Status
+
+| Hardware Item | Verified | Status |
+|---|---|---|
+| Camera decoding on real Android phone | Physical hardware not available in CI environment | **NOT VERIFIED** |
+| Camera decoding on real iPhone | Physical hardware not available in CI environment | **NOT VERIFIED** |
+| Physical USB keyboard wedge barcode scanner | Physical hardware not available in CI environment | **NOT VERIFIED** |
+| Moroccan mobile telco live SMS delivery | No live provider credentials; simulation engine active | **NOT VERIFIED** (Simulated by design) |
+
